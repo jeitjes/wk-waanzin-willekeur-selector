@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>WK WAANZIN™ — Officiële Willekeur Selector</title>
+<title>WK WAANZIN™ — Privekwim Willekeur Selector</title>
 <style>
   :root {
     --navy: #0a1030;
@@ -14,6 +14,7 @@
     --red: #e03131;
     --teal: #1fd4c0;
     --magenta: #ff3df0;
+    --green: #3ddc84;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { height: 100%; }
@@ -41,11 +42,15 @@
     50% { transform: translate(1%,-2%); } 75% { transform: translate(-1%,2%); } 100% { transform: translate(2%,-1%); }
   }
 
+  /* ---------- screens ---------- */
+  .screen { display: none; }
+  .screen.active { display: flex; animation: fadeIn 0.5s ease; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
   .page {
     width: 100%;
     max-width: 480px;
     padding: 28px 22px 90px;
-    display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
@@ -77,6 +82,7 @@
 
   /* ---------- crest ---------- */
   .crest { width: 150px; height: auto; margin-bottom: 4px; filter: drop-shadow(0 6px 24px rgba(212,175,55,0.25)); }
+  .crest.small { width: 92px; }
   .crest .eye-iris { animation: iris 5s ease-in-out infinite; transform-origin: 75px 74px; }
   @keyframes iris {
     0%, 42%, 100% { transform: scale(1); }
@@ -109,7 +115,6 @@
     color: transparent;
   }
   .tm { font-size: 0.22em; vertical-align: super; color: var(--gold); -webkit-background-clip: initial; background-clip: initial; }
-  /* occasional chromatic glitch on the title */
   .glitching { animation: glitch 0.18s steps(2) 2; }
   @keyframes glitch {
     0% { text-shadow: 3px 0 var(--magenta), -3px 0 var(--teal); transform: translateX(0); }
@@ -179,7 +184,7 @@
     box-shadow: 0 0 18px rgba(212,175,55,0.35);
   }
 
-  .confirm-btn {
+  .btn-gold {
     margin-top: 24px;
     width: 100%;
     font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
@@ -192,12 +197,11 @@
     border-radius: 4px;
     padding: 16px;
     cursor: pointer;
-    opacity: 0.35;
-    pointer-events: none;
     transition: opacity 0.25s ease, transform 0.12s ease;
   }
-  .confirm-btn.armed { opacity: 1; pointer-events: auto; box-shadow: 0 4px 30px rgba(212,175,55,0.45); }
-  .confirm-btn:active { transform: scale(0.98); }
+  .btn-gold.locked { opacity: 0.35; pointer-events: none; }
+  .btn-gold.armed { opacity: 1; pointer-events: auto; box-shadow: 0 4px 30px rgba(212,175,55,0.45); }
+  .btn-gold:active { transform: scale(0.98); }
 
   .disclaimer {
     margin-top: 18px;
@@ -208,7 +212,7 @@
     text-transform: uppercase;
   }
 
-  /* ---------- news ticker ---------- */
+  /* ---------- CCTV ticker ---------- */
   .ticker-wrap {
     position: fixed;
     bottom: 0; left: 0; right: 0;
@@ -226,11 +230,13 @@
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 2px;
-    display: flex; align-items: center;
+    display: flex; align-items: center; gap: 5px;
     padding: 0 10px;
     z-index: 2;
     text-transform: uppercase;
   }
+  .rec-dot { width: 7px; height: 7px; border-radius: 50%; background: #fff; animation: blink 1.2s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0.15; } }
   .ticker {
     display: inline-block;
     white-space: nowrap;
@@ -238,25 +244,262 @@
     letter-spacing: 1.5px;
     text-transform: uppercase;
     color: rgba(244,242,236,0.8);
-    animation: tick 9s linear infinite;
+    transform: translateX(-50%);
+    animation: tickLR 14s linear infinite;
+    will-change: transform;
   }
   .ticker b { color: var(--gold-bright); }
-  @keyframes tick { to { transform: translateX(-50%); } }
+  /* van links naar rechts */
+  @keyframes tickLR { from { transform: translateX(-50%); } to { transform: translateX(0%); } }
+
+  /* ---------- verificatie ---------- */
+  .verify-panel {
+    width: 100%;
+    margin-top: 8px;
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 6px;
+    background: rgba(255,255,255,0.03);
+    padding: 24px 18px;
+  }
+  .verify-kop {
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: clamp(26px, 8vw, 36px);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--white);
+  }
+  .verify-kop b { color: var(--gold-bright); }
+  .kandidaat {
+    margin-top: 10px;
+    font-size: 11px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: rgba(244,242,236,0.55);
+  }
+  .kandidaat b { color: var(--gold); }
+  .verify-vraag {
+    margin: 22px 0 12px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--white);
+  }
+  .verify-input {
+    width: 100%;
+    font-family: "Courier New", monospace;
+    font-size: 15px;
+    color: var(--gold-bright);
+    background: rgba(6,10,30,0.8);
+    border: 1px solid rgba(212,175,55,0.5);
+    border-radius: 4px;
+    padding: 13px 12px;
+    outline: none;
+  }
+  .verify-input:focus { border-color: var(--gold-bright); box-shadow: 0 0 12px rgba(212,175,55,0.3); }
+  .verify-status {
+    margin-top: 16px;
+    min-height: 44px;
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    color: rgba(244,242,236,0.7);
+    text-align: left;
+    white-space: pre-line;
+  }
+  .verify-status .ok { color: var(--green); font-weight: 700; }
+  .beveiligd {
+    margin-top: 14px;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(244,242,236,0.3);
+  }
+
+  /* ---------- loting (full screen trip) ---------- */
+  #s-loting {
+    position: fixed; inset: 0;
+    z-index: 10;
+    background: var(--navy-deep);
+    overflow: hidden;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+  .trip { position: absolute; inset: 0; display: grid; place-items: center; --spd: 26s; --glow: 0.06; }
+  .ring {
+    position: absolute;
+    width: 160vmax; height: 160vmax;
+    border-radius: 50%;
+    opacity: var(--glow);
+    will-change: transform;
+  }
+  .r1 { background: repeating-conic-gradient(from 0deg, var(--gold-bright) 0 8deg, transparent 8deg 24deg); animation: spin var(--spd) linear infinite; }
+  .r2 { background: repeating-radial-gradient(circle, rgba(255,61,240,0.7) 0 3vmax, transparent 3vmax 7vmax); animation: spinRev calc(var(--spd) * 0.7) linear infinite, breathe 5s ease-in-out infinite; }
+  .r3 { background: conic-gradient(var(--teal), var(--magenta), var(--gold-bright), var(--teal)); filter: blur(60px); animation: spin calc(var(--spd) * 0.5) linear infinite; mix-blend-mode: screen; }
+  .r4 { background: repeating-conic-gradient(from 10deg, rgba(31,212,192,0.8) 0 4deg, transparent 4deg 18deg); animation: spinRev calc(var(--spd) * 0.35) linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes spinRev { to { transform: rotate(-360deg); } }
+  @keyframes breathe { 0%,100% { scale: 1; } 50% { scale: 1.25; } }
+
+  .trip-eye { position: relative; z-index: 2; width: 120px; transition: transform 1.2s ease; filter: drop-shadow(0 0 30px rgba(212,175,55,0.4)); }
+  #s-loting.p3 .trip-eye { transform: scale(2.6); }
+  #s-loting.p2 .trip { --spd: 9s; --glow: 0.35; }
+  #s-loting.p3 .trip { --spd: 2.2s; --glow: 0.8; }
+  #s-loting.p3 { animation: hueSpin 2.5s linear infinite; }
+  @keyframes hueSpin { to { filter: hue-rotate(360deg); } }
+
+  .loting-status {
+    position: absolute;
+    top: max(34px, env(safe-area-inset-top));
+    left: 0; right: 0;
+    z-index: 3;
+    font-family: "Courier New", monospace;
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: var(--gold-bright);
+    text-align: center;
+    padding: 0 24px;
+    text-shadow: 0 0 12px rgba(6,10,30,0.9);
+  }
+  .name-flash {
+    position: absolute;
+    z-index: 3;
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: clamp(44px, 14vw, 90px);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--white);
+    text-shadow: 0 0 24px var(--magenta), 0 0 60px var(--teal);
+    opacity: 0;
+  }
+  .name-flash.on { opacity: 1; }
+  .loting-bar-wrap {
+    position: absolute;
+    bottom: 56px; left: 10%; right: 10%;
+    z-index: 3;
+    height: 8px;
+    border: 1px solid rgba(212,175,55,0.5);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .loting-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--gold), var(--gold-bright)); transition: width 0.4s ease; }
+  .flash-white {
+    position: absolute; inset: 0; z-index: 6;
+    background: #fff; opacity: 0; pointer-events: none;
+  }
+  .flash-white.go { animation: whiteout 1s ease forwards; }
+  @keyframes whiteout { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; } }
+
+  /* ---------- reveal ---------- */
+  .reveal-kop {
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: clamp(30px, 9.5vw, 44px);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--white);
+    margin-top: 6px;
+  }
+  .reveal-kop b {
+    background: linear-gradient(175deg, var(--gold-bright) 20%, var(--gold) 60%, #8a6d1f 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .team-card {
+    width: 100%;
+    margin-top: 26px;
+    border: 2px solid var(--gold);
+    border-radius: 8px;
+    background:
+      radial-gradient(ellipse 120% 90% at 50% 0%, rgba(212,175,55,0.14), transparent 55%),
+      rgba(255,255,255,0.03);
+    padding: 30px 18px 26px;
+    position: relative;
+    box-shadow: 0 0 40px rgba(212,175,55,0.2), inset 0 0 0 1px rgba(212,175,55,0.25);
+    animation: cardIn 0.9s cubic-bezier(0.2, 1.4, 0.4, 1);
+  }
+  @keyframes cardIn { from { transform: scale(0.6) rotate(-3deg); opacity: 0; } to { transform: none; opacity: 1; } }
+  .team-label {
+    font-size: 12px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: rgba(244,242,236,0.6);
+  }
+  .team-nr {
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: clamp(64px, 22vw, 110px);
+    line-height: 1;
+    background: linear-gradient(175deg, var(--gold-bright) 20%, var(--gold) 60%, #8a6d1f 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    margin: 4px 0 10px;
+  }
+  .team-namen {
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: clamp(30px, 10vw, 46px);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--white);
+    line-height: 1.15;
+  }
+  .team-namen .amp { color: var(--gold); font-size: 0.6em; display: block; line-height: 1.4; }
+  .team-namen .jij { position: relative; }
+  .team-namen .jij::after {
+    content: "(jij)";
+    font-family: "Arial Narrow", Arial, sans-serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--gold-bright);
+    position: absolute;
+    top: -2px; right: -34px;
+  }
+  .stempel {
+    display: inline-block;
+    margin-top: 20px;
+    border: 2px solid var(--green);
+    color: var(--green);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 3px;
+    transform: rotate(-4deg);
+    opacity: 0.9;
+  }
+  .reveal-sub {
+    margin-top: 20px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(244,242,236,0.55);
+    line-height: 1.8;
+  }
+  .reveal-sub b { color: var(--gold-bright); }
+  .btn-again {
+    margin-top: 22px;
+    background: none;
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 4px;
+    color: rgba(244,242,236,0.6);
+    font-family: "Arial Narrow", Arial, sans-serif;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 10px 18px;
+    cursor: pointer;
+  }
 </style>
 </head>
 <body>
 
-<div class="page">
+<!-- ========== SCHERM 1: LANDING ========== -->
+<div class="page screen active" id="s-landing">
   <div class="fed-strip"><div class="fed-scroll"><b>10 kwimmers</b> · 5 teams · 1 winnaar &nbsp;★&nbsp; <b>10 kwimmers</b> · 5 teams · 1 winnaar &nbsp;★&nbsp; <b>10 kwimmers</b> · 5 teams · 1 winnaar &nbsp;★&nbsp; <b>10 kwimmers</b> · 5 teams · 1 winnaar &nbsp;★&nbsp; </div></div>
 
-  <!-- Official crest: laurel + football, with an eye where the ball's center panel should be -->
   <svg class="crest" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <defs>
       <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stop-color="#ffd75e"/><stop offset="1" stop-color="#8a6d1f"/>
       </linearGradient>
     </defs>
-    <!-- laurel branches -->
     <g stroke="url(#goldGrad)" stroke-width="2.5" fill="none" stroke-linecap="round">
       <path d="M32 128 C 14 108, 8 84, 14 58"/>
       <path d="M118 128 C 136 108, 142 84, 136 58"/>
@@ -271,7 +514,6 @@
       <ellipse cx="140" cy="75" rx="9" ry="3.5" transform="rotate(88 140 75)"/>
       <ellipse cx="138" cy="57" rx="9" ry="3.5" transform="rotate(104 138 57)"/>
     </g>
-    <!-- football -->
     <circle cx="75" cy="74" r="42" fill="#0d1436" stroke="url(#goldGrad)" stroke-width="3"/>
     <g stroke="url(#goldGrad)" stroke-width="1.6" fill="none" opacity="0.85">
       <path d="M75 32 L 75 46"/>
@@ -281,13 +523,11 @@
       <path d="M56 96 L 52 60"/><path d="M94 96 L 98 60"/>
       <path d="M56 96 L 75 104 L 94 96"/><path d="M75 104 L 75 116"/>
     </g>
-    <!-- the eye (pentagon panel replaced by an eye) -->
     <g>
       <path d="M53 74 Q 75 56 97 74 Q 75 92 53 74 Z" fill="#f4f2ec"/>
       <circle class="eye-iris" cx="75" cy="74" r="10" fill="#0d1436" stroke="url(#goldGrad)" stroke-width="2.5"/>
       <circle cx="75" cy="74" r="3.6" fill="url(#goldGrad)"/>
     </g>
-    <!-- banner -->
     <path d="M28 132 L 122 132 L 116 143 L 34 143 Z" fill="url(#goldGrad)"/>
     <text x="75" y="141" text-anchor="middle" font-family="Arial Narrow, Arial" font-size="8.5" font-weight="bold" letter-spacing="2" fill="#0d1436">ORDO EX CHAO</text>
   </svg>
@@ -297,49 +537,148 @@
   <h1 id="title">WK<span class="tm">™</span><span class="waanzin">Waanzin</span></h1>
 
   <div class="subtitle">Privekwim <b>Willekeur Selector</b></div>
-  <div class="edition">De achterkamer komt naar voren</div>
+  <div class="edition">Je zit in de wachtkamer</div>
 
   <hr class="divider">
 
   <div class="select-label">Selecteer je naam</div>
 
-  <div class="names" id="names">
-    <button class="name-btn">Speler 1</button>
-    <button class="name-btn">Speler 2</button>
-    <button class="name-btn">Speler 3</button>
-    <button class="name-btn">Speler 4</button>
-    <button class="name-btn">Speler 5</button>
-    <button class="name-btn">Speler 6</button>
-    <button class="name-btn">Speler 7</button>
-    <button class="name-btn">Speler 8</button>
-    <button class="name-btn">Speler 9</button>
-    <button class="name-btn">Speler 10</button>
-  </div>
+  <div class="names" id="names"></div>
 
-  <button class="confirm-btn" id="confirm">Bevestig identiteit</button>
+  <button class="btn-gold locked" id="confirm">Bevestig identiteit</button>
 
   <div class="disclaimer">
     De uitslag van de loting is eerlijk en volledig willekeurig bepaald. Neem cash mee zaterdag als je wil wisselen.
   </div>
 </div>
 
+<!-- ========== SCHERM 2: VERIFICATIE ========== -->
+<div class="page screen" id="s-verify">
+  <div class="fed-strip"><div class="fed-scroll"><b>Beveiligingsniveau: maximaal</b> · verificatie vereist &nbsp;★&nbsp; <b>Beveiligingsniveau: maximaal</b> · verificatie vereist &nbsp;★&nbsp; <b>Beveiligingsniveau: maximaal</b> · verificatie vereist &nbsp;★&nbsp; <b>Beveiligingsniveau: maximaal</b> · verificatie vereist &nbsp;★&nbsp; </div></div>
+
+  <svg class="crest small" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <use href="#verify-eye"/>
+    <circle cx="75" cy="74" r="42" fill="#0d1436" stroke="#d4af37" stroke-width="3"/>
+    <path d="M53 74 Q 75 56 97 74 Q 75 92 53 74 Z" fill="#f4f2ec"/>
+    <circle class="eye-iris" cx="75" cy="74" r="10" fill="#0d1436" stroke="#d4af37" stroke-width="2.5"/>
+    <circle cx="75" cy="74" r="3.6" fill="#d4af37"/>
+  </svg>
+
+  <div class="verify-panel">
+    <div class="verify-kop">Bevestig dat je <b>kwim</b> bent</div>
+    <div class="kandidaat">Kandidaat: <b id="kandidaat-naam">—</b></div>
+
+    <div class="verify-vraag">Beveiligingsvraag:<br>“Wat betekent Privekwim?”</div>
+    <input class="verify-input" id="verify-input" type="text" autocomplete="off" placeholder="Typ je antwoord…">
+
+    <button class="btn-gold locked" id="verify-btn">Verifieer antwoord</button>
+
+    <div class="verify-status" id="verify-status"></div>
+
+    <div class="beveiligd">🔒 Beveiligd via het Kwim-protocol v4.5.12</div>
+  </div>
+</div>
+
+<!-- ========== SCHERM 3: LOTING / TRIP ========== -->
+<div class="screen" id="s-loting">
+  <div class="trip">
+    <div class="ring r3"></div>
+    <div class="ring r1"></div>
+    <div class="ring r2"></div>
+    <div class="ring r4"></div>
+    <svg class="trip-eye" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="75" cy="74" r="42" fill="#0d1436" stroke="#d4af37" stroke-width="3"/>
+      <path d="M53 74 Q 75 56 97 74 Q 75 92 53 74 Z" fill="#f4f2ec"/>
+      <circle id="trip-iris" cx="75" cy="74" r="10" fill="#0d1436" stroke="#d4af37" stroke-width="2.5"/>
+      <circle cx="75" cy="74" r="3.6" fill="#d4af37"/>
+    </svg>
+  </div>
+  <div class="loting-status" id="loting-status">Verbinding maken met de Federatie…</div>
+  <div class="name-flash" id="name-flash"></div>
+  <div class="loting-bar-wrap"><div class="loting-bar" id="loting-bar"></div></div>
+  <div class="flash-white" id="flash-white"></div>
+</div>
+
+<!-- ========== SCHERM 4: TEAM REVEAL ========== -->
+<div class="page screen" id="s-reveal">
+  <div class="fed-strip"><div class="fed-scroll"><b>Uitslag definitief</b> · geen bezwaar mogelijk &nbsp;★&nbsp; <b>Uitslag definitief</b> · geen bezwaar mogelijk &nbsp;★&nbsp; <b>Uitslag definitief</b> · geen bezwaar mogelijk &nbsp;★&nbsp; <b>Uitslag definitief</b> · geen bezwaar mogelijk &nbsp;★&nbsp; </div></div>
+
+  <div class="stars">★ ★ <span class="odd">★</span> ★ ★</div>
+  <div class="reveal-kop">De loting heeft <b>gesproken</b></div>
+
+  <div class="team-card">
+    <div class="team-label">Jij speelt in</div>
+    <div class="team-nr" id="team-nr">Team —</div>
+    <div class="team-namen" id="team-namen"></div>
+    <div class="stempel">✓ Gecertificeerd willekeurig</div>
+  </div>
+
+  <div class="reveal-sub">
+    Screenshot dit en stuur het in de groep.<br>
+    <b>Neem cash mee zaterdag als je wil wisselen.</b>
+  </div>
+
+  <button class="btn-again" id="btn-again">Loting opnieuw beleven</button>
+</div>
+
+<!-- CCTV ticker -->
 <div class="ticker-wrap">
-  <div class="ticker-label">Live</div>
-  <div class="ticker"><b>Loting is nu live!</b> &nbsp;•&nbsp; <b>Loting is nu live!</b> &nbsp;•&nbsp; <b>Loting is nu live!</b> &nbsp;•&nbsp; <b>Loting is nu live!</b> &nbsp;•&nbsp; <b>Loting is nu live!</b> &nbsp;•&nbsp; <b>Loting is nu live!</b> &nbsp;•&nbsp; </div>
+  <div class="ticker-label"><span class="rec-dot"></span>CCTV</div>
+  <div class="ticker" id="cctv"></div>
 </div>
 
 <script>
-  // name selection
-  const buttons = document.querySelectorAll('.name-btn');
-  const confirmBtn = document.getElementById('confirm');
-  buttons.forEach(btn => btn.addEventListener('click', () => {
-    buttons.forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-    confirmBtn.classList.add('armed');
-  }));
+  /* ================= data ================= */
+  const TEAMS = [
+    ["Jelle", "Pepijn"],
+    ["Daniel", "Sep"],
+    ["Rob", "Lars"],
+    ["Thomas", "Zowi"],
+    ["Jaap", "Shayan"]
+  ];
+  // vaste husselvolgorde — geen teamgenoten naast elkaar, niets af te leiden
+  const SPELERS = ["Rob", "Shayan", "Pepijn", "Daniel", "Zowi", "Jelle", "Lars", "Sep", "Jaap", "Thomas"];
 
-  // occasional glitch on the title — a crack in the official facade
-  const title = document.getElementById('title');
+  let gekozen = null;
+
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const $ = id => document.getElementById(id);
+
+  function toonScherm(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    $(id).classList.add('active');
+    window.scrollTo(0, 0);
+  }
+
+  /* ================= CCTV ticker ================= */
+  const cctvTekst = '<b>CCTV</b> — Uganda Mango Ziggo 4512 Live Broadcast &nbsp;•&nbsp; ';
+  $('cctv').innerHTML = cctvTekst.repeat(8);
+
+  /* ================= scherm 1: landing ================= */
+  const grid = $('names');
+  const confirmBtn = $('confirm');
+  SPELERS.forEach(naam => {
+    const b = document.createElement('button');
+    b.className = 'name-btn';
+    b.textContent = naam;
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.name-btn').forEach(x => x.classList.remove('selected'));
+      b.classList.add('selected');
+      gekozen = naam;
+      confirmBtn.classList.remove('locked');
+      confirmBtn.classList.add('armed');
+    });
+    grid.appendChild(b);
+  });
+
+  confirmBtn.addEventListener('click', () => {
+    $('kandidaat-naam').textContent = gekozen;
+    toonScherm('s-verify');
+    setTimeout(() => $('verify-input').focus(), 400);
+  });
+
+  // titel-glitch
+  const title = $('title');
   (function scheduleGlitch() {
     setTimeout(() => {
       title.classList.add('glitching');
@@ -347,6 +686,117 @@
       scheduleGlitch();
     }, 3500 + Math.random() * 5000);
   })();
+
+  /* ================= scherm 2: verificatie ================= */
+  const vInput = $('verify-input');
+  const vBtn = $('verify-btn');
+  const vStatus = $('verify-status');
+
+  vInput.addEventListener('input', () => {
+    if (vInput.value.trim().length > 0) {
+      vBtn.classList.remove('locked'); vBtn.classList.add('armed');
+    } else {
+      vBtn.classList.add('locked'); vBtn.classList.remove('armed');
+    }
+  });
+  vInput.addEventListener('keydown', e => { if (e.key === 'Enter' && vInput.value.trim()) vBtn.click(); });
+
+  vBtn.addEventListener('click', async () => {
+    vBtn.classList.add('locked'); vBtn.classList.remove('armed');
+    vInput.disabled = true;
+    vStatus.innerHTML = '';
+    const regels = [
+      '> antwoord ontvangen…',
+      '> semantische kwim-analyse gestart…',
+      '> vergelijking met 0 bekende definities…',
+      '> twijfel gedetecteerd… genegeerd.',
+    ];
+    for (const r of regels) {
+      vStatus.innerHTML += r + '\n';
+      await sleep(650);
+    }
+    vStatus.innerHTML += '<span class="ok">✓ CORRECT — kwim-status bevestigd</span>';
+    await sleep(1300);
+    startLoting();
+  });
+
+  /* ================= scherm 3: loting-trip ================= */
+  async function startLoting() {
+    toonScherm('s-loting');
+    const scr = $('s-loting');
+    const status = $('loting-status');
+    const bar = $('loting-bar');
+    const flash = $('name-flash');
+
+    // reset (bij opnieuw beleven)
+    flash.classList.remove('on');
+    flash.textContent = '';
+    bar.style.width = '0%';
+
+    // fase 1: officieel
+    const fase1 = [
+      ['Verbinding maken met de Federatie…', 8],
+      ['Willekeurgenerator opwarmen…', 21],
+      ['Kwim-coëfficiënten laden…', 34],
+      ['Entropie aanzuiveren…', 47],
+    ];
+    for (const [t, p] of fase1) {
+      status.textContent = t;
+      bar.style.width = p + '%';
+      await sleep(1400);
+    }
+
+    // fase 2: het wordt vreemd
+    scr.classList.add('p2');
+    const fase2 = [
+      ['Kwantumchaos gedetecteerd…', 58],
+      ['De achterkamer opent zich…', 66],
+      ['Willekeur overschrijdt veilige waarden…', 74],
+    ];
+    for (const [t, p] of fase2) {
+      status.textContent = t;
+      bar.style.width = p + '%';
+      await sleep(1500);
+    }
+
+    // fase 3: volle trip + namen-slotmachine
+    scr.classList.add('p3');
+    status.textContent = 'DE LOTING SPREEKT';
+    bar.style.width = '97%';
+    flash.classList.add('on');
+    let i = 0, interval = 70;
+    const draaiStart = Date.now();
+    while (Date.now() - draaiStart < 4200) {
+      flash.textContent = SPELERS[i % SPELERS.length];
+      i++;
+      await sleep(interval);
+      if (Date.now() - draaiStart > 2800) interval += 30; // vertraagt op het eind
+    }
+    // eindig op de teamgenoot
+    const team = TEAMS.find(t => t.includes(gekozen));
+    const maat = team[0] === gekozen ? team[1] : team[0];
+    flash.textContent = maat;
+    bar.style.width = '100%';
+    await sleep(900);
+
+    // witte flits → reveal
+    $('flash-white').classList.add('go');
+    await sleep(420);
+    toonReveal(team, maat);
+    await sleep(700);
+    scr.classList.remove('p2', 'p3');
+  }
+
+  /* ================= scherm 4: reveal ================= */
+  function toonReveal(team, maat) {
+    const nr = TEAMS.indexOf(team) + 1;
+    $('team-nr').textContent = 'Team ' + nr;
+    $('team-namen').innerHTML =
+      `<span class="jij">${gekozen}</span><span class="amp">&amp;</span>${maat}`;
+    toonScherm('s-reveal');
+  }
+
+  $('btn-again').addEventListener('click', () => startLoting());
 </script>
 </body>
 </html>
