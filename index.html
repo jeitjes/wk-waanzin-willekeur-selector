@@ -361,20 +361,38 @@
     color: rgba(244,242,236,0.7);
   }
   .kast-kop b { color: var(--gold); }
-  .plank-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 10px; }
-  .trofee {
-    padding: 10px 4px 8px;
-    border-bottom: 3px solid;
-    border-image: linear-gradient(90deg, transparent, var(--gold), transparent) 1;
-  }
-  .trofee-emoji { font-size: 34px; line-height: 1.1; filter: drop-shadow(0 4px 10px rgba(212,175,55,0.4)); }
-  .trofee-emoji img { width: 40px; height: 40px; object-fit: contain; display: block; margin: 0 auto; }
-  .trofee-naam { margin-top: 6px; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: rgba(244,242,236,0.8); line-height: 1.4; }
   .kast-leeg {
     font-family: "Courier New", monospace;
     font-size: 12px; color: rgba(244,242,236,0.45);
     padding: 14px 0 6px;
   }
+  .kast-foto {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(212,175,55,0.25);
+  }
+  .foto-knop {
+    display: inline-block;
+    font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--gold-bright);
+    border: 1px solid rgba(212,175,55,0.5);
+    border-radius: 4px;
+    padding: 9px 14px;
+    cursor: pointer;
+    background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
+  }
+  .foto-knop input { display: none; }
+  .foto-uitleg {
+    margin-top: 8px;
+    font-size: 9.5px;
+    letter-spacing: 0.5px;
+    color: rgba(244,242,236,0.4);
+    text-transform: uppercase;
+  }
+  .foto-status { margin-top: 8px; font-size: 11px; letter-spacing: 1px; }
+  .foto-status.bezig { color: var(--gold-bright); }
+  .foto-status.ok { color: var(--green); }
+  .foto-status.fout { color: var(--red); }
   .badge-lijst { display: flex; flex-direction: column; gap: 8px; text-align: left; }
   .badge-regel {
     display: flex; align-items: center; gap: 10px;
@@ -385,7 +403,6 @@
   .badge-regel .b-emoji { font-size: 20px; }
   .badge-regel .b-emoji img { width: 52px; height: 52px; object-fit: contain; display: block; filter: drop-shadow(0 3px 8px rgba(0,0,0,0.5)); }
   .badge-regel .b-naam { font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
-  .badge-regel .b-info { font-size: 10px; letter-spacing: 1px; color: rgba(244,242,236,0.5); text-transform: uppercase; }
 
   /* ---------- CCTV ticker ---------- */
   .ticker-wrap {
@@ -489,13 +506,11 @@
 <script>
   const $ = id => document.getElementById(id);
   const CAT = window.KWIM_CATALOGUS;
-  // badge kan uit de vaste catalogus komen (emoji) of een geüploade badge zijn (afbeelding)
-  const badgeVan = id =>
-    CAT.badges.find(b => b.id === id) ||
-    ((staat && staat.badgeDefs) || []).find(b => b.id === id);
-  const badgeIcoon = b => b.afbeelding
-    ? `<img src="${b.afbeelding}" alt="">`
-    : escapeHtml(b.emoji || '');
+  // een prijs komt uit de vaste catalogus (kampioensring) of is een geüploade prijs (afbeelding)
+  const prijsVan = id =>
+    CAT.prijzen.find(p => p.id === id) ||
+    ((staat && staat.prijsDefs) || []).find(p => p.id === id);
+  const prijsIcoon = p => `<img src="${p.afbeelding}" alt="">`;
 
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -540,9 +555,9 @@
       const rij = document.createElement('button');
       rij.className = 'rij plek-' + plek;
       rij.style.animationDelay = (i * 0.07) + 's';
-      const badges = (team.badges || [])
-        .map(badgeVan).filter(Boolean)
-        .map(b => `<span class="badge" title="${escapeHtml(b.naam)}">${badgeIcoon(b)}</span>`)
+      const badges = (team.prijzen || [])
+        .map(prijsVan).filter(Boolean)
+        .map(p => `<span class="badge" title="${escapeHtml(p.naam)}">${prijsIcoon(p)}</span>`)
         .join('');
       rij.innerHTML = `
         <div class="plek">${plek}</div>
@@ -595,18 +610,16 @@
     }
   }
 
+  let huidigeKastTeam = null;
+
   function openKast(teamId) {
     const team = staat.teams.find(t => t.id === teamId);
     if (!team) return;
-    const trofeeen = (team.trofeeen || []).map(tr => `
-      <div class="trofee">
-        <div class="trofee-emoji">${tr.afbeelding ? `<img src="${tr.afbeelding}" alt="">` : escapeHtml(tr.emoji)}</div>
-        <div class="trofee-naam">${escapeHtml(tr.naam)}</div>
-      </div>`).join('');
-    const badges = (team.badges || []).map(badgeVan).filter(Boolean).map(b => `
+    huidigeKastTeam = teamId;
+    const prijzen = (team.prijzen || []).map(prijsVan).filter(Boolean).map(p => `
       <div class="badge-regel">
-        <span class="b-emoji">${badgeIcoon(b)}</span>
-        <span><div class="b-naam">${escapeHtml(b.naam)}</div>${b.info ? `<div class="b-info">${escapeHtml(b.info)}</div>` : ''}</span>
+        <span class="b-emoji">${prijsIcoon(p)}</span>
+        <span class="b-naam">${escapeHtml(p.naam)}</span>
       </div>`).join('');
     $('kast').innerHTML = `
       <button class="kast-sluit" id="kast-sluit">✕ sluit</button>
@@ -614,13 +627,71 @@
       <div class="kast-naam">${escapeHtml(team.naam)}</div>
       <div class="kast-spelers">${team.spelers.map(escapeHtml).join(' & ')}</div>
       <div class="kast-kop">★ <b>Prijzenkast</b> ★</div>
-      ${trofeeen ? `<div class="plank-grid">${trofeeen}</div>` : `<div class="kast-leeg">> de kast is leeg. triest.</div>`}
-      <div class="kast-kop">Verdiende <b>badges</b></div>
-      ${badges ? `<div class="badge-lijst">${badges}</div>` : `<div class="kast-leeg">> nog geen badges verdiend.</div>`}`;
+      ${prijzen ? `<div class="badge-lijst">${prijzen}</div>` : `<div class="kast-leeg">> de kast is leeg. triest.</div>`}
+      <div class="kast-foto">
+        <label class="foto-knop" id="foto-knop">📷 Wijzig profielfoto<input type="file" accept="image/*" id="foto-input"></label>
+        <div class="foto-uitleg">Iedereen mag deze foto aanpassen — voor elk team. Dat is de bedoeling.</div>
+        <div class="foto-status" id="foto-status"></div>
+      </div>`;
     $('kast-sluit').addEventListener('click', sluitKast);
+    $('foto-input').addEventListener('change', onFotoGekozen);
     $('kast').scrollTop = 0;
     modal.classList.add('open');
     zetScrollSlot(true);
+  }
+
+  /* ================= profielfoto uploaden (publiek, geen sleutel nodig) ================= */
+  function verkleinFoto(bestand) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(bestand);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const MAAT = 256;
+        const canvas = document.createElement('canvas');
+        canvas.width = MAAT; canvas.height = MAAT;
+        const ctx = canvas.getContext('2d');
+        const kant = Math.min(img.width, img.height);
+        const sx = (img.width - kant) / 2;
+        const sy = (img.height - kant) / 2;
+        ctx.drawImage(img, sx, sy, kant, kant, 0, 0, MAAT, MAAT);
+        let data = canvas.toDataURL('image/webp', 0.85);
+        if (!data.startsWith('data:image/webp')) data = canvas.toDataURL('image/jpeg', 0.85);
+        resolve(data);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('ongeldig beeld')); };
+      img.src = url;
+    });
+  }
+
+  function zetFotoStatus(tekst, klasse) {
+    const el = $('foto-status');
+    if (!el) return;
+    el.textContent = tekst;
+    el.className = 'foto-status' + (klasse ? ' ' + klasse : '');
+  }
+
+  async function onFotoGekozen(e) {
+    const bestand = e.target.files[0];
+    if (!bestand || !huidigeKastTeam) return;
+    const teamId = huidigeKastTeam;
+    zetFotoStatus('● bezig…', 'bezig');
+    try {
+      const data = await verkleinFoto(bestand);
+      const res = await fetch('/api/logo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamId, logo: data })
+      });
+      if (!res.ok) throw new Error(res.status);
+      const uitkomst = await res.json();
+      staat = uitkomst.staat;
+      renderBord();
+      if (modal.classList.contains('open') && huidigeKastTeam === teamId) openKast(teamId);
+      zetFotoStatus('✓ gelukt', 'ok');
+    } catch (err) {
+      zetFotoStatus('✗ mislukt — probeer opnieuw', 'fout');
+    }
   }
   function sluitKast() {
     if (!modal.classList.contains('open')) return;

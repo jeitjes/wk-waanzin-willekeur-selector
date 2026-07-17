@@ -3,6 +3,7 @@
 
 const STATE_KEY = "state:v1";
 const MAX_BODY = 4 * 1024 * 1024; // 4 MB — ruim genoeg voor 5 logo's als data-URL
+const LOGO_MAX_BODY = 1.5 * 1024 * 1024; // 1.5 MB — ruim genoeg voor één verkleind profielfotootje
 const MAX_POGINGEN = 8; // mislukte inlogpogingen voor een IP wordt vergrendeld
 const VERGRENDEL_SECONDEN = 15 * 60;
 
@@ -22,13 +23,13 @@ const DEFAULT_WERELDLIED = {
 };
 
 const DEFAULT_STATE = {
-  badgeDefs: [],
+  prijsDefs: [],
   teams: [
-    { id: "t1", naam: "Team 1", spelers: ["Jelle", "Pepijn"], punten: 0, logo: null, land: null, badges: [], trofeeen: [] },
-    { id: "t2", naam: "Team 2", spelers: ["Daniel", "Sep"], punten: 0, logo: null, land: null, badges: [], trofeeen: [] },
-    { id: "t3", naam: "Team 3", spelers: ["Rob", "Lars"], punten: 0, logo: null, land: null, badges: [], trofeeen: [] },
-    { id: "t4", naam: "Team 4", spelers: ["Thomas", "Zowi"], punten: 0, logo: null, land: null, badges: [], trofeeen: [] },
-    { id: "t5", naam: "Team 5", spelers: ["Jaap", "Shayan"], punten: 0, logo: null, land: null, badges: [], trofeeen: [] }
+    { id: "t1", naam: "Team 1", spelers: ["Jelle", "Pepijn"], punten: 0, logo: null, land: null, prijzen: [] },
+    { id: "t2", naam: "Team 2", spelers: ["Daniel", "Sep"], punten: 0, logo: null, land: null, prijzen: [] },
+    { id: "t3", naam: "Team 3", spelers: ["Rob", "Lars"], punten: 0, logo: null, land: null, prijzen: [] },
+    { id: "t4", naam: "Team 4", spelers: ["Thomas", "Zowi"], punten: 0, logo: null, land: null, prijzen: [] },
+    { id: "t5", naam: "Team 5", spelers: ["Jaap", "Shayan"], punten: 0, logo: null, land: null, prijzen: [] }
   ]
 };
 
@@ -93,22 +94,20 @@ async function geverifieerd(request, env) {
 
 function valideerState(state) {
   if (!state || !Array.isArray(state.teams) || state.teams.length === 0 || state.teams.length > 20) return false;
-  if (state.badgeDefs !== undefined) {
-    if (!Array.isArray(state.badgeDefs) || state.badgeDefs.length > 50) return false;
-    for (const b of state.badgeDefs) {
+  if (state.prijsDefs !== undefined) {
+    if (!Array.isArray(state.prijsDefs) || state.prijsDefs.length > 50) return false;
+    for (const b of state.prijsDefs) {
       if (typeof b.id !== "string" || typeof b.naam !== "string") return false;
       if (typeof b.afbeelding !== "string" || !b.afbeelding.startsWith("data:image/")) return false;
     }
   }
   for (const t of state.teams) {
     if (typeof t.id !== "string" || typeof t.naam !== "string") return false;
-    if (!Array.isArray(t.spelers) || !Array.isArray(t.badges) || !Array.isArray(t.trofeeen)) return false;
+    if (!Array.isArray(t.spelers) || !Array.isArray(t.prijzen)) return false;
+    if (!t.prijzen.every(p => typeof p === "string")) return false;
     if (typeof t.punten !== "number" || !Number.isFinite(t.punten)) return false;
     if (t.logo !== null && (typeof t.logo !== "string" || !t.logo.startsWith("data:image/"))) return false;
     if (t.land !== undefined && t.land !== null && (typeof t.land !== "string" || !/^[A-Za-z]{2}$/.test(t.land))) return false;
-    for (const tr of t.trofeeen) {
-      if (typeof tr !== "object" || typeof tr.naam !== "string" || typeof tr.emoji !== "string") return false;
-    }
   }
   return true;
 }
@@ -170,8 +169,7 @@ export default {
 
     if (url.pathname === "/api/state") {
       if (request.method === "GET") {
-        const raw = await env.LEADERBOARD.get(STATE_KEY);
-        return json(raw ? JSON.parse(raw) : DEFAULT_STATE);
+        return json(await leesHoofdstaat(env));
       }
       if (request.method === "PUT") {
         const auth = await geverifieerd(request, env);
@@ -190,6 +188,30 @@ export default {
         return json({ ok: true });
       }
       return json({ fout: "Methode niet toegestaan" }, 405);
+    }
+
+    // Iedereen mag ieders profielfoto zetten — bewust geen ADMIN_KEY hier, dat is de grap.
+    // Alleen het logo-veld van één team wordt aangeraakt, de rest van de staat blijft ongemoeid.
+    if (url.pathname === "/api/logo" && request.method === "POST") {
+      const len = Number(request.headers.get("Content-Length") || 0);
+      if (len > LOGO_MAX_BODY) return json({ fout: "Te groot" }, 413);
+      let body;
+      try {
+        body = await request.json();
+      } catch {
+        return json({ fout: "Ongeldige JSON" }, 400);
+      }
+      const { teamId, logo } = body || {};
+      if (typeof teamId !== "string") return json({ fout: "Ongeldig verzoek" }, 400);
+      if (logo !== null && (typeof logo !== "string" || !logo.startsWith("data:image/") || logo.length > LOGO_MAX_BODY)) {
+        return json({ fout: "Ongeldige afbeelding" }, 400);
+      }
+      const staat = await leesHoofdstaat(env);
+      const team = staat.teams.find(t => t.id === teamId);
+      if (!team) return json({ fout: "Onbekend team" }, 404);
+      team.logo = logo;
+      await env.LEADERBOARD.put(STATE_KEY, JSON.stringify(staat));
+      return json({ ok: true, staat });
     }
 
     if (url.pathname === "/api/wereldlied") {
