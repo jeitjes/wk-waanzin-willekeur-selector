@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>og</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1200px; height: 630px;
+    font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+    background: radial-gradient(ellipse 120% 130% at 50% -20%, #1a2455 0%, #0a1030 55%, #060a1e 100%);
+    color: #f4f2ec;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 70px;
+    overflow: hidden;
+  }
+  .crest { width: 300px; flex-shrink: 0; filter: drop-shadow(0 10px 40px rgba(212,175,55,0.3)); }
+  .tekst { text-align: left; }
+  .stars { font-size: 26px; color: #d4af37; letter-spacing: 12px; margin-bottom: 14px; }
+  h1 {
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: 120px;
+    line-height: 0.92;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #f4f2ec;
+  }
+  h1 .waanzin {
+    display: block;
+    background: linear-gradient(175deg, #ffd75e 20%, #d4af37 55%, #8a6d1f 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .tm { font-size: 0.22em; vertical-align: super; color: #d4af37; }
+  .subtitle { margin-top: 22px; font-size: 25px; letter-spacing: 7px; text-transform: uppercase; color: rgba(244,242,236,0.9); }
+  .subtitle b { color: #d4af37; }
+  .strip {
+    margin-top: 16px;
+    font-size: 19px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: rgba(244,242,236,0.55);
+  }
+  .strip b { color: #ffd75e; }
+</style>
+</head>
+<body>
+  <svg class="crest" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#ffd75e"/><stop offset="1" stop-color="#8a6d1f"/>
+      </linearGradient>
+    </defs>
+    <g stroke="url(#goldGrad)" stroke-width="2.5" fill="none" stroke-linecap="round">
+      <path d="M32 128 C 14 108, 8 84, 14 58"/>
+      <path d="M118 128 C 136 108, 142 84, 136 58"/>
+    </g>
+    <g fill="url(#goldGrad)">
+      <ellipse cx="18" cy="112" rx="9" ry="3.5" transform="rotate(-52 18 112)"/>
+      <ellipse cx="12" cy="94" rx="9" ry="3.5" transform="rotate(-72 12 94)"/>
+      <ellipse cx="10" cy="75" rx="9" ry="3.5" transform="rotate(-88 10 75)"/>
+      <ellipse cx="12" cy="57" rx="9" ry="3.5" transform="rotate(-104 12 57)"/>
+      <ellipse cx="132" cy="112" rx="9" ry="3.5" transform="rotate(52 132 112)"/>
+      <ellipse cx="138" cy="94" rx="9" ry="3.5" transform="rotate(72 138 94)"/>
+      <ellipse cx="140" cy="75" rx="9" ry="3.5" transform="rotate(88 140 75)"/>
+      <ellipse cx="138" cy="57" rx="9" ry="3.5" transform="rotate(104 138 57)"/>
+    </g>
+    <circle cx="75" cy="74" r="42" fill="#0d1436" stroke="url(#goldGrad)" stroke-width="3"/>
+    <g stroke="url(#goldGrad)" stroke-width="1.6" fill="none" opacity="0.85">
+      <path d="M75 32 L 75 46"/>
+      <path d="M40 52 L 52 60"/><path d="M110 52 L 98 60"/>
+      <path d="M46 108 L 56 96"/><path d="M104 108 L 94 96"/>
+      <path d="M52 60 L 75 46 L 98 60"/>
+      <path d="M56 96 L 52 60"/><path d="M94 96 L 98 60"/>
+      <path d="M56 96 L 75 104 L 94 96"/><path d="M75 104 L 75 116"/>
+    </g>
+    <g>
+      <path d="M53 74 Q 75 56 97 74 Q 75 92 53 74 Z" fill="#f4f2ec"/>
+      <circle cx="75" cy="74" r="10" fill="#0d1436" stroke="url(#goldGrad)" stroke-width="2.5"/>
+      <circle cx="75" cy="74" r="3.6" fill="url(#goldGrad)"/>
+    </g>
+    <path d="M28 132 L 122 132 L 116 143 L 34 143 Z" fill="url(#goldGrad)"/>
+    <text x="75" y="141" text-anchor="middle" font-family="Arial Narrow, Arial" font-size="8.5" font-weight="bold" letter-spacing="2" fill="#0d1436">ORDO EX CHAO</text>
+  </svg>
+
+  <div class="tekst">
+    <div class="stars">★ ★ ★ ★ ★</div>
+    <h1>WK<span class="tm">™</span><span class="waanzin">Waanzin</span></h1>
+    <div class="subtitle">Privekwim <b>Willekeur Selector</b></div>
+    <div class="strip"><b>10 kwimmers</b> · 5 teams · 1 winnaar</div>
+  </div>
+</body>
+</html>
