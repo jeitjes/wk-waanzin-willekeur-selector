@@ -271,6 +271,7 @@
     background: rgba(6,10,30,0.5);
   }
   .trofee-item .t-emoji { font-size: 17px; }
+  .trofee-item .t-emoji img { width: 22px; height: 22px; object-fit: contain; display: block; }
   .trofee-item .t-naam { flex: 1; letter-spacing: 1px; text-transform: uppercase; font-weight: 700; font-size: 11.5px; }
   .t-weg { background: none; border: 1px solid rgba(224,49,49,0.5); border-radius: 4px; color: var(--red); font-size: 11px; padding: 3px 8px; }
   .toevoeg-rij { display: flex; gap: 6px; }
@@ -500,7 +501,7 @@
 
       const trofeeItems = (team.trofeeen || []).map((tr, ti) => `
         <div class="trofee-item">
-          <span class="t-emoji">${escapeHtml(tr.emoji)}</span>
+          <span class="t-emoji">${tr.afbeelding ? `<img src="${tr.afbeelding}" alt="">` : escapeHtml(tr.emoji)}</span>
           <span class="t-naam">${escapeHtml(tr.naam)}</span>
           <button class="t-weg" data-trofee="${ti}">✕</button>
         </div>`).join('');
@@ -634,7 +635,9 @@
         const cat = CAT.trofeeen.find(t => t.id === sel.value);
         if (!cat) return;
         team.trofeeen = team.trofeeen || [];
-        team.trofeeen.push({ id: cat.id + '-' + Date.now(), emoji: cat.emoji, naam: cat.naam });
+        const nieuweTrofee = { id: cat.id + '-' + Date.now(), emoji: cat.emoji, naam: cat.naam };
+        if (cat.afbeelding) nieuweTrofee.afbeelding = cat.afbeelding;
+        team.trofeeen.push(nieuweTrofee);
         render();
         planOpslaan();
       });

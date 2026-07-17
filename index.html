@@ -368,6 +368,7 @@
     border-image: linear-gradient(90deg, transparent, var(--gold), transparent) 1;
   }
   .trofee-emoji { font-size: 34px; line-height: 1.1; filter: drop-shadow(0 4px 10px rgba(212,175,55,0.4)); }
+  .trofee-emoji img { width: 40px; height: 40px; object-fit: contain; display: block; margin: 0 auto; }
   .trofee-naam { margin-top: 6px; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: rgba(244,242,236,0.8); line-height: 1.4; }
   .kast-leeg {
     font-family: "Courier New", monospace;
@@ -599,7 +600,7 @@
     if (!team) return;
     const trofeeen = (team.trofeeen || []).map(tr => `
       <div class="trofee">
-        <div class="trofee-emoji">${escapeHtml(tr.emoji)}</div>
+        <div class="trofee-emoji">${tr.afbeelding ? `<img src="${tr.afbeelding}" alt="">` : escapeHtml(tr.emoji)}</div>
         <div class="trofee-naam">${escapeHtml(tr.naam)}</div>
       </div>`).join('');
     const badges = (team.badges || []).map(badgeVan).filter(Boolean).map(b => `
