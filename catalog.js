@@ -11,7 +11,8 @@ window.KWIM_CATALOGUS = {
     { id: "infantino",     emoji: "🎩", naam: "De Infantino Bokaal" },
     { id: "comeback",      emoji: "🔥", naam: "Comeback van het Jaar" },
     { id: "fairplay",      emoji: "🤝", naam: "Fair Play Award" },
-    { id: "pollepel",      emoji: "🥄", naam: "De Houten Pollepel" }
+    { id: "pollepel",      emoji: "🥄", naam: "De Houten Pollepel" },
+    { id: "kampioensring", emoji: "💍", naam: "De Kampioensring", afbeelding: "/kampioensring.svg" }
   ],
   // emoji-keuze voor eigen trofeeën in het admin-paneel
   emojis: ["🏆", "🥇", "🥈", "🥉", "🍾", "⚽", "🥭", "👁️", "🎖️", "💀", "🦆", "🧨", "🍟", "🚑", "🛎️", "🪩"],
