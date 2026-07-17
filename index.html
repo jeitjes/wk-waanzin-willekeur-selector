@@ -506,10 +506,8 @@
 <script>
   const $ = id => document.getElementById(id);
   const CAT = window.KWIM_CATALOGUS;
-  // een prijs komt uit de vaste catalogus (kampioensring) of is een geüploade prijs (afbeelding)
-  const prijsVan = id =>
-    CAT.prijzen.find(p => p.id === id) ||
-    ((staat && staat.prijsDefs) || []).find(p => p.id === id);
+  // de vier vaste prijzen komen uit de gedeelde catalogus
+  const prijsVan = id => CAT.prijzen.find(p => p.id === id);
   const prijsIcoon = p => `<img src="${p.afbeelding}" alt="">`;
 
   function escapeHtml(s) {
