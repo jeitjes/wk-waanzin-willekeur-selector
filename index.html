@@ -27,6 +27,13 @@
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { height: 100%; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { -webkit-font-smoothing: antialiased; }
+  button, input {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button { user-select: none; -webkit-user-select: none; }
   html { background: var(--navy-deep); }
   body {
     font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
@@ -68,7 +75,7 @@
   .page {
     width: 100%;
     max-width: 480px;
-    padding: 28px 22px 90px;
+    padding: 0 22px calc(90px + env(safe-area-inset-bottom));
     flex-direction: column;
     align-items: center;
     text-align: center;
@@ -238,7 +245,7 @@
     border-top: 2px solid var(--gold);
     overflow: hidden;
     z-index: 4;
-    padding: 8px 0;
+    padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
   }
   .ticker-label {
     position: absolute;
@@ -305,7 +312,7 @@
   .verify-input {
     width: 100%;
     font-family: "Courier New", monospace;
-    font-size: 15px;
+    font-size: 16px; /* onder 16px zoomt iOS automatisch in op focus */
     color: var(--gold-bright);
     background: rgba(6,10,30,0.8);
     border: 1px solid rgba(212,175,55,0.5);
@@ -346,14 +353,14 @@
   .trip { position: absolute; inset: 0; display: grid; place-items: center; --spd: 26s; --glow: 0.06; }
   .ring {
     position: absolute;
-    width: 160vmax; height: 160vmax;
+    width: 130vmax; height: 130vmax;
     border-radius: 50%;
     opacity: var(--glow);
     will-change: transform;
   }
   .r1 { background: repeating-conic-gradient(from 0deg, var(--gold-bright) 0 8deg, transparent 8deg 24deg); animation: spin var(--spd) linear infinite; }
   .r2 { background: repeating-radial-gradient(circle, rgba(255,61,240,0.7) 0 3vmax, transparent 3vmax 7vmax); animation: spinRev calc(var(--spd) * 0.7) linear infinite, breathe 5s ease-in-out infinite; }
-  .r3 { background: conic-gradient(var(--teal), var(--magenta), var(--gold-bright), var(--teal)); filter: blur(60px); animation: spin calc(var(--spd) * 0.5) linear infinite; mix-blend-mode: screen; }
+  .r3 { background: conic-gradient(var(--teal), var(--magenta), var(--gold-bright), var(--teal)); filter: blur(32px); animation: spin calc(var(--spd) * 0.5) linear infinite; mix-blend-mode: screen; }
   .r4 { background: repeating-conic-gradient(from 10deg, rgba(31,212,192,0.8) 0 4deg, transparent 4deg 18deg); animation: spinRev calc(var(--spd) * 0.35) linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   @keyframes spinRev { to { transform: rotate(-360deg); } }
@@ -393,7 +400,7 @@
   .name-flash.on { opacity: 1; }
   .loting-bar-wrap {
     position: absolute;
-    bottom: 56px; left: 10%; right: 10%;
+    bottom: calc(32px + env(safe-area-inset-bottom)); left: 10%; right: 10%;
     z-index: 3;
     height: 8px;
     border: 1px solid rgba(212,175,55,0.5);
@@ -491,6 +498,22 @@
     line-height: 1.8;
   }
   .reveal-sub b { color: var(--gold-bright); }
+  /* compacter ritme op telefoons: namen eerder in beeld, minder loze ruimte */
+  @media (max-width: 430px) {
+    .crest { width: 116px; }
+    .crest.small { width: 80px; }
+    .fed-strip { margin-bottom: 16px; }
+    .stars { font-size: 11px; margin-bottom: 6px; }
+    h1 { font-size: clamp(48px, 15.5vw, 84px); }
+    .subtitle { margin-top: 10px; font-size: 11px; letter-spacing: 3px; }
+    .divider { margin: 20px 0 16px; }
+    .select-label { margin-bottom: 12px; }
+    .name-btn { padding: 13px 8px; font-size: 16px; }
+    .btn-gold { margin-top: 18px; font-size: 20px; padding: 14px; }
+    .team-card { margin-top: 18px; padding: 24px 14px 22px; }
+    .verify-panel { padding: 20px 14px; }
+  }
+
   .btn-again {
     margin-top: 22px;
     background: none;
