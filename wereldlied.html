@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>WK WAANZIN™ — Het Wereldlied</title>
+<meta name="theme-color" content="#060a1e">
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root {
+    --navy: #0a1030;
+    --navy-deep: #060a1e;
+    --gold: #d4af37;
+    --gold-bright: #ffd75e;
+    --white: #f4f2ec;
+    --red: #e03131;
+    --teal: #1fd4c0;
+    --magenta: #ff3df0;
+    --green: #3ddc84;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  html { -webkit-text-size-adjust: 100%; background: var(--navy-deep); }
+  body {
+    font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background: var(--navy-deep);
+    color: var(--white);
+    min-height: 100%;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  button, input, textarea, select { font-family: inherit; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  button { user-select: none; -webkit-user-select: none; cursor: pointer; }
+
+  /* ---------- de permanente trip (zelfde als de homepage) ---------- */
+  .trip {
+    position: fixed; inset: 0;
+    display: grid; place-items: center;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    --spd: 30s;
+    animation: hueSpin 22s linear infinite;
+  }
+  .ring { position: absolute; width: 130vmax; height: 130vmax; border-radius: 50%; opacity: 0.14; will-change: transform; }
+  .r1 { background: repeating-conic-gradient(from 0deg, var(--gold-bright) 0 8deg, transparent 8deg 24deg); animation: spin var(--spd) linear infinite; }
+  .r2 { background: repeating-radial-gradient(circle, rgba(255,61,240,0.7) 0 3vmax, transparent 3vmax 7vmax); animation: spinRev calc(var(--spd) * 0.7) linear infinite, breathe 7s ease-in-out infinite; }
+  .r3 { background: conic-gradient(var(--teal), var(--magenta), var(--gold-bright), var(--teal)); filter: blur(32px); animation: spin calc(var(--spd) * 0.5) linear infinite; mix-blend-mode: screen; }
+  .r4 { background: repeating-conic-gradient(from 10deg, rgba(31,212,192,0.8) 0 4deg, transparent 4deg 18deg); animation: spinRev calc(var(--spd) * 0.35) linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes spinRev { to { transform: rotate(-360deg); } }
+  @keyframes breathe { 0%,100% { scale: 1; } 50% { scale: 1.25; } }
+  @keyframes hueSpin { to { filter: hue-rotate(360deg); } }
+  .waas {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(ellipse 110% 80% at 50% 40%, rgba(6,10,30,0.25) 0%, rgba(6,10,30,0.78) 100%);
+  }
+
+  .page {
+    width: 100%;
+    max-width: 560px;
+    padding: 22px 18px calc(30px + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+  }
+
+  h1 {
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: clamp(34px, 10vw, 48px);
+    line-height: 0.95;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background: linear-gradient(175deg, var(--gold-bright) 20%, var(--gold) 55%, #8a6d1f 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .subtitle {
+    margin-top: 8px;
+    font-size: 11.5px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(244,242,236,0.7);
+  }
+  .subtitle b {
+    background: linear-gradient(90deg, var(--teal), var(--magenta), var(--gold-bright));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    font-weight: 700;
+    animation: hueSpin 8s linear infinite;
+  }
+  .divider {
+    width: 70%; margin: 18px 0; border: none; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  /* ---------- wachtscherm ---------- */
+  .wacht { padding: 14vh 10px 0; }
+  .wacht .stip {
+    display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+    background: var(--red); margin-right: 8px; vertical-align: 1px;
+    animation: blink 1.2s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0.15; } }
+  .wacht-tekst { font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(244,242,236,0.75); line-height: 1.9; }
+
+  /* ---------- inlogpoort ---------- */
+  .poort-panel {
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.03);
+    padding: 26px 20px;
+    width: 100%;
+    max-width: 380px;
+    margin: 10vh auto 0;
+  }
+  .poort-panel p { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: rgba(244,242,236,0.7); margin-bottom: 14px; }
+  .poort-panel select, .poort-panel input {
+    width: 100%;
+    font-size: 16px;
+    color: var(--gold-bright);
+    background: rgba(6,10,30,0.8);
+    border: 1px solid rgba(212,175,55,0.5);
+    border-radius: 4px;
+    padding: 13px 12px;
+    outline: none;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  .poort-panel select:focus, .poort-panel input:focus { border-color: var(--gold-bright); box-shadow: 0 0 12px rgba(212,175,55,0.3); }
+  .btn-gold {
+    margin-top: 4px; width: 100%;
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: 19px; letter-spacing: 2.5px; text-transform: uppercase;
+    color: var(--navy-deep);
+    background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+    border: none; border-radius: 4px; padding: 14px;
+  }
+  .btn-gold:active { transform: scale(0.98); }
+  .poort-fout { margin-top: 12px; font-family: "Courier New", monospace; font-size: 12px; color: var(--red); min-height: 16px; }
+
+  /* ---------- beurt-kop ---------- */
+  .beurt-kop { width: 100%; margin-bottom: 20px; }
+  .beurt-label { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: rgba(244,242,236,0.55); margin-bottom: 8px; }
+  .beurt-team {
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: 28px; letter-spacing: 1.5px; text-transform: uppercase;
+    background: linear-gradient(90deg, var(--teal), var(--magenta), var(--gold-bright));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: hueSpin 6s linear infinite;
+  }
+
+  .ring-wrap { position: relative; width: 96px; height: 96px; margin: 6px auto 16px; }
+  .ring-timer { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .ring-bg { fill: none; stroke: rgba(212,175,55,0.2); stroke-width: 8; }
+  .ring-fg {
+    fill: none; stroke: url(#ringGrad); stroke-width: 8; stroke-linecap: round;
+    transition: stroke-dashoffset 0.25s linear;
+  }
+  .ring-getal {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: 30px; color: var(--gold-bright);
+  }
+  .ring-wrap.dringend .ring-getal { color: var(--red); animation: pulse 0.6s ease-in-out infinite; }
+  @keyframes pulse { 50% { transform: scale(1.12); } }
+
+  .invoer-blok { width: 100%; }
+  .invoer-tekst {
+    width: 100%;
+    font-family: inherit;
+    font-size: 16px;
+    color: var(--white);
+    background: rgba(6,10,30,0.8);
+    border: 1px solid rgba(212,175,55,0.5);
+    border-radius: 6px;
+    padding: 12px;
+    outline: none;
+    resize: none;
+    min-height: 74px;
+  }
+  .invoer-tekst:focus { border-color: var(--gold-bright); box-shadow: 0 0 12px rgba(212,175,55,0.25); }
+  .invoer-teller { font-size: 10px; letter-spacing: 1px; color: rgba(244,242,236,0.4); text-align: right; margin: 4px 2px 12px; }
+
+  .wacht-op {
+    font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: rgba(244,242,236,0.55); margin-top: 4px;
+  }
+
+  /* ---------- de ketting ---------- */
+  .ketting { width: 100%; display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+  .regel-kaart {
+    text-align: left;
+    border: 1px solid rgba(212,175,55,0.3);
+    border-radius: 8px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+    padding: 11px 14px;
+    animation: regelIn 0.5s cubic-bezier(0.2, 1, 0.4, 1) backwards;
+  }
+  @keyframes regelIn { from { opacity: 0; transform: translateY(14px) scale(0.97); } }
+  .regel-kaart.nieuw { box-shadow: 0 0 0 2px var(--gold-bright), 0 0 20px rgba(212,175,55,0.4); }
+  .regel-team {
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--gold-bright); margin-bottom: 3px;
+  }
+  .regel-tekst { font-size: 15px; line-height: 1.4; }
+  .regel-tekst.overgeslagen { color: rgba(244,242,236,0.4); font-style: italic; }
+
+  /* ---------- klaar ---------- */
+  .klaar-banner {
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: 26px; letter-spacing: 1.5px; text-transform: uppercase;
+    background: linear-gradient(175deg, var(--gold-bright) 20%, var(--gold) 60%, #8a6d1f 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    margin-bottom: 14px;
+  }
+  .voorlezen {
+    text-align: left;
+    border: 2px solid var(--gold);
+    border-radius: 10px;
+    background: radial-gradient(ellipse 120% 70% at 50% 0%, rgba(212,175,55,0.12), transparent 55%), linear-gradient(180deg, #121a3e, var(--navy-deep));
+    padding: 18px 18px 20px;
+    margin-top: 18px;
+    font-size: 16px;
+    line-height: 1.7;
+    box-shadow: 0 0 40px rgba(212,175,55,0.2);
+  }
+  .voorlezen b { color: var(--gold-bright); }
+
+  .uitloggen { margin-top: 22px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(244,242,236,0.35); background: none; border: none; text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="trip" aria-hidden="true">
+  <div class="ring r3"></div>
+  <div class="ring r1"></div>
+  <div class="ring r2"></div>
+  <div class="ring r4"></div>
+</div>
+<div class="waas" aria-hidden="true"></div>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1fd4c0"/><stop offset="0.5" stop-color="#ff3df0"/><stop offset="1" stop-color="#ffd75e"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<div class="page">
+  <h1>Het Wereldlied</h1>
+  <div class="subtitle"><b>Het volkslied van de hele wereld</b> — live gebouwd door alle teams</div>
+  <hr class="divider">
+
+  <div id="inhoud"></div>
+</div>
+
+<script src="/catalog.js"></script>
+<script>
+  const $ = id => document.getElementById(id);
+  const IDENT_KEY = 'kwimWereldliedIdentiteit';
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  let hoofdstaat = null;   // /api/state — voor teamnamen, logo's, vlaggen
+  let wereld = null;       // /api/wereldlied — de ronde zelf
+  let identiteit = JSON.parse(localStorage.getItem(IDENT_KEY) || 'null');
+  let vorigAantalRegels = -1;
+  let overslaanBezig = false;
+  let ringTimer = null;
+
+  const teamVan = id => (hoofdstaat && hoofdstaat.teams.find(t => t.id === id)) || null;
+  const teamNaam = id => (teamVan(id) || {}).naam || id;
+  const teamVlag = id => { const t = teamVan(id); return t && t.land ? window.KWIM_VLAG(t.land) : ''; };
+
+  async function laadHoofdstaat() {
+    try {
+      const res = await fetch('/api/state', { cache: 'no-store' });
+      hoofdstaat = await res.json();
+    } catch {}
+  }
+
+  async function laadWereld(eerste = false) {
+    try {
+      const res = await fetch('/api/wereldlied', { cache: 'no-store' });
+      wereld = await res.json();
+      render();
+    } catch {
+      if (eerste) $('inhoud').innerHTML = '<div class="wacht-tekst">✗ verbinding mislukt — herlaad de pagina</div>';
+    }
+  }
+
+  /* ================= inloggen als team ================= */
+  function renderPoort() {
+    const teams = (wereld.volgorde.length ? wereld.volgorde : (hoofdstaat ? hoofdstaat.teams.map(t => t.id) : []))
+      .map(id => teamVan(id)).filter(Boolean);
+    const opties = teams.map(t => `<option value="${t.id}">${teamVlag(t.id)} ${escapeHtml(t.naam)}</option>`).join('');
+    $('inhoud').innerHTML = `
+      <div class="poort-panel">
+        <p>🎤 Welk team ben jij?</p>
+        <select id="wl-team">${opties}</select>
+        <input id="wl-code" type="text" inputmode="numeric" autocomplete="off" placeholder="Team-code">
+        <button class="btn-gold" id="wl-login-btn">Meedoen</button>
+        <div class="poort-fout" id="wl-poort-fout"></div>
+      </div>`;
+    $('wl-login-btn').addEventListener('click', probeerInloggen);
+    $('wl-code').addEventListener('keydown', e => { if (e.key === 'Enter') probeerInloggen(); });
+  }
+
+  async function probeerInloggen() {
+    const teamId = $('wl-team').value;
+    const code = $('wl-code').value.trim();
+    if (!code) return;
+    $('wl-poort-fout').textContent = '';
+    try {
+      const res = await fetch('/api/wereldlied/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamId, code })
+      });
+      if (res.ok) {
+        identiteit = { teamId, code };
+        localStorage.setItem(IDENT_KEY, JSON.stringify(identiteit));
+        render();
+      } else {
+        $('wl-poort-fout').textContent = '✗ code afgewezen door de Federatie';
+      }
+    } catch {
+      $('wl-poort-fout').textContent = '✗ verbinding mislukt';
+    }
+  }
+
+  /* ================= inzenden ================= */
+  async function verzendRegel() {
+    const veld = $('wl-tekst');
+    const tekst = veld.value.trim();
+    if (!tekst) return;
+    veld.disabled = true;
+    $('wl-verzend').disabled = true;
+    try {
+      const res = await fetch('/api/wereldlied/inzenden', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamId: identiteit.teamId, code: identiteit.code, tekst })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        wereld = data.staat;
+        render();
+      } else if (res.status === 401) {
+        localStorage.removeItem(IDENT_KEY);
+        identiteit = null;
+        render();
+      } else {
+        veld.disabled = false;
+        $('wl-verzend').disabled = false;
+      }
+    } catch {
+      veld.disabled = false;
+      $('wl-verzend').disabled = false;
+    }
+  }
+
+  /* ================= countdown-ring ================= */
+  function tekenRing(percentage, dringend) {
+    const omtrek = 2 * Math.PI * 44;
+    const fg = $('wl-ring-fg');
+    if (!fg) return;
+    fg.style.strokeDasharray = omtrek;
+    fg.style.strokeDashoffset = omtrek * (1 - percentage);
+    $('wl-ring-wrap').classList.toggle('dringend', dringend);
+  }
+
+  function updateRing() {
+    if (!wereld || !wereld.actief || wereld.klaar || wereld.beurtStart === null) return;
+    const resterend = wereld.beurtStart + wereld.duur * 1000 - Date.now();
+    const getal = Math.max(0, Math.ceil(resterend / 1000));
+    const el = $('wl-ring-getal');
+    if (el) el.textContent = getal;
+    tekenRing(Math.max(0, resterend) / (wereld.duur * 1000), getal <= 5);
+    if (resterend <= 0 && !overslaanBezig) {
+      overslaanBezig = true;
+      fetch('/api/wereldlied/overslaan', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => { wereld = data; overslaanBezig = false; render(); })
+        .catch(() => { overslaanBezig = false; });
+    }
+  }
+
+  /* ================= hoofdscherm ================= */
+  function renderKetting() {
+    return wereld.regels.map((r, i) => {
+      const nieuw = i === wereld.regels.length - 1 && wereld.regels.length > vorigAantalRegels && vorigAantalRegels >= 0;
+      return `<div class="regel-kaart${nieuw ? ' nieuw' : ''}" style="animation-delay:${i === wereld.regels.length - 1 ? 0 : 0}s">
+        <div class="regel-team">${teamVlag(r.teamId)} ${escapeHtml(teamNaam(r.teamId))}</div>
+        ${r.overgeslagen
+          ? `<div class="regel-tekst overgeslagen">⏭ tijd verstreken — geen regel</div>`
+          : `<div class="regel-tekst">${escapeHtml(r.tekst)}</div>`}
+      </div>`;
+    }).join('');
+  }
+
+  function render() {
+    if (!wereld) return;
+
+    if (!wereld.actief) {
+      $('inhoud').innerHTML = `
+        <div class="wacht">
+          <div class="wacht-tekst"><span class="stip"></span>Wacht tot de Federatie<br>het Wereldlied start…</div>
+        </div>`;
+      vorigAantalRegels = -1;
+      return;
+    }
+
+    if (!identiteit) { renderPoort(); return; }
+
+    const huidigeTeamId = !wereld.klaar ? wereld.volgorde[wereld.huidige] : null;
+    const jijBent = huidigeTeamId === identiteit.teamId;
+
+    let boven = '';
+    if (wereld.klaar) {
+      boven = `<div class="klaar-banner">🌍 Het Wereldlied is compleet!</div>`;
+    } else {
+      boven = `
+        <div class="beurt-kop">
+          <div class="beurt-label">${jijBent ? 'Jullie zijn aan de beurt' : 'Aan de beurt'}</div>
+          <div class="beurt-team">${teamVlag(huidigeTeamId)} ${escapeHtml(teamNaam(huidigeTeamId))}</div>
+        </div>
+        <div class="ring-wrap" id="wl-ring-wrap">
+          <svg class="ring-timer" viewBox="0 0 96 96">
+            <circle class="ring-bg" cx="48" cy="48" r="44"></circle>
+            <circle class="ring-fg" id="wl-ring-fg" cx="48" cy="48" r="44"></circle>
+          </svg>
+          <div class="ring-getal" id="wl-ring-getal">${wereld.duur}</div>
+        </div>`;
+      if (jijBent) {
+        boven += `
+          <div class="invoer-blok">
+            <textarea class="invoer-tekst" id="wl-tekst" maxlength="140" placeholder="Plak hier jullie zin aan het Wereldlied…" autofocus></textarea>
+            <div class="invoer-teller" id="wl-teller">140 tekens over</div>
+            <button class="btn-gold" id="wl-verzend">Zet vast in het Wereldlied</button>
+          </div>`;
+      } else {
+        boven += `<div class="wacht-op">wacht tot ${escapeHtml(teamNaam(huidigeTeamId))} hun zin intikt…</div>`;
+      }
+    }
+
+    $('inhoud').innerHTML = `
+      ${boven}
+      <div class="ketting">${renderKetting()}</div>
+      ${wereld.klaar ? `<div class="voorlezen">${wereld.regels.filter(r => !r.overgeslagen).map(r => escapeHtml(r.tekst)).join(' ')}</div>` : ''}
+      <button class="uitloggen" id="wl-uitlog">niet jullie team? wissel van team</button>
+    `;
+    vorigAantalRegels = wereld.regels.length;
+
+    if (!wereld.klaar) { tekenRing(1, false); updateRing(); }
+
+    const veld = $('wl-tekst');
+    if (veld) {
+      veld.addEventListener('input', () => { $('wl-teller').textContent = (140 - veld.value.length) + ' tekens over'; });
+      veld.focus();
+    }
+    const verzendBtn = $('wl-verzend');
+    if (verzendBtn) verzendBtn.addEventListener('click', verzendRegel);
+    $('wl-uitlog').addEventListener('click', () => {
+      localStorage.removeItem(IDENT_KEY);
+      identiteit = null;
+      render();
+    });
+  }
+
+  /* ================= start + live verversen ================= */
+  (async () => {
+    await laadHoofdstaat();
+    await laadWereld(true);
+  })();
+  setInterval(laadWereld, 2500);
+  setInterval(laadHoofdstaat, 10000);
+  clearInterval(ringTimer);
+  ringTimer = setInterval(updateRing, 250);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) laadWereld(); });
+</script>
+</body>
+</html>
