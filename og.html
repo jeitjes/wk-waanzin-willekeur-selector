@@ -45,6 +45,48 @@
     color: rgba(244,242,236,0.55);
   }
   .strip b { color: #ffd75e; }
+
+  /* ---------- CCTV broadcast overlay ---------- */
+  .scanlines {
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.14) 0 2px, transparent 2px 5px);
+    pointer-events: none;
+  }
+  .rec {
+    position: fixed; top: 34px; left: 40px;
+    display: flex; align-items: center; gap: 12px;
+    font-family: "Courier New", monospace;
+    font-size: 26px; font-weight: 700; letter-spacing: 3px;
+    color: #f4f2ec;
+  }
+  .rec .dot { width: 20px; height: 20px; border-radius: 50%; background: #e03131; box-shadow: 0 0 14px #e03131; }
+  .live {
+    position: fixed; top: 30px; right: 40px;
+    font-family: "Courier New", monospace;
+    font-size: 22px; font-weight: 700; letter-spacing: 3px;
+    color: #fff; background: #e03131;
+    padding: 6px 16px;
+  }
+  .timecode {
+    position: fixed; bottom: 86px; right: 40px;
+    font-family: "Courier New", monospace;
+    font-size: 22px; font-weight: 700; letter-spacing: 2px;
+    color: rgba(244,242,236,0.8);
+  }
+  .chyron {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(180deg, #101838, #0a1030);
+    border-top: 3px solid #d4af37;
+    padding: 14px 40px;
+    display: flex; align-items: center; gap: 16px;
+    white-space: nowrap;
+    font-family: "Courier New", monospace;
+    font-size: 20px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(244,242,236,0.9);
+  }
+  .chyron .cctv { background: #e03131; color: #fff; padding: 4px 12px; }
+  .chyron b { color: #ffd75e; }
 </style>
 </head>
 <body>
@@ -92,5 +134,11 @@
     <div class="subtitle">Privekwim <b>Willekeur Selector</b></div>
     <div class="strip"><b>10 kwimmers</b> · 5 teams · 1 winnaar</div>
   </div>
+
+  <div class="scanlines"></div>
+  <div class="rec"><span class="dot"></span>REC</div>
+  <div class="live">LIVE</div>
+  <div class="timecode">04:13:22:07</div>
+  <div class="chyron"><span class="cctv">CCTV</span> Uganda Mango Ziggo 4512 &nbsp;·&nbsp; <b>WK Waanzin Willekeur Team Selector</b></div>
 </body>
 </html>
