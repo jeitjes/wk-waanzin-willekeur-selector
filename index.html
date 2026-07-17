@@ -3,50 +3,48 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>WK WAANZIN — De Officiële Willekeur Selector</title>
+<title>WK WAANZIN™ — Officiële Willekeur Selector</title>
 <style>
   :root {
-    --void: #0d0a07;
-    --void-2: #171209;
-    --bone: #ece5d3;
-    --acid: #d8f021;
-    --blood: #ff4b12;
-    --pink: #ff2f9e;
-    --ink: #1a140c;
+    --navy: #0a1030;
+    --navy-deep: #060a1e;
+    --gold: #d4af37;
+    --gold-bright: #ffd75e;
+    --white: #f4f2ec;
+    --red: #e03131;
+    --teal: #1fd4c0;
+    --magenta: #ff3df0;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { height: 100%; }
   body {
-    font-family: "Courier New", Courier, monospace;
-    background:
-      radial-gradient(ellipse 90% 60% at 70% 15%, rgba(255,75,18,0.10), transparent 60%),
-      radial-gradient(ellipse 70% 50% at 20% 85%, rgba(255,47,158,0.07), transparent 60%),
-      var(--void);
-    color: var(--bone);
+    font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+    background: radial-gradient(ellipse 120% 80% at 50% -10%, #1a2455 0%, var(--navy) 45%, var(--navy-deep) 100%);
+    color: var(--white);
     min-height: 100%;
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
     align-items: center;
   }
-  /* heavy grain — cheap motel film stock */
+  /* subtle animated grain */
   body::after {
     content: "";
     position: fixed; inset: -50%;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='130' height='130'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='130' height='130' filter='url(%23n)' opacity='0.09'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
     pointer-events: none;
-    animation: grain 0.5s steps(3) infinite;
-    z-index: 6;
+    animation: grain 0.6s steps(4) infinite;
+    z-index: 5;
   }
   @keyframes grain {
-    0% { transform: translate(0,0); } 33% { transform: translate(-1.5%,1%); }
-    66% { transform: translate(1%,-1.5%); } 100% { transform: translate(-1%,1.5%); }
+    0% { transform: translate(0,0); } 25% { transform: translate(-2%,1%); }
+    50% { transform: translate(1%,-2%); } 75% { transform: translate(-1%,2%); } 100% { transform: translate(2%,-1%); }
   }
 
   .page {
     width: 100%;
     max-width: 480px;
-    padding: 0 20px 48px;
+    padding: 28px 22px 90px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -55,389 +53,296 @@
     z-index: 2;
   }
 
-  /* ---------- manuscript header ---------- */
-  .presenteert {
-    width: calc(100% + 40px);
-    margin: 0 -20px;
-    padding: 10px 20px 9px;
-    font-size: 11px;
-    font-weight: 700;
+  /* ---------- official header strip ---------- */
+  .fed-strip {
+    font-size: 10px;
     letter-spacing: 3px;
     text-transform: uppercase;
-    color: var(--acid);
-    border-bottom: 2px dashed rgba(216,240,33,0.35);
-    background: rgba(216,240,33,0.04);
-  }
-  .quote {
-    margin-top: 16px;
-    font-size: 10px;
-    font-style: italic;
-    letter-spacing: 1.5px;
-    color: rgba(236,229,211,0.5);
-  }
-
-  /* ---------- badge zone: dripping ball + bats ---------- */
-  .badge-zone { position: relative; width: 100%; height: 190px; margin-top: 14px; }
-  .splat-bg {
-    position: absolute; left: 50%; top: 46%;
-    width: 300px; height: 190px;
-    transform: translate(-50%, -50%) rotate(-8deg);
-    opacity: 0.55;
-  }
-  .ball {
-    position: absolute; left: 50%; top: 48%;
-    width: 150px; height: 168px;
-    transform: translate(-50%, -50%);
-    filter: drop-shadow(0 0 26px rgba(255,75,18,0.35));
-    animation: ballSway 6s ease-in-out infinite;
-  }
-  @keyframes ballSway {
-    0%, 100% { transform: translate(-50%, -50%) rotate(-2deg); }
-    50% { transform: translate(-50%, -50%) rotate(2.5deg); }
-  }
-  .bat { position: absolute; width: 40px; height: auto; opacity: 0.95; }
-  .bat path { fill: #060402; stroke: rgba(236,229,211,0.55); stroke-width: 1; }
-  .bat.b1 { left: 6%; top: 6%; transform: rotate(-14deg) scale(0.8); animation: flap 2.3s ease-in-out infinite; }
-  .bat.b2 { right: 8%; top: 12%; transform: rotate(10deg); animation: flap 1.9s ease-in-out infinite 0.4s; }
-  .bat.b3 { right: 20%; top: 68%; transform: rotate(18deg) scale(0.6); animation: flap 2.7s ease-in-out infinite 0.9s; }
-  .bat.b4 { left: 12%; top: 62%; transform: rotate(-6deg) scale(0.5); animation: flap 2.1s ease-in-out infinite 1.3s; }
-  @keyframes flap {
-    0%, 100% { transform: translateY(0) rotate(-12deg) scaleY(1); }
-    50% { transform: translateY(-7px) rotate(-8deg) scaleY(0.82); }
-  }
-
-  /* ---------- ransom title ---------- */
-  .title-wrap { margin-top: 4px; position: relative; }
-  .wk-line {
-    font-family: Impact, "Arial Black", sans-serif;
-    font-size: clamp(30px, 9vw, 42px);
-    letter-spacing: 10px;
-    color: var(--bone);
-    text-transform: uppercase;
-    transform: rotate(-3deg);
-  }
-  .wk-line .k { display: inline-block; transform: rotate(6deg) translateY(3px); color: var(--blood); }
-  h1 {
-    font-family: Impact, "Arial Black", sans-serif;
-    font-size: clamp(58px, 17.5vw, 88px);
-    line-height: 1;
-    text-transform: uppercase;
-    letter-spacing: 0;
-    margin-top: 2px;
+    color: rgba(244,242,236,0.55);
+    border-top: 1px solid rgba(212,175,55,0.4);
+    border-bottom: 1px solid rgba(212,175,55,0.4);
+    padding: 5px 14px;
+    margin-bottom: 26px;
     white-space: nowrap;
   }
-  h1 span { display: inline-block; }
-  /* per-letter ransom jitter — deterministic chaos */
-  h1 .l1 { color: var(--bone);  transform: rotate(-6deg) translateY(2px); }
-  h1 .l2 { color: var(--acid);  transform: rotate(4deg)  translateY(-4px); }
-  h1 .l3 { color: var(--bone);  transform: rotate(-3deg) translateY(3px); }
-  h1 .l4 { color: var(--pink);  transform: rotate(5deg)  translateY(-2px); }
-  h1 .l5 { color: var(--blood); transform: rotate(-5deg) translateY(4px); }
-  h1 .l6 { color: var(--bone);  transform: rotate(3deg)  translateY(-3px); }
-  h1 .l7 { color: var(--acid);  transform: rotate(-4deg) translateY(2px); }
-  /* the whole word twitches now and then */
-  .twitch { animation: twitch 0.14s steps(2) 2; }
-  @keyframes twitch {
-    0% { transform: skewX(0); } 50% { transform: skewX(-3deg) translateX(3px); } 100% { transform: none; }
+
+  /* ---------- crest ---------- */
+  .crest { width: 150px; height: auto; margin-bottom: 4px; filter: drop-shadow(0 6px 24px rgba(212,175,55,0.25)); }
+  .crest .eye-iris { animation: iris 5s ease-in-out infinite; transform-origin: 75px 74px; }
+  @keyframes iris {
+    0%, 42%, 100% { transform: scale(1); }
+    46%, 54% { transform: scale(0.55); }
+    58% { transform: scale(1); }
+  }
+
+  .stars { font-size: 13px; color: var(--gold); letter-spacing: 6px; margin-bottom: 10px; }
+  .stars .odd { display: inline-block; animation: starTilt 7s ease-in-out infinite; }
+  @keyframes starTilt {
+    0%, 80%, 100% { transform: rotate(0deg); }
+    85%, 95% { transform: rotate(160deg) translateY(1px); }
+  }
+
+  /* ---------- title ---------- */
+  h1 {
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: clamp(56px, 17vw, 84px);
+    line-height: 0.92;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--white);
+    position: relative;
+  }
+  h1 .waanzin {
+    display: block;
+    background: linear-gradient(175deg, var(--gold-bright) 20%, var(--gold) 55%, #8a6d1f 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .tm { font-size: 0.22em; vertical-align: super; color: var(--gold); -webkit-background-clip: initial; background-clip: initial; }
+  /* occasional chromatic glitch on the title */
+  .glitching { animation: glitch 0.18s steps(2) 2; }
+  @keyframes glitch {
+    0% { text-shadow: 3px 0 var(--magenta), -3px 0 var(--teal); transform: translateX(0); }
+    50% { text-shadow: -4px 0 var(--magenta), 4px 0 var(--teal); transform: translateX(2px) skewX(-2deg); }
+    100% { text-shadow: none; transform: none; }
   }
 
   .subtitle {
     margin-top: 14px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 2.5px;
-    text-transform: uppercase;
-    color: rgba(236,229,211,0.85);
-  }
-  .subtitle b { color: var(--acid); background: rgba(216,240,33,0.12); padding: 1px 5px; }
-
-  /* ---------- PRIVEKWIM stamp — the club, front and center ---------- */
-  .stamp {
-    margin-top: 22px;
-    display: inline-block;
-    transform: rotate(-4deg);
-    border: 4px double var(--pink);
-    color: var(--pink);
-    padding: 10px 22px 8px;
-    position: relative;
-    text-transform: uppercase;
-    box-shadow: 0 0 22px rgba(255,47,158,0.25), inset 0 0 14px rgba(255,47,158,0.12);
-    animation: stampPulse 4s ease-in-out infinite;
-  }
-  @keyframes stampPulse {
-    0%, 100% { box-shadow: 0 0 22px rgba(255,47,158,0.25), inset 0 0 14px rgba(255,47,158,0.12); }
-    50% { box-shadow: 0 0 34px rgba(255,47,158,0.45), inset 0 0 20px rgba(255,47,158,0.2); }
-  }
-  .stamp .club {
-    font-family: Impact, "Arial Black", sans-serif;
-    font-size: clamp(32px, 10vw, 44px);
-    letter-spacing: 3px;
-    line-height: 1;
-    display: block;
-  }
-  .stamp .ondertitel {
-    display: block;
-    font-family: "Courier New", monospace;
-    font-size: 9.5px;
-    font-weight: 700;
-    letter-spacing: 3px;
-    margin-top: 5px;
-    color: rgba(255,47,158,0.85);
-  }
-  .stamp::after {
-    content: "ECHT";
-    position: absolute; top: -10px; right: -18px;
-    font-size: 9px; font-weight: 700; letter-spacing: 1px;
-    color: var(--acid);
-    border: 1.5px solid var(--acid);
-    padding: 2px 5px;
-    transform: rotate(12deg);
-    background: var(--void);
-  }
-
-  /* ---------- divider: gaffer tape ---------- */
-  .tape {
-    width: 82%;
-    margin: 34px 0 22px;
-    height: 16px;
-    background: repeating-linear-gradient(-45deg, rgba(236,229,211,0.55) 0 8px, rgba(236,229,211,0.38) 8px 16px);
-    transform: rotate(-1.2deg);
-    position: relative;
-  }
-  .tape::after {
-    content: "BEWIJSMATERIAAL — NIET VERWIJDEREN";
-    position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 8px; font-weight: 700; letter-spacing: 2px;
-    color: rgba(13,10,7,0.85);
-    text-transform: uppercase;
-  }
-
-  .select-label {
     font-size: 12px;
-    font-weight: 700;
+    letter-spacing: 3.5px;
+    text-transform: uppercase;
+    color: rgba(244,242,236,0.85);
+  }
+  .subtitle b { color: var(--gold); font-weight: 700; }
+  .edition {
+    margin-top: 6px;
+    font-size: 11px;
     letter-spacing: 2px;
     text-transform: uppercase;
-    color: var(--bone);
-    margin-bottom: 4px;
-  }
-  .select-sub {
-    font-size: 10px;
-    font-style: italic;
-    color: rgba(236,229,211,0.45);
-    margin-bottom: 18px;
-    letter-spacing: 1px;
+    color: rgba(244,242,236,0.45);
   }
 
-  /* ---------- name scraps ---------- */
+  /* ---------- divider ---------- */
+  .divider {
+    width: 70%;
+    margin: 30px 0 24px;
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  /* ---------- name selection ---------- */
+  .select-label {
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(244,242,236,0.7);
+    margin-bottom: 16px;
+  }
   .names {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 14px 12px;
+    gap: 10px;
     width: 100%;
   }
-  .scrap {
-    position: relative;
-    font-family: Impact, "Arial Black", sans-serif;
-    font-size: 19px;
+  .name-btn {
+    font-family: "Arial Narrow", Arial, sans-serif;
+    font-size: 17px;
+    font-weight: 700;
     letter-spacing: 2px;
     text-transform: uppercase;
-    color: var(--ink);
-    background: var(--bone);
-    border: none;
-    padding: 16px 8px 13px;
+    color: var(--white);
+    background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
+    border: 1px solid rgba(212,175,55,0.35);
+    border-radius: 4px;
+    padding: 15px 8px;
     cursor: pointer;
-    clip-path: polygon(2% 8%, 12% 1%, 55% 4%, 90% 0%, 99% 12%, 96% 55%, 100% 88%, 88% 99%, 45% 95%, 10% 100%, 0% 90%, 3% 45%);
+    transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
     -webkit-tap-highlight-color: transparent;
-    transition: transform 0.12s ease;
   }
-  .scrap:nth-child(odd)  { transform: rotate(-2deg); }
-  .scrap:nth-child(even) { transform: rotate(1.6deg); }
-  .scrap:nth-child(3n)   { transform: rotate(2.4deg); }
-  .scrap:active { transform: scale(0.95); }
-  .scrap .ex {
-    display: block;
-    font-family: "Courier New", monospace;
-    font-size: 8px;
-    font-weight: 700;
-    letter-spacing: 1.5px;
-    color: rgba(26,20,12,0.5);
-    margin-bottom: 4px;
+  .name-btn:active { transform: scale(0.97); }
+  .name-btn.selected {
+    border-color: var(--gold-bright);
+    background: linear-gradient(180deg, rgba(212,175,55,0.28), rgba(212,175,55,0.1));
+    color: var(--gold-bright);
+    box-shadow: 0 0 18px rgba(212,175,55,0.35);
   }
-  /* selected: circled in pink marker */
-  .scrap.selected {
-    background: #fff8e6;
-    z-index: 2;
-  }
-  .scrap.selected::before {
-    content: "";
-    position: absolute; inset: -9px -7px;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 64' preserveAspectRatio='none'%3E%3Cpath d='M14 32 C 10 14, 44 5, 68 6 C 96 7, 122 13, 119 32 C 116 50, 88 60, 60 58 C 32 56, 17 48, 14 34' fill='none' stroke='%23ff2f9e' stroke-width='5' stroke-linecap='round' opacity='0.9'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
-    pointer-events: none;
-  }
-  .scrap.selected .ex { color: var(--pink); }
 
-  /* ---------- confirm ---------- */
   .confirm-btn {
-    margin-top: 30px;
+    margin-top: 24px;
     width: 100%;
-    font-family: Impact, "Arial Black", sans-serif;
-    font-size: 21px;
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: 22px;
     letter-spacing: 3px;
     text-transform: uppercase;
-    color: var(--void);
-    background: var(--blood);
-    border: 3px solid var(--bone);
+    color: var(--navy-deep);
+    background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+    border: none;
+    border-radius: 4px;
     padding: 16px;
     cursor: pointer;
-    transform: rotate(-0.8deg);
-    box-shadow: 5px 5px 0 rgba(216,240,33,0.85);
-    opacity: 0.25;
+    opacity: 0.35;
     pointer-events: none;
-    transition: opacity 0.25s ease, transform 0.1s ease, box-shadow 0.1s ease;
+    transition: opacity 0.25s ease, transform 0.12s ease;
   }
-  .confirm-btn.armed { opacity: 1; pointer-events: auto; }
-  .confirm-btn:active { transform: rotate(-0.8deg) translate(4px, 4px); box-shadow: 1px 1px 0 rgba(216,240,33,0.85); }
+  .confirm-btn.armed { opacity: 1; pointer-events: auto; box-shadow: 0 4px 30px rgba(212,175,55,0.45); }
+  .confirm-btn:active { transform: scale(0.98); }
 
-  /* ---------- typewriter small print ---------- */
-  .smallprint {
-    margin-top: 24px;
+  .disclaimer {
+    margin-top: 18px;
     font-size: 9.5px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    line-height: 1.8;
-    color: rgba(236,229,211,0.42);
+    letter-spacing: 1px;
+    line-height: 1.6;
+    color: rgba(244,242,236,0.35);
     text-transform: uppercase;
   }
-  .smallprint em { color: rgba(255,47,158,0.6); font-style: normal; }
 
-  .footer-strip {
-    margin-top: 30px;
-    width: calc(100% + 40px);
-    margin-left: -20px; margin-right: -20px;
-    border-top: 2px dashed rgba(236,229,211,0.2);
-    color: rgba(236,229,211,0.35);
-    font-size: 9px;
+  /* ---------- news ticker ---------- */
+  .ticker-wrap {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(180deg, #101838, #0a1030);
+    border-top: 2px solid var(--gold);
+    overflow: hidden;
+    z-index: 4;
+    padding: 8px 0;
+  }
+  .ticker-label {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: var(--red);
+    color: #fff;
+    font-size: 10px;
     font-weight: 700;
     letter-spacing: 2px;
+    display: flex; align-items: center;
+    padding: 0 10px;
+    z-index: 2;
     text-transform: uppercase;
-    padding: 12px 20px 0;
   }
+  .ticker {
+    display: inline-block;
+    white-space: nowrap;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(244,242,236,0.8);
+    padding-left: 100%;
+    animation: tick 38s linear infinite;
+  }
+  .ticker b { color: var(--gold-bright); }
+  @keyframes tick { to { transform: translateX(-100%); } }
 </style>
 </head>
 <body>
 
 <div class="page">
-  <div class="presenteert">★ Privekwim presenteert ★</div>
+  <div class="fed-strip">Federatie voor Willekeurige Zaken · Afd. Loting</div>
 
-  <div class="quote">"Te gek om te leven, te zeldzaam om te sterven."<br>— aantekening in de kantlijn, 04:13 uur</div>
+  <!-- Official crest: laurel + football, with an eye where the ball's center panel should be -->
+  <svg class="crest" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#ffd75e"/><stop offset="1" stop-color="#8a6d1f"/>
+      </linearGradient>
+    </defs>
+    <!-- laurel branches -->
+    <g stroke="url(#goldGrad)" stroke-width="2.5" fill="none" stroke-linecap="round">
+      <path d="M32 128 C 14 108, 8 84, 14 58"/>
+      <path d="M118 128 C 136 108, 142 84, 136 58"/>
+    </g>
+    <g fill="url(#goldGrad)">
+      <ellipse cx="18" cy="112" rx="9" ry="3.5" transform="rotate(-52 18 112)"/>
+      <ellipse cx="12" cy="94" rx="9" ry="3.5" transform="rotate(-72 12 94)"/>
+      <ellipse cx="10" cy="75" rx="9" ry="3.5" transform="rotate(-88 10 75)"/>
+      <ellipse cx="12" cy="57" rx="9" ry="3.5" transform="rotate(-104 12 57)"/>
+      <ellipse cx="132" cy="112" rx="9" ry="3.5" transform="rotate(52 132 112)"/>
+      <ellipse cx="138" cy="94" rx="9" ry="3.5" transform="rotate(72 138 94)"/>
+      <ellipse cx="140" cy="75" rx="9" ry="3.5" transform="rotate(88 140 75)"/>
+      <ellipse cx="138" cy="57" rx="9" ry="3.5" transform="rotate(104 138 57)"/>
+    </g>
+    <!-- football -->
+    <circle cx="75" cy="74" r="42" fill="#0d1436" stroke="url(#goldGrad)" stroke-width="3"/>
+    <g stroke="url(#goldGrad)" stroke-width="1.6" fill="none" opacity="0.85">
+      <path d="M75 32 L 75 46"/>
+      <path d="M40 52 L 52 60"/><path d="M110 52 L 98 60"/>
+      <path d="M46 108 L 56 96"/><path d="M104 108 L 94 96"/>
+      <path d="M52 60 L 75 46 L 98 60"/>
+      <path d="M56 96 L 52 60"/><path d="M94 96 L 98 60"/>
+      <path d="M56 96 L 75 104 L 94 96"/><path d="M75 104 L 75 116"/>
+    </g>
+    <!-- the eye (pentagon panel replaced by an eye) -->
+    <g>
+      <path d="M53 74 Q 75 56 97 74 Q 75 92 53 74 Z" fill="#f4f2ec"/>
+      <circle class="eye-iris" cx="75" cy="74" r="10" fill="#0d1436" stroke="url(#goldGrad)" stroke-width="2.5"/>
+      <circle cx="75" cy="74" r="3.6" fill="url(#goldGrad)"/>
+    </g>
+    <!-- banner -->
+    <path d="M28 132 L 122 132 L 116 143 L 34 143 Z" fill="url(#goldGrad)"/>
+    <text x="75" y="141" text-anchor="middle" font-family="Arial Narrow, Arial" font-size="8.5" font-weight="bold" letter-spacing="2" fill="#0d1436">ORDO EX CHAO</text>
+  </svg>
 
-  <!-- badge zone: ink splat, dripping football, bats -->
-  <div class="badge-zone">
-    <!-- ink splat behind -->
-    <svg class="splat-bg" viewBox="0 0 300 190" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <path fill="#ff4b12" opacity="0.28" d="M150 30 C 190 18, 235 32, 248 62 C 268 60, 284 74, 276 92 C 292 104, 284 126, 262 128 C 258 152, 224 164, 196 154 C 178 176, 136 174, 120 152 C 84 166, 44 150, 44 122 C 20 116, 14 90, 36 78 C 26 54, 52 34, 82 42 C 96 22, 128 18, 150 30 Z"/>
-      <circle cx="270" cy="44" r="7" fill="#ff2f9e" opacity="0.5"/>
-      <circle cx="286" cy="66" r="3.5" fill="#ff2f9e" opacity="0.45"/>
-      <circle cx="30" cy="150" r="5" fill="#d8f021" opacity="0.4"/>
-      <circle cx="16" cy="132" r="3" fill="#d8f021" opacity="0.35"/>
-    </svg>
+  <div class="stars">★ ★ <span class="odd">★</span> ★ ★</div>
 
-    <!-- hand-drawn dripping football -->
-    <svg class="ball" viewBox="0 0 150 168" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <!-- wobbly outline, double-struck like a nervous pen -->
-      <path d="M75 12 C 106 10, 132 36, 133 68 C 134 100, 110 128, 76 130 C 44 132, 18 104, 17 70 C 16 38, 44 14, 75 12 Z"
-            fill="#ded5bf" stroke="#ece5d3" stroke-width="3.5"/>
-      <path d="M75 8 C 109 7, 137 35, 137 69 C 137 103, 109 133, 74 134 C 41 135, 13 105, 13 69 C 13 36, 42 9, 75 8 Z"
-            fill="none" stroke="#ece5d3" stroke-width="1.2" opacity="0.55"/>
-      <!-- wonky black pentagon panels, classic ball gone wrong -->
-      <path d="M75 50 L 94 62 L 88 84 L 62 84 L 56 62 Z" fill="#12100c"/>
-      <path d="M40 34 L 58 28 L 66 42 L 54 54 L 38 48 Z" fill="#12100c"/>
-      <path d="M96 26 L 112 36 L 108 52 L 92 50 L 88 36 Z" fill="#12100c"/>
-      <path d="M28 78 L 44 74 L 50 90 L 40 102 L 26 94 Z" fill="#12100c"/>
-      <path d="M104 82 L 120 76 L 128 90 L 118 102 L 104 96 Z" fill="#12100c"/>
-      <path d="M60 106 L 78 102 L 86 116 L 72 126 L 58 118 Z" fill="#12100c"/>
-      <!-- crazed bloodshot eye on the center panel -->
-      <circle cx="75" cy="67" r="9.5" fill="#ece5d3"/>
-      <circle cx="76" cy="67" r="5" fill="#ff2f9e"/>
-      <circle cx="76" cy="67" r="2.4" fill="#12100c"/>
-      <path d="M67 61 L 71 64 M84 62 L 80 64 M67 73 L 71 71" stroke="#ff4b12" stroke-width="1.2" fill="none"/>
-      <!-- drips -->
-      <path d="M52 128 C 51 140, 53 148, 52 158 C 51.5 163, 48.5 163, 48 158 C 47.5 150, 49 140, 49 129 Z" fill="#ff2f9e"/>
-      <path d="M78 132 C 78 141, 79 146, 78 152 C 77.5 156, 74.5 156, 74 152 C 73.5 147, 75 140, 75 132 Z" fill="#ece5d3" opacity="0.8"/>
-      <path d="M104 124 C 104 134, 106 142, 105 150 C 104.5 154.5, 101.5 154.5, 101 150 C 100.5 143, 101 133, 101 125 Z" fill="#d8f021" opacity="0.9"/>
-    </svg>
+  <h1 id="title">WK<span class="tm">™</span><span class="waanzin">Waanzin</span></h1>
 
-    <!-- bats -->
-    <svg class="bat b1" viewBox="0 0 36 16" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M18 9 C 15 3, 8 1, 1 4 C 6 6, 8 8, 7 12 C 11 10, 14 11, 16 14 C 17 12, 19 12, 20 14 C 22 11, 25 10, 29 12 C 28 8, 30 6, 35 4 C 28 1, 21 3, 18 9 Z"/></svg>
-    <svg class="bat b2" viewBox="0 0 36 16" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M18 9 C 15 3, 8 1, 1 4 C 6 6, 8 8, 7 12 C 11 10, 14 11, 16 14 C 17 12, 19 12, 20 14 C 22 11, 25 10, 29 12 C 28 8, 30 6, 35 4 C 28 1, 21 3, 18 9 Z"/></svg>
-    <svg class="bat b3" viewBox="0 0 36 16" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M18 9 C 15 3, 8 1, 1 4 C 6 6, 8 8, 7 12 C 11 10, 14 11, 16 14 C 17 12, 19 12, 20 14 C 22 11, 25 10, 29 12 C 28 8, 30 6, 35 4 C 28 1, 21 3, 18 9 Z"/></svg>
-    <svg class="bat b4" viewBox="0 0 36 16" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M18 9 C 15 3, 8 1, 1 4 C 6 6, 8 8, 7 12 C 11 10, 14 11, 16 14 C 17 12, 19 12, 20 14 C 22 11, 25 10, 29 12 C 28 8, 30 6, 35 4 C 28 1, 21 3, 18 9 Z"/></svg>
+  <div class="subtitle">Officiële <b>Willekeur Selector</b></div>
+  <div class="edition">Privekwim Editie · MMXXVI · Gecertificeerd Willekeurig</div>
+
+  <hr class="divider">
+
+  <div class="select-label">Selecteer uw identiteit om de loting te starten</div>
+
+  <div class="names" id="names">
+    <button class="name-btn">Speler 1</button>
+    <button class="name-btn">Speler 2</button>
+    <button class="name-btn">Speler 3</button>
+    <button class="name-btn">Speler 4</button>
+    <button class="name-btn">Speler 5</button>
+    <button class="name-btn">Speler 6</button>
+    <button class="name-btn">Speler 7</button>
+    <button class="name-btn">Speler 8</button>
   </div>
 
-  <div class="title-wrap">
-    <div class="wk-line">W<span class="k">K</span></div>
-    <h1 id="title"><span class="l1">W</span><span class="l2">A</span><span class="l3">A</span><span class="l4">N</span><span class="l5">Z</span><span class="l6">I</span><span class="l7">N</span></h1>
+  <button class="confirm-btn" id="confirm">Bevestig identiteit</button>
+
+  <div class="disclaimer">
+    De uitslag van de loting is bindend en onherroepelijk. Bezwaar aantekenen is mogelijk bij de Commissie&nbsp;Waanzin, doch volstrekt zinloos. Aan deelname zijn risico's verbonden.
   </div>
+</div>
 
-  <div class="subtitle">De officiële <b>willekeur selector</b></div>
-
-  <div class="stamp">
-    <span class="club">Privekwim</span>
-    <span class="ondertitel">Geen leden · Geen uitweg · Editie MMXXVI</span>
-  </div>
-
-  <div class="tape"></div>
-
-  <div class="select-label">Wie ben jij, in godsnaam?</div>
-  <div class="select-sub">wijs jezelf aan — de commissie kijkt mee</div>
-
-  <div class="names" id="names"></div>
-
-  <button class="confirm-btn" id="confirm">Bevestig — geen weg terug</button>
-
-  <div class="smallprint">
-    De redactie aanvaardt geen enkele aansprakelijkheid voor wat volgt.
-    Onze advocaat is aanwezig, doch <em>Samoaans en onbereikbaar</em>.
-    Wie eenmaal is ingeloot, blijft ingeloot. Koop het kaartje, neem de rit.
-  </div>
-
-  <div class="footer-strip">
-    Getypt om 04:13 uur · Kamer 1850 · De vleermuizen zijn niet echt
+<div class="ticker-wrap">
+  <div class="ticker-label">Live</div>
+  <div class="ticker">
+    <b>Laatste nieuws:</b> loting is 100% willekeurig, bevestigt commissie die de uitslag gisteren al kende &nbsp;•&nbsp;
+    FIFA ontkent elke betrokkenheid bij WK Waanzin &nbsp;•&nbsp;
+    weerbericht: kans op chaos 100% &nbsp;•&nbsp;
+    bookmakers weigeren noteringen af te geven &nbsp;•&nbsp;
+    VAR-check op de loting afgebroken wegens "te veel waanzin" &nbsp;•&nbsp;
+    <b>Dit bericht herhaalt zich, net als de geschiedenis</b> &nbsp;•&nbsp;
   </div>
 </div>
 
 <script>
-  // placeholder players — real names + team pairs to be filled in
-  const SPELERS = ["Speler 1","Speler 2","Speler 3","Speler 4","Speler 5","Speler 6","Speler 7","Speler 8"];
-
-  const grid = document.getElementById('names');
+  // name selection
+  const buttons = document.querySelectorAll('.name-btn');
   const confirmBtn = document.getElementById('confirm');
+  buttons.forEach(btn => btn.addEventListener('click', () => {
+    buttons.forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    confirmBtn.classList.add('armed');
+  }));
 
-  SPELERS.forEach((naam, i) => {
-    const b = document.createElement('button');
-    b.className = 'scrap';
-    b.innerHTML = `<span class="ex">bewijsstuk ${String.fromCharCode(65+i)}</span>${naam}`;
-    b.addEventListener('click', () => {
-      document.querySelectorAll('.scrap').forEach((s, j) => {
-        s.classList.remove('selected');
-        s.querySelector('.ex').textContent = `bewijsstuk ${String.fromCharCode(65+j)}`;
-      });
-      b.classList.add('selected');
-      b.querySelector('.ex').textContent = '✗ deze gek ✗';
-      confirmBtn.classList.add('armed');
-    });
-    grid.appendChild(b);
-  });
-
-  // the word twitches now and then — it knows
+  // occasional glitch on the title — a crack in the official facade
   const title = document.getElementById('title');
-  (function scheduleTwitch() {
+  (function scheduleGlitch() {
     setTimeout(() => {
-      title.classList.add('twitch');
-      setTimeout(() => title.classList.remove('twitch'), 350);
-      scheduleTwitch();
-    }, 2800 + Math.random() * 4200);
+      title.classList.add('glitching');
+      setTimeout(() => title.classList.remove('glitching'), 400);
+      scheduleGlitch();
+    }, 3500 + Math.random() * 5000);
   })();
 </script>
 </body>
