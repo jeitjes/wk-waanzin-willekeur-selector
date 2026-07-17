@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>WK WAANZIN™ — Wil je een spelletje spelen?</title>
+<meta name="theme-color" content="#060a1e">
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root {
+    --navy: #0a1030;
+    --navy-deep: #060a1e;
+    --gold: #d4af37;
+    --gold-bright: #ffd75e;
+    --white: #f4f2ec;
+    --red: #e03131;
+    --teal: #1fd4c0;
+    --magenta: #ff3df0;
+    --green: #3ddc84;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  html { -webkit-text-size-adjust: 100%; background: var(--navy-deep); }
+  body {
+    font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background: var(--navy-deep);
+    color: var(--white);
+    min-height: 100%;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  a, button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+
+  /* ---------- de permanente trip (zelfde als de homepage) ---------- */
+  .trip {
+    position: fixed; inset: 0;
+    display: grid; place-items: center;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    --spd: 30s;
+    animation: hueSpin 22s linear infinite;
+  }
+  .ring { position: absolute; width: 130vmax; height: 130vmax; border-radius: 50%; opacity: 0.14; will-change: transform; }
+  .r1 { background: repeating-conic-gradient(from 0deg, var(--gold-bright) 0 8deg, transparent 8deg 24deg); animation: spin var(--spd) linear infinite; }
+  .r2 { background: repeating-radial-gradient(circle, rgba(255,61,240,0.7) 0 3vmax, transparent 3vmax 7vmax); animation: spinRev calc(var(--spd) * 0.7) linear infinite, breathe 7s ease-in-out infinite; }
+  .r3 { background: conic-gradient(var(--teal), var(--magenta), var(--gold-bright), var(--teal)); filter: blur(32px); animation: spin calc(var(--spd) * 0.5) linear infinite; mix-blend-mode: screen; }
+  .r4 { background: repeating-conic-gradient(from 10deg, rgba(31,212,192,0.8) 0 4deg, transparent 4deg 18deg); animation: spinRev calc(var(--spd) * 0.35) linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes spinRev { to { transform: rotate(-360deg); } }
+  @keyframes breathe { 0%,100% { scale: 1; } 50% { scale: 1.25; } }
+  @keyframes hueSpin { to { filter: hue-rotate(360deg); } }
+  .waas {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(ellipse 110% 80% at 50% 40%, rgba(6,10,30,0.25) 0%, rgba(6,10,30,0.78) 100%);
+  }
+
+  .page {
+    width: 100%;
+    max-width: 520px;
+    padding: 26px 20px calc(40px + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+  }
+
+  .pop {
+    width: 128px; height: 128px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    border: 2px solid var(--red);
+    background: radial-gradient(circle at 50% 38%, rgba(224,49,49,0.32), rgba(6,10,30,0.92) 72%);
+    display: grid; place-items: center;
+    box-shadow: 0 0 26px rgba(224,49,49,0.4);
+    animation: popPulse 3.2s ease-in-out infinite;
+  }
+  .pop img { width: 76%; height: 76%; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.65)); }
+  @keyframes popPulse {
+    0%, 100% { box-shadow: 0 0 26px rgba(224,49,49,0.4); transform: scale(1); }
+    50% { box-shadow: 0 0 40px rgba(224,49,49,0.7); transform: scale(1.03); }
+  }
+
+  h1 {
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: clamp(30px, 9vw, 42px);
+    line-height: 1.05;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--red);
+    text-shadow: 0 0 18px rgba(224,49,49,0.5);
+  }
+  .subtitle {
+    margin-top: 10px;
+    font-size: 11.5px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(244,242,236,0.6);
+  }
+  .divider {
+    width: 70%; margin: 22px 0; border: none; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  .spellen { width: 100%; display: flex; flex-direction: column; gap: 14px; }
+  .spel-kaart {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    text-align: left;
+    padding: 16px 18px;
+    border-radius: 10px;
+    border: 1px solid rgba(212,175,55,0.35);
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+    color: inherit;
+    text-decoration: none;
+    transition: transform 0.15s ease;
+  }
+  a.spel-kaart:active { transform: scale(0.98); }
+  .spel-icoon { font-size: 30px; flex-shrink: 0; width: 42px; text-align: center; }
+  .spel-mid { flex: 1; min-width: 0; }
+  .spel-naam {
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: 20px; letter-spacing: 1.5px; text-transform: uppercase;
+    background: linear-gradient(175deg, var(--gold-bright) 20%, var(--gold) 60%, #8a6d1f 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .spel-omschrijving { margin-top: 3px; font-size: 12px; color: rgba(244,242,236,0.6); line-height: 1.4; }
+  .spel-pijl { font-size: 18px; color: var(--gold); flex-shrink: 0; }
+
+  .spel-kaart.op-slot { opacity: 0.55; cursor: default; }
+  .spel-kaart.op-slot .spel-naam { -webkit-background-clip: text; background-clip: text; }
+  .spel-badge {
+    position: absolute; top: -9px; right: 14px;
+    font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+    background: var(--red); color: var(--white);
+    padding: 3px 8px; border-radius: 10px;
+  }
+
+  .terug {
+    margin-top: 28px;
+    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: rgba(212,175,55,0.7); text-decoration: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="trip" aria-hidden="true">
+  <div class="ring r3"></div>
+  <div class="ring r1"></div>
+  <div class="ring r2"></div>
+  <div class="ring r4"></div>
+</div>
+<div class="waas" aria-hidden="true"></div>
+
+<div class="page">
+  <div class="pop"><img src="/billy.svg" alt=""></div>
+  <h1>Wil je een<br>spelletje spelen?</h1>
+  <div class="subtitle">Kies je spel</div>
+
+  <hr class="divider">
+
+  <div class="spellen">
+    <a class="spel-kaart" href="/wereldlied">
+      <div class="spel-icoon">🎤</div>
+      <div class="spel-mid">
+        <div class="spel-naam">Het Wereldlied</div>
+        <div class="spel-omschrijving">Bouw samen live het volkslied van de hele wereld — elk team schrijft om de beurt een regel.</div>
+      </div>
+      <div class="spel-pijl">→</div>
+    </a>
+
+    <div class="spel-kaart op-slot">
+      <span class="spel-badge">binnenkort</span>
+      <div class="spel-icoon">🔒</div>
+      <div class="spel-mid">
+        <div class="spel-naam">Secret Infantino</div>
+        <div class="spel-omschrijving">Nog niet vrijgegeven door de Federatie. Kom later terug.</div>
+      </div>
+    </div>
+  </div>
+
+  <a class="terug" href="/">← terug naar het klassement</a>
+</div>
+
+</body>
+</html>
