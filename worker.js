@@ -7,11 +7,11 @@ const MAX_BODY = 4 * 1024 * 1024; // 4 MB — ruim genoeg voor 5 logo's als data
 const DEFAULT_STATE = {
   badgeDefs: [],
   teams: [
-    { id: "t1", naam: "Team 1", spelers: ["Jelle", "Pepijn"], punten: 0, logo: null, badges: [], trofeeen: [] },
-    { id: "t2", naam: "Team 2", spelers: ["Daniel", "Sep"], punten: 0, logo: null, badges: [], trofeeen: [] },
-    { id: "t3", naam: "Team 3", spelers: ["Rob", "Lars"], punten: 0, logo: null, badges: [], trofeeen: [] },
-    { id: "t4", naam: "Team 4", spelers: ["Thomas", "Zowi"], punten: 0, logo: null, badges: [], trofeeen: [] },
-    { id: "t5", naam: "Team 5", spelers: ["Jaap", "Shayan"], punten: 0, logo: null, badges: [], trofeeen: [] }
+    { id: "t1", naam: "Team 1", spelers: ["Jelle", "Pepijn"], punten: 0, logo: null, land: null, badges: [], trofeeen: [] },
+    { id: "t2", naam: "Team 2", spelers: ["Daniel", "Sep"], punten: 0, logo: null, land: null, badges: [], trofeeen: [] },
+    { id: "t3", naam: "Team 3", spelers: ["Rob", "Lars"], punten: 0, logo: null, land: null, badges: [], trofeeen: [] },
+    { id: "t4", naam: "Team 4", spelers: ["Thomas", "Zowi"], punten: 0, logo: null, land: null, badges: [], trofeeen: [] },
+    { id: "t5", naam: "Team 5", spelers: ["Jaap", "Shayan"], punten: 0, logo: null, land: null, badges: [], trofeeen: [] }
   ]
 };
 
@@ -60,6 +60,7 @@ function valideerState(state) {
     if (!Array.isArray(t.spelers) || !Array.isArray(t.badges) || !Array.isArray(t.trofeeen)) return false;
     if (typeof t.punten !== "number" || !Number.isFinite(t.punten)) return false;
     if (t.logo !== null && (typeof t.logo !== "string" || !t.logo.startsWith("data:image/"))) return false;
+    if (t.land !== undefined && t.land !== null && typeof t.land !== "string") return false;
     for (const tr of t.trofeeen) {
       if (typeof tr !== "object" || typeof tr.naam !== "string" || typeof tr.emoji !== "string") return false;
     }

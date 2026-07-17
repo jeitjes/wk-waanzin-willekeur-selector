@@ -265,6 +265,7 @@
     margin-top: 2px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
+  .team-land { color: var(--gold); letter-spacing: 1px; }
   .badge-rij { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; min-height: 0; }
   .badge {
     font-size: 14px;
@@ -344,6 +345,7 @@
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
   .kast-spelers { font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: rgba(244,242,236,0.55); margin-top: 3px; }
+  .kast-land { font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold); margin-top: 6px; }
   .kast-kop {
     margin: 20px 0 12px;
     font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
@@ -477,6 +479,7 @@
 <script>
   const $ = id => document.getElementById(id);
   const CAT = window.KWIM_CATALOGUS;
+  const landVan = code => CAT.landen.find(l => l.code === code);
   // badge kan uit de vaste catalogus komen (emoji) of een geüploade badge zijn (afbeelding)
   const badgeVan = id =>
     CAT.badges.find(b => b.id === id) ||
@@ -528,12 +531,13 @@
         .map(badgeVan).filter(Boolean)
         .map(b => `<span class="badge" title="${escapeHtml(b.naam)}">${badgeIcoon(b)}</span>`)
         .join('');
+      const land = team.land && landVan(team.land);
       rij.innerHTML = `
         <div class="plek">${plek}</div>
         ${logoHtml(team)}
         <div class="rij-mid">
           <div class="team-naam">${escapeHtml(team.naam)}</div>
-          <div class="team-spelers">${team.spelers.map(escapeHtml).join(' & ')}</div>
+          <div class="team-spelers">${team.spelers.map(escapeHtml).join(' & ')}${land ? ` <span class="team-land">${land.vlag} ${escapeHtml(land.naam)}</span>` : ''}</div>
           ${badges ? `<div class="badge-rij">${badges}</div>` : ''}
         </div>
         <div class="punten-blok">
@@ -592,11 +596,13 @@
         <span class="b-emoji">${badgeIcoon(b)}</span>
         <span><div class="b-naam">${escapeHtml(b.naam)}</div>${b.info ? `<div class="b-info">${escapeHtml(b.info)}</div>` : ''}</span>
       </div>`).join('');
+    const kastLand = team.land && landVan(team.land);
     $('kast').innerHTML = `
       <button class="kast-sluit" id="kast-sluit">✕ sluit</button>
       ${logoHtml(team)}
       <div class="kast-naam">${escapeHtml(team.naam)}</div>
       <div class="kast-spelers">${team.spelers.map(escapeHtml).join(' & ')}</div>
+      ${kastLand ? `<div class="kast-land">${kastLand.vlag} ${escapeHtml(kastLand.naam)}</div>` : ''}
       <div class="kast-kop">★ <b>Prijzenkast</b> ★</div>
       ${trofeeen ? `<div class="plank-grid">${trofeeen}</div>` : `<div class="kast-leeg">> de kast is leeg. triest.</div>`}
       <div class="kast-kop">Verdiende <b>badges</b></div>

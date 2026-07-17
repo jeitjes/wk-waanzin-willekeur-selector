@@ -223,6 +223,17 @@
     outline: none;
   }
 
+  .land-select {
+    width: 100%;
+    font-size: 13px;
+    color: var(--white);
+    background: rgba(6,10,30,0.8);
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 4px;
+    padding: 8px;
+    outline: none;
+  }
+
   .chips { display: flex; flex-wrap: wrap; gap: 6px; }
   .chip {
     font-size: 12px;
@@ -481,6 +492,9 @@
         .map(t => `<option value="${t.id}">${t.emoji} ${escapeHtml(t.naam)}</option>`)
         .join('');
       const emojiOpties = CAT.emojis.map(e => `<option value="${e}">${e}</option>`).join('');
+      const landOpties = '<option value="">— geen land —</option>' + CAT.landen
+        .map(l => `<option value="${l.code}" ${team.land === l.code ? 'selected' : ''}>${l.vlag} ${escapeHtml(l.naam)}</option>`)
+        .join('');
 
       kaart.innerHTML = `
         <div class="kaart-kop">
@@ -503,6 +517,11 @@
             <input class="punten-input" type="number" value="${team.punten}">
             <button class="punt-knop plus">+</button>
           </div>
+        </div>
+
+        <div class="regel">
+          <div class="regel-label">Land</div>
+          <select class="land-select">${landOpties}</select>
         </div>
 
         <div class="regel">
@@ -552,6 +571,11 @@
       kaart.querySelector('.min').addEventListener('click', () => {
         team.punten = (team.punten || 0) - 1;
         puntenInput.value = team.punten;
+        planOpslaan();
+      });
+
+      kaart.querySelector('.land-select').addEventListener('change', e => {
+        team.land = e.target.value || null;
         planOpslaan();
       });
       kaart.querySelector('.plus').addEventListener('click', () => {
