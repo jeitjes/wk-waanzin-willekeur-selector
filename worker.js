@@ -184,7 +184,9 @@ export default {
     }
 
     if (url.pathname === "/api/wereldlied/start" && request.method === "POST") {
-      if (!checkAuth(request, env)) return json({ fout: "Geen toegang" }, 401);
+      const auth = await geverifieerd(request, env);
+      if (auth.vergrendeld) return json({ fout: "Te veel mislukte pogingen, probeer het over 15 minuten opnieuw" }, 429);
+      if (!auth.ok) return json({ fout: "Geen toegang" }, 401);
       let body;
       try { body = await request.json(); } catch { body = {}; }
       const hoofdstaat = await leesHoofdstaat(env);
@@ -215,14 +217,18 @@ export default {
     }
 
     if (url.pathname === "/api/wereldlied/reset" && request.method === "POST") {
-      if (!checkAuth(request, env)) return json({ fout: "Geen toegang" }, 401);
+      const auth = await geverifieerd(request, env);
+      if (auth.vergrendeld) return json({ fout: "Te veel mislukte pogingen, probeer het over 15 minuten opnieuw" }, 429);
+      if (!auth.ok) return json({ fout: "Geen toegang" }, 401);
       await schrijfWereldlied(env, DEFAULT_WERELDLIED);
       await env.LEADERBOARD.put(WERELDLIED_CODES_KEY, JSON.stringify({}));
       return json({ ok: true });
     }
 
     if (url.pathname === "/api/wereldlied/codes" && request.method === "GET") {
-      if (!checkAuth(request, env)) return json({ fout: "Geen toegang" }, 401);
+      const auth = await geverifieerd(request, env);
+      if (auth.vergrendeld) return json({ fout: "Te veel mislukte pogingen, probeer het over 15 minuten opnieuw" }, 429);
+      if (!auth.ok) return json({ fout: "Geen toegang" }, 401);
       return json(await leesWereldliedCodes(env));
     }
 
