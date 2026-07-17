@@ -31,30 +31,6 @@ const DEFAULT_STATE = {
   ]
 };
 
-// migreert oude staat (badgeDefs/badges/trofeeen) naar de samengevoegde prijzen-vorm.
-// trofeeën anders dan de kampioensring vervallen; badges en de kampioensring worden
-// allemaal "prijzen". Staat die al in de nieuwe vorm is, komt ongewijzigd terug.
-function migreerStaat(state) {
-  if (!state || !Array.isArray(state.teams)) return state;
-  if (state.prijsDefs === undefined && Array.isArray(state.badgeDefs)) {
-    state.prijsDefs = state.badgeDefs;
-  }
-  delete state.badgeDefs;
-  state.prijsDefs = state.prijsDefs || [];
-  state.teams.forEach(t => {
-    if (t.prijzen === undefined) {
-      const uitBadges = Array.isArray(t.badges) ? t.badges : [];
-      const uitTrofeeen = Array.isArray(t.trofeeen)
-        ? t.trofeeen.filter(tr => tr && typeof tr.id === "string" && tr.id.startsWith("kampioensring")).map(() => "kampioensring")
-        : [];
-      t.prijzen = [...new Set([...uitBadges, ...uitTrofeeen])];
-    }
-    delete t.badges;
-    delete t.trofeeen;
-  });
-  return state;
-}
-
 // CORS staat open op /api zodat beheer-tools ook vanaf andere origins kunnen werken;
 // schrijven blijft beschermd door de ADMIN_KEY-check.
 const CORS = {
@@ -140,7 +116,7 @@ function genereerWereldliedCode() {
 
 async function leesHoofdstaat(env) {
   const raw = await env.LEADERBOARD.get(STATE_KEY);
-  return raw ? migreerStaat(JSON.parse(raw)) : DEFAULT_STATE;
+  return raw ? JSON.parse(raw) : DEFAULT_STATE;
 }
 
 async function leesWereldlied(env) {
