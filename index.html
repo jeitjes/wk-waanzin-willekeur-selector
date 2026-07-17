@@ -48,6 +48,7 @@
     position: fixed; inset: 0;
     display: grid; place-items: center;
     z-index: 0;
+    overflow: hidden;
     pointer-events: none;
     --spd: 30s; --glow: 0.14;
     animation: hueSpin 22s linear infinite;
@@ -268,6 +269,7 @@
     border-radius: 4px;
     background: rgba(6,10,30,0.55);
   }
+  .badge img { width: 16px; height: 16px; object-fit: contain; display: block; }
 
   .punten-blok { flex-shrink: 0; text-align: right; }
   .punten {
@@ -305,7 +307,11 @@
     width: 100%;
     max-width: 520px;
     max-height: 86vh;
+    max-height: 86dvh;
     overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
     background:
       radial-gradient(ellipse 120% 70% at 50% 0%, rgba(212,175,55,0.14), transparent 55%),
       linear-gradient(180deg, #121a3e, var(--navy-deep));
@@ -359,6 +365,7 @@
     padding: 8px 12px;
   }
   .badge-regel .b-emoji { font-size: 20px; }
+  .badge-regel .b-emoji img { width: 24px; height: 24px; object-fit: contain; display: block; }
   .badge-regel .b-naam { font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
   .badge-regel .b-info { font-size: 10px; letter-spacing: 1px; color: rgba(244,242,236,0.5); text-transform: uppercase; }
 
@@ -464,7 +471,13 @@
 <script>
   const $ = id => document.getElementById(id);
   const CAT = window.KWIM_CATALOGUS;
-  const badgeVan = id => CAT.badges.find(b => b.id === id);
+  // badge kan uit de vaste catalogus komen (emoji) of een geüploade badge zijn (afbeelding)
+  const badgeVan = id =>
+    CAT.badges.find(b => b.id === id) ||
+    ((staat && staat.badgeDefs) || []).find(b => b.id === id);
+  const badgeIcoon = b => b.afbeelding
+    ? `<img src="${b.afbeelding}" alt="">`
+    : escapeHtml(b.emoji || '');
 
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -507,7 +520,7 @@
       rij.style.animationDelay = (i * 0.07) + 's';
       const badges = (team.badges || [])
         .map(badgeVan).filter(Boolean)
-        .map(b => `<span class="badge" title="${escapeHtml(b.naam)}">${b.emoji}</span>`)
+        .map(b => `<span class="badge" title="${escapeHtml(b.naam)}">${badgeIcoon(b)}</span>`)
         .join('');
       rij.innerHTML = `
         <div class="plek">${plek}</div>
@@ -542,6 +555,24 @@
   /* ================= prijzenkast ================= */
   const modal = $('modal');
 
+  // scroll-slot: houdt de pagina op zijn plek zolang de kast open is (ook op iOS)
+  let scrollPos = 0;
+  function zetScrollSlot(aan) {
+    if (aan) {
+      scrollPos = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = -scrollPos + 'px';
+      document.body.style.left = '0';
+      document.body.style.right = '0';
+    } else {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
+      window.scrollTo(0, scrollPos);
+    }
+  }
+
   function openKast(teamId) {
     const team = staat.teams.find(t => t.id === teamId);
     if (!team) return;
@@ -552,8 +583,8 @@
       </div>`).join('');
     const badges = (team.badges || []).map(badgeVan).filter(Boolean).map(b => `
       <div class="badge-regel">
-        <span class="b-emoji">${b.emoji}</span>
-        <span><div class="b-naam">${escapeHtml(b.naam)}</div><div class="b-info">${escapeHtml(b.info)}</div></span>
+        <span class="b-emoji">${badgeIcoon(b)}</span>
+        <span><div class="b-naam">${escapeHtml(b.naam)}</div>${b.info ? `<div class="b-info">${escapeHtml(b.info)}</div>` : ''}</span>
       </div>`).join('');
     $('kast').innerHTML = `
       <button class="kast-sluit" id="kast-sluit">✕ sluit</button>
@@ -565,9 +596,15 @@
       <div class="kast-kop">Verdiende <b>badges</b></div>
       ${badges ? `<div class="badge-lijst">${badges}</div>` : `<div class="kast-leeg">> nog geen badges verdiend.</div>`}`;
     $('kast-sluit').addEventListener('click', sluitKast);
+    $('kast').scrollTop = 0;
     modal.classList.add('open');
+    zetScrollSlot(true);
   }
-  function sluitKast() { modal.classList.remove('open'); }
+  function sluitKast() {
+    if (!modal.classList.contains('open')) return;
+    modal.classList.remove('open');
+    zetScrollSlot(false);
+  }
   modal.addEventListener('click', e => { if (e.target === modal) sluitKast(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') sluitKast(); });
 

@@ -5,6 +5,7 @@ const STATE_KEY = "state:v1";
 const MAX_BODY = 4 * 1024 * 1024; // 4 MB — ruim genoeg voor 5 logo's als data-URL
 
 const DEFAULT_STATE = {
+  badgeDefs: [],
   teams: [
     { id: "t1", naam: "Team 1", spelers: ["Jelle", "Pepijn"], punten: 0, logo: null, badges: [], trofeeen: [] },
     { id: "t2", naam: "Team 2", spelers: ["Daniel", "Sep"], punten: 0, logo: null, badges: [], trofeeen: [] },
@@ -38,6 +39,13 @@ function checkAuth(request, env) {
 
 function valideerState(state) {
   if (!state || !Array.isArray(state.teams) || state.teams.length === 0 || state.teams.length > 20) return false;
+  if (state.badgeDefs !== undefined) {
+    if (!Array.isArray(state.badgeDefs) || state.badgeDefs.length > 50) return false;
+    for (const b of state.badgeDefs) {
+      if (typeof b.id !== "string" || typeof b.naam !== "string") return false;
+      if (typeof b.afbeelding !== "string" || !b.afbeelding.startsWith("data:image/")) return false;
+    }
+  }
   for (const t of state.teams) {
     if (typeof t.id !== "string" || typeof t.naam !== "string") return false;
     if (!Array.isArray(t.spelers) || !Array.isArray(t.badges) || !Array.isArray(t.trofeeen)) return false;
