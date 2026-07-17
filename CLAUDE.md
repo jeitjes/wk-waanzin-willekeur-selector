@@ -28,6 +28,17 @@ Static site (plain HTML, no build step) plus a small leaderboard-API, served by 
 - Page variants live in `variants/`; `index.html` is the main page; `og.html`/`og.png` are for social previews.
 - House style: navy/gold Federatie-look with the teal/magenta/gold psychedelic "trip" accents (see the ring/hueSpin CSS in `index.html`).
 
+## Parallel sessions & merge conflicts
+
+Multiple Claude sessions work on this repo concurrently, each on its own branch. The four core files (`index.html`, `admin.html`, `worker.js`, `catalog.js`) are monoliths that nearly every feature touches, so concurrent branches conflict often. Rules:
+
+- **Before every push**: `git fetch origin main` and rebase onto (or merge in) `origin/main`, resolving any conflicts *in this session* — you have the full context of your own change; a later merge doesn't. Repeat this if more time passes between your last fetch and a follow-up push.
+- **Resolving conflicts in these files**:
+  - `index.html`: after resolving, verify the `overscroll-behavior-y: none` rule on `html, body` is still present (see "Known regressions" below) — it has been silently dropped in merges before.
+  - `worker.js`: route handlers from both sides are usually independent features — keep both unless they genuinely handle the same route. Same for shared validation logic: check that neither side's checks were dropped.
+  - `catalog.js`: entries from both sides are usually additive — keep both; watch for duplicate ids.
+- **Deploy discipline**: only run `npx wrangler deploy` from a branch that is up to date with `origin/main` (normally: main itself, after merging). Deploying a stale feature branch silently reverts other sessions' already-live changes — git will never flag this.
+
 ## Known regressions to watch for
 
 - **Infinite scroll on mobile (`index.html`)**: the page must stop scrolling exactly where the content ends — no rubber-band bounce past the footer on mobile browsers. This is guarded by `overscroll-behavior-y: none` on the `html, body` rule near the top of `index.html`'s `<style>`. This has regressed before (silently dropped during a refactor); if it reappears, check that rule is still present before investigating further, and manually verify by hand on a phone (scroll to bottom, keep dragging up — it should not bounce or reveal empty space) before each deploy that touches `index.html`'s layout/CSS.
