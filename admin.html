@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>WK WAANZIN™ — Federatie Controlekamer</title>
+<meta name="theme-color" content="#060a1e">
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root {
+    --navy: #0a1030;
+    --navy-deep: #060a1e;
+    --gold: #d4af37;
+    --gold-bright: #ffd75e;
+    --white: #f4f2ec;
+    --red: #e03131;
+    --teal: #1fd4c0;
+    --magenta: #ff3df0;
+    --green: #3ddc84;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { background: var(--navy-deep); -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background: var(--navy-deep);
+    color: var(--white);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse 120% 90% at 50% -20%, rgba(26,36,85,0.85) 0%, rgba(10,16,48,0.5) 45%, rgba(6,10,30,0) 75%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  button, input, select {
+    font-family: inherit;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button { user-select: none; -webkit-user-select: none; cursor: pointer; }
+
+  .page {
+    width: 100%;
+    max-width: 560px;
+    padding: 18px 18px 80px;
+    position: relative;
+    z-index: 2;
+  }
+  h1 {
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: 30px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    text-align: center;
+  }
+  h1 b {
+    background: linear-gradient(175deg, var(--gold-bright) 20%, var(--gold) 60%, #8a6d1f 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .sub {
+    text-align: center;
+    font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+    color: rgba(244,242,236,0.5);
+    margin: 6px 0 18px;
+  }
+
+  /* ---------- login-poort ---------- */
+  #poort { text-align: center; padding-top: 8vh; }
+  .poort-panel {
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.03);
+    padding: 26px 20px;
+    max-width: 380px;
+    margin: 0 auto;
+  }
+  .poort-panel p { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: rgba(244,242,236,0.7); margin-bottom: 14px; }
+  .sleutel-input {
+    width: 100%;
+    font-family: "Courier New", monospace;
+    font-size: 16px;
+    color: var(--gold-bright);
+    background: rgba(6,10,30,0.8);
+    border: 1px solid rgba(212,175,55,0.5);
+    border-radius: 4px;
+    padding: 13px 12px;
+    outline: none;
+    text-align: center;
+  }
+  .sleutel-input:focus { border-color: var(--gold-bright); box-shadow: 0 0 12px rgba(212,175,55,0.3); }
+  .btn-gold {
+    margin-top: 14px;
+    width: 100%;
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: 19px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--navy-deep);
+    background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+    border: none;
+    border-radius: 4px;
+    padding: 14px;
+  }
+  .poort-fout {
+    margin-top: 12px;
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    color: var(--red);
+    min-height: 16px;
+  }
+
+  /* ---------- statusbalk ---------- */
+  .statusbalk {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 10;
+    background: linear-gradient(180deg, #101838, #0a1030);
+    border-top: 2px solid var(--gold);
+    padding: 9px 14px calc(9px + env(safe-area-inset-bottom));
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    color: rgba(244,242,236,0.75);
+  }
+  .statusbalk .ok { color: var(--green); }
+  .statusbalk .bezig { color: var(--gold-bright); }
+  .statusbalk .fout { color: var(--red); }
+  .uitlog { background: none; border: 1px solid rgba(212,175,55,0.4); border-radius: 4px; color: rgba(244,242,236,0.6); font-size: 11px; letter-spacing: 1px; padding: 4px 10px; text-transform: uppercase; }
+
+  /* ---------- teamkaarten ---------- */
+  #teams { display: none; flex-direction: column; gap: 14px; }
+  .kaart {
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.03);
+    padding: 14px;
+  }
+  .kaart-kop { display: flex; align-items: center; gap: 10px; }
+  .plek {
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: 26px;
+    width: 30px;
+    text-align: center;
+    background: linear-gradient(175deg, var(--gold-bright) 20%, var(--gold) 60%, #8a6d1f 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    flex-shrink: 0;
+  }
+  .logo-dop {
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 2px solid rgba(212,175,55,0.5);
+    background: #0d1436;
+    overflow: hidden;
+    display: grid; place-items: center;
+    font-size: 20px;
+  }
+  .logo-dop img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .kop-mid { flex: 1; min-width: 0; }
+  .naam-input {
+    width: 100%;
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: 18px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--white);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 2px 6px;
+    outline: none;
+  }
+  .naam-input:focus { border-color: rgba(212,175,55,0.5); background: rgba(6,10,30,0.6); }
+  .spelers { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: rgba(244,242,236,0.5); padding-left: 7px; }
+
+  .pijlen { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+  .pijl {
+    width: 34px; height: 26px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 4px;
+    color: var(--gold-bright);
+    font-size: 13px;
+    line-height: 1;
+  }
+  .pijl:disabled { opacity: 0.25; }
+  .pijl:active:not(:disabled) { transform: scale(0.94); }
+
+  .regel {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(212,175,55,0.18);
+  }
+  .regel-label { font-size: 9.5px; letter-spacing: 2.5px; text-transform: uppercase; color: rgba(244,242,236,0.45); margin-bottom: 8px; }
+
+  .punten-rij { display: flex; align-items: center; gap: 10px; }
+  .punt-knop {
+    width: 42px; height: 38px;
+    font-size: 19px; font-weight: 700;
+    background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 4px;
+    color: var(--gold-bright);
+  }
+  .punt-knop:active { transform: scale(0.94); }
+  .punten-input {
+    width: 72px;
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: 24px;
+    text-align: center;
+    color: var(--gold-bright);
+    background: rgba(6,10,30,0.7);
+    border: 1px solid rgba(212,175,55,0.5);
+    border-radius: 4px;
+    padding: 4px;
+    outline: none;
+  }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    padding: 6px 9px;
+    border: 1px solid rgba(212,175,55,0.35);
+    border-radius: 20px;
+    background: rgba(6,10,30,0.55);
+    color: rgba(244,242,236,0.7);
+  }
+  .chip.aan {
+    border-color: var(--gold-bright);
+    background: linear-gradient(180deg, rgba(212,175,55,0.3), rgba(212,175,55,0.12));
+    color: var(--gold-bright);
+    box-shadow: 0 0 10px rgba(212,175,55,0.3);
+  }
+
+  .trofee-lijst { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+  .trofee-item {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px;
+    border: 1px solid rgba(212,175,55,0.25);
+    border-radius: 5px;
+    padding: 6px 8px;
+    background: rgba(6,10,30,0.5);
+  }
+  .trofee-item .t-emoji { font-size: 17px; }
+  .trofee-item .t-naam { flex: 1; letter-spacing: 1px; text-transform: uppercase; font-weight: 700; font-size: 11.5px; }
+  .t-weg { background: none; border: 1px solid rgba(224,49,49,0.5); border-radius: 4px; color: var(--red); font-size: 11px; padding: 3px 8px; }
+  .toevoeg-rij { display: flex; gap: 6px; }
+  .toevoeg-rij select, .toevoeg-rij input[type="text"] {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    color: var(--white);
+    background: rgba(6,10,30,0.8);
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 4px;
+    padding: 8px;
+    outline: none;
+  }
+  .emoji-select { width: 58px; flex: none !important; }
+  .t-plus {
+    background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+    border: none; border-radius: 4px;
+    color: var(--navy-deep);
+    font-weight: 700; font-size: 13px;
+    padding: 0 14px;
+    letter-spacing: 1px;
+  }
+  .of { text-align: center; font-size: 9px; letter-spacing: 2px; color: rgba(244,242,236,0.35); text-transform: uppercase; margin: 6px 0; }
+
+  .logo-rij { display: flex; align-items: center; gap: 10px; }
+  .logo-rij .logo-dop { width: 54px; height: 54px; }
+  .upload-knop {
+    display: inline-block;
+    font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--gold-bright);
+    border: 1px solid rgba(212,175,55,0.5);
+    border-radius: 4px;
+    padding: 9px 14px;
+    cursor: pointer;
+    background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
+  }
+  .upload-knop input { display: none; }
+  .logo-weg { background: none; border: 1px solid rgba(224,49,49,0.5); border-radius: 4px; color: var(--red); font-size: 11px; letter-spacing: 1px; padding: 9px 12px; text-transform: uppercase; }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <h1>Federatie <b>Controlekamer</b></h1>
+  <div class="sub">Alleen voor organisatoren · Kwim-protocol v4.5.12</div>
+
+  <!-- login -->
+  <div id="poort">
+    <div class="poort-panel">
+      <p>🔒 Voer de Federatie-sleutel in</p>
+      <input class="sleutel-input" id="sleutel" type="password" autocomplete="off" placeholder="KWIM-XXXX-XXXX-…">
+      <button class="btn-gold" id="poort-btn">Ontgrendel</button>
+      <div class="poort-fout" id="poort-fout"></div>
+    </div>
+  </div>
+
+  <!-- teamkaarten -->
+  <div id="teams"></div>
+</div>
+
+<div class="statusbalk" id="statusbalk" style="display:none">
+  <span id="opslag-status">—</span>
+  <button class="uitlog" id="uitlog">Vergrendel</button>
+</div>
+
+<script src="/catalog.js"></script>
+<script>
+  const $ = id => document.getElementById(id);
+  const CAT = window.KWIM_CATALOGUS;
+  const SLEUTEL_OPSLAG = 'kwimAdminSleutel';
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  let sleutel = localStorage.getItem(SLEUTEL_OPSLAG) || '';
+  let staat = null;
+  let opslaanTimer = null;
+
+  /* ================= login ================= */
+  async function probeerLogin(kandidaat) {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + kandidaat }
+    });
+    return res.ok;
+  }
+
+  $('poort-btn').addEventListener('click', async () => {
+    const kandidaat = $('sleutel').value.trim();
+    if (!kandidaat) return;
+    $('poort-fout').textContent = '';
+    if (await probeerLogin(kandidaat)) {
+      sleutel = kandidaat;
+      localStorage.setItem(SLEUTEL_OPSLAG, sleutel);
+      start();
+    } else {
+      $('poort-fout').textContent = '✗ Sleutel afgewezen door de Federatie.';
+    }
+  });
+  $('sleutel').addEventListener('keydown', e => { if (e.key === 'Enter') $('poort-btn').click(); });
+
+  $('uitlog').addEventListener('click', () => {
+    localStorage.removeItem(SLEUTEL_OPSLAG);
+    location.reload();
+  });
+
+  /* ================= opslaan ================= */
+  function zetStatus(tekst, klasse) {
+    $('opslag-status').innerHTML = `<span class="${klasse}">${tekst}</span>`;
+  }
+
+  function planOpslaan() {
+    zetStatus('● wijzigingen…', 'bezig');
+    clearTimeout(opslaanTimer);
+    opslaanTimer = setTimeout(slaOp, 800);
+  }
+
+  async function slaOp() {
+    zetStatus('● opslaan…', 'bezig');
+    try {
+      const res = await fetch('/api/state', {
+        method: 'PUT',
+        headers: {
+          'Authorization': 'Bearer ' + sleutel,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(staat)
+      });
+      if (!res.ok) throw new Error(res.status);
+      const nu = new Date().toTimeString().slice(0, 8);
+      zetStatus('✓ opgeslagen ' + nu, 'ok');
+    } catch (e) {
+      zetStatus('✗ opslaan mislukt — probeer opnieuw', 'fout');
+    }
+  }
+
+  /* ================= renderen ================= */
+  function render() {
+    const wrap = $('teams');
+    wrap.innerHTML = '';
+    staat.teams.forEach((team, i) => {
+      const kaart = document.createElement('div');
+      kaart.className = 'kaart';
+
+      const badgeChips = CAT.badges.map(b => {
+        const aan = (team.badges || []).includes(b.id);
+        return `<button class="chip ${aan ? 'aan' : ''}" data-badge="${b.id}" title="${escapeHtml(b.info)}">${b.emoji} ${escapeHtml(b.naam)}</button>`;
+      }).join('');
+
+      const trofeeItems = (team.trofeeen || []).map((tr, ti) => `
+        <div class="trofee-item">
+          <span class="t-emoji">${escapeHtml(tr.emoji)}</span>
+          <span class="t-naam">${escapeHtml(tr.naam)}</span>
+          <button class="t-weg" data-trofee="${ti}">✕</button>
+        </div>`).join('');
+
+      const catalogusOpties = CAT.trofeeen
+        .map(t => `<option value="${t.id}">${t.emoji} ${escapeHtml(t.naam)}</option>`)
+        .join('');
+      const emojiOpties = CAT.emojis.map(e => `<option value="${e}">${e}</option>`).join('');
+
+      kaart.innerHTML = `
+        <div class="kaart-kop">
+          <div class="plek">${i + 1}</div>
+          <div class="pijlen">
+            <button class="pijl omhoog" ${i === 0 ? 'disabled' : ''}>▲</button>
+            <button class="pijl omlaag" ${i === staat.teams.length - 1 ? 'disabled' : ''}>▼</button>
+          </div>
+          <div class="logo-dop">${team.logo ? `<img src="${team.logo}" alt="">` : '👁️'}</div>
+          <div class="kop-mid">
+            <input class="naam-input" value="${escapeHtml(team.naam)}" maxlength="30">
+            <div class="spelers">${team.spelers.map(escapeHtml).join(' & ')}</div>
+          </div>
+        </div>
+
+        <div class="regel">
+          <div class="regel-label">Punten</div>
+          <div class="punten-rij">
+            <button class="punt-knop min">−</button>
+            <input class="punten-input" type="number" value="${team.punten}">
+            <button class="punt-knop plus">+</button>
+          </div>
+        </div>
+
+        <div class="regel">
+          <div class="regel-label">Badges</div>
+          <div class="chips">${badgeChips}</div>
+        </div>
+
+        <div class="regel">
+          <div class="regel-label">Prijzenkast</div>
+          <div class="trofee-lijst">${trofeeItems || ''}</div>
+          <div class="toevoeg-rij">
+            <select class="trofee-select">${catalogusOpties}</select>
+            <button class="t-plus cat-plus">+ Ken toe</button>
+          </div>
+          <div class="of">— of een eigen trofee —</div>
+          <div class="toevoeg-rij">
+            <select class="emoji-select">${emojiOpties}</select>
+            <input type="text" class="eigen-naam" placeholder="Naam van de trofee…" maxlength="40">
+            <button class="t-plus eigen-plus">+</button>
+          </div>
+        </div>
+
+        <div class="regel">
+          <div class="regel-label">Logo</div>
+          <div class="logo-rij">
+            <div class="logo-dop">${team.logo ? `<img src="${team.logo}" alt="">` : '👁️'}</div>
+            <label class="upload-knop">📷 Upload logo<input type="file" accept="image/*"></label>
+            ${team.logo ? '<button class="logo-weg">✕ Weg</button>' : ''}
+          </div>
+        </div>`;
+
+      /* ---- gedrag ---- */
+      kaart.querySelector('.omhoog').addEventListener('click', () => verplaats(i, -1));
+      kaart.querySelector('.omlaag').addEventListener('click', () => verplaats(i, 1));
+
+      const naamInput = kaart.querySelector('.naam-input');
+      naamInput.addEventListener('input', () => {
+        team.naam = naamInput.value.trim() || 'Team ' + (i + 1);
+        planOpslaan();
+      });
+
+      const puntenInput = kaart.querySelector('.punten-input');
+      puntenInput.addEventListener('input', () => {
+        team.punten = parseInt(puntenInput.value, 10) || 0;
+        planOpslaan();
+      });
+      kaart.querySelector('.min').addEventListener('click', () => {
+        team.punten = (team.punten || 0) - 1;
+        puntenInput.value = team.punten;
+        planOpslaan();
+      });
+      kaart.querySelector('.plus').addEventListener('click', () => {
+        team.punten = (team.punten || 0) + 1;
+        puntenInput.value = team.punten;
+        planOpslaan();
+      });
+
+      kaart.querySelectorAll('.chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          const id = chip.dataset.badge;
+          team.badges = team.badges || [];
+          const idx = team.badges.indexOf(id);
+          if (idx >= 0) team.badges.splice(idx, 1); else team.badges.push(id);
+          chip.classList.toggle('aan');
+          planOpslaan();
+        });
+      });
+
+      kaart.querySelectorAll('.t-weg').forEach(btn => {
+        btn.addEventListener('click', () => {
+          team.trofeeen.splice(Number(btn.dataset.trofee), 1);
+          render();
+          planOpslaan();
+        });
+      });
+      kaart.querySelector('.cat-plus').addEventListener('click', () => {
+        const sel = kaart.querySelector('.trofee-select');
+        const cat = CAT.trofeeen.find(t => t.id === sel.value);
+        if (!cat) return;
+        team.trofeeen = team.trofeeen || [];
+        team.trofeeen.push({ id: cat.id + '-' + Date.now(), emoji: cat.emoji, naam: cat.naam });
+        render();
+        planOpslaan();
+      });
+      kaart.querySelector('.eigen-plus').addEventListener('click', () => {
+        const naam = kaart.querySelector('.eigen-naam').value.trim();
+        const emoji = kaart.querySelector('.emoji-select').value;
+        if (!naam) return;
+        team.trofeeen = team.trofeeen || [];
+        team.trofeeen.push({ id: 'eigen-' + Date.now(), emoji, naam });
+        render();
+        planOpslaan();
+      });
+
+      kaart.querySelector('input[type="file"]').addEventListener('change', async e => {
+        const bestand = e.target.files[0];
+        if (!bestand) return;
+        try {
+          team.logo = await verkleinLogo(bestand);
+          render();
+          planOpslaan();
+        } catch {
+          zetStatus('✗ logo kon niet worden gelezen', 'fout');
+        }
+      });
+      const wegKnop = kaart.querySelector('.logo-weg');
+      if (wegKnop) wegKnop.addEventListener('click', () => {
+        team.logo = null;
+        render();
+        planOpslaan();
+      });
+
+      wrap.appendChild(kaart);
+    });
+  }
+
+  function verplaats(i, richting) {
+    const j = i + richting;
+    if (j < 0 || j >= staat.teams.length) return;
+    [staat.teams[i], staat.teams[j]] = [staat.teams[j], staat.teams[i]];
+    render();
+    planOpslaan();
+  }
+
+  /* ================= logo verkleinen (canvas, 256px vierkant) ================= */
+  function verkleinLogo(bestand) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(bestand);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const MAAT = 256;
+        const canvas = document.createElement('canvas');
+        canvas.width = MAAT; canvas.height = MAAT;
+        const ctx = canvas.getContext('2d');
+        // cover-crop naar vierkant
+        const kant = Math.min(img.width, img.height);
+        const sx = (img.width - kant) / 2;
+        const sy = (img.height - kant) / 2;
+        ctx.drawImage(img, sx, sy, kant, kant, 0, 0, MAAT, MAAT);
+        let data = canvas.toDataURL('image/webp', 0.85);
+        if (!data.startsWith('data:image/webp')) data = canvas.toDataURL('image/jpeg', 0.85);
+        resolve(data);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('ongeldig beeld')); };
+      img.src = url;
+    });
+  }
+
+  /* ================= start ================= */
+  async function start() {
+    $('poort').style.display = 'none';
+    $('statusbalk').style.display = 'flex';
+    const res = await fetch('/api/state', { cache: 'no-store' });
+    staat = await res.json();
+    $('teams').style.display = 'flex';
+    render();
+    zetStatus('✓ verbonden met de Federatie', 'ok');
+  }
+
+  (async () => {
+    if (sleutel && await probeerLogin(sleutel)) {
+      start();
+    } else {
+      localStorage.removeItem(SLEUTEL_OPSLAG);
+      setTimeout(() => $('sleutel').focus(), 300);
+    }
+  })();
+</script>
+</body>
+</html>

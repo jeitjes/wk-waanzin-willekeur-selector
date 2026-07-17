@@ -1,6 +1,15 @@
-# WK Waanzin — Willekeur Selector
+# WK Waanzin — kwimhub.com
 
-Static site (plain HTML, no build step) served by a Cloudflare Worker with static assets. Live at **https://kwimhub.com** (and www).
+Static site (plain HTML, no build step) plus a small leaderboard-API, served by a Cloudflare Worker (`worker.js`) with static assets. Live at **https://kwimhub.com** (and www).
+
+## Architecture
+
+- `index.html` — live leaderboard (homepage); polls `GET /api/state` every 12 s.
+- `admin.html` (→ `/admin`) — admin panel; mutations go through `PUT /api/state` with `Authorization: Bearer <ADMIN_KEY>`, validated server-side in `worker.js`.
+- `selector.html` (→ `/selector`) — the original one-time team selector, archived.
+- `catalog.js` — shared badge/trophy catalog for both pages.
+- Leaderboard state lives in KV (binding `LEADERBOARD`, namespace id in `wrangler.jsonc`); team logos are stored inside the state as small data-URLs. The admin key is the Worker secret `ADMIN_KEY` (production: `wrangler secret put ADMIN_KEY`; local dev: `.dev.vars`, which is git- and assets-ignored).
+- Local dev: `npx wrangler dev` (local KV simulation, independent of production state).
 
 ## Hosting & deploy (Cloudflare)
 
@@ -17,3 +26,4 @@ Static site (plain HTML, no build step) served by a Cloudflare Worker with stati
 
 - Site content and commit messages are in Dutch.
 - Page variants live in `variants/`; `index.html` is the main page; `og.html`/`og.png` are for social previews.
+- House style: navy/gold Federatie-look with the teal/magenta/gold psychedelic "trip" accents (see the ring/hueSpin CSS in `index.html`).

@@ -1,9 +1,12 @@
 .git
 .github
+.gitignore
 .claude
 .wrangler
 .assetsignore
 .mcp.json
+.dev.vars
 wrangler.jsonc
+worker.js
 README.md
 CLAUDE.md
