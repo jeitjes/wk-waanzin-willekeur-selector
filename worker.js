@@ -21,8 +21,10 @@ const DEFAULT_WERELDLIED = {
   regels: []
 };
 
+// De vier vaste prijzen — moet gelijk lopen met catalog.js
+const PRIJS_IDS = ["fairplay", "flairplay", "legacy", "kampioensring"];
+
 const DEFAULT_STATE = {
-  prijsDefs: [],
   teams: [
     { id: "t1", naam: "Team 1", spelers: ["Jelle", "Pepijn"], punten: 0, logo: null, land: null, prijzen: [] },
     { id: "t2", naam: "Team 2", spelers: ["Daniel", "Sep"], punten: 0, logo: null, land: null, prijzen: [] },
@@ -93,17 +95,10 @@ async function geverifieerd(request, env) {
 
 function valideerState(state) {
   if (!state || !Array.isArray(state.teams) || state.teams.length === 0 || state.teams.length > 20) return false;
-  if (state.prijsDefs !== undefined) {
-    if (!Array.isArray(state.prijsDefs) || state.prijsDefs.length > 50) return false;
-    for (const b of state.prijsDefs) {
-      if (typeof b.id !== "string" || typeof b.naam !== "string") return false;
-      if (typeof b.afbeelding !== "string" || !b.afbeelding.startsWith("data:image/")) return false;
-    }
-  }
   for (const t of state.teams) {
     if (typeof t.id !== "string" || typeof t.naam !== "string") return false;
     if (!Array.isArray(t.spelers) || !Array.isArray(t.prijzen)) return false;
-    if (!t.prijzen.every(p => typeof p === "string")) return false;
+    if (!t.prijzen.every(p => PRIJS_IDS.includes(p))) return false;
     if (typeof t.punten !== "number" || !Number.isFinite(t.punten)) return false;
     if (t.logo !== null && (typeof t.logo !== "string" || !t.logo.startsWith("data:image/"))) return false;
     if (t.land !== undefined && t.land !== null && (typeof t.land !== "string" || !/^[A-Za-z]{2}$/.test(t.land))) return false;
@@ -115,9 +110,34 @@ function genereerWereldliedCode() {
   return String(Math.floor(1000 + Math.random() * 9000)); // 4 cijfers, hardop voor te lezen
 }
 
+// De KV-staat kan nog in een oudere vorm staan: losse badges/trofeeen-velden
+// (met geüploade badgeDefs) of prijzen met bdef-*-ids. Deze migratie mapt dat
+// alles naar de vier vaste prijs-ids; onbekende prijzen vervallen.
+const OUDE_PRIJS_IDS = { "bdef-fairplay": "fairplay", "bdef-flair": "flairplay", "bdef-legacy": "legacy" };
+
+function migreerStaat(state) {
+  if (!state || !Array.isArray(state.teams)) return state;
+  delete state.badgeDefs;
+  delete state.prijsDefs;
+  state.teams.forEach(t => {
+    const oud = Array.isArray(t.prijzen)
+      ? t.prijzen
+      : [
+          ...(Array.isArray(t.badges) ? t.badges : []),
+          ...(Array.isArray(t.trofeeen)
+            ? t.trofeeen.filter(tr => tr && typeof tr.id === "string" && tr.id.startsWith("kampioensring")).map(() => "kampioensring")
+            : [])
+        ];
+    t.prijzen = [...new Set(oud.map(id => OUDE_PRIJS_IDS[id] || id))].filter(id => PRIJS_IDS.includes(id));
+    delete t.badges;
+    delete t.trofeeen;
+  });
+  return state;
+}
+
 async function leesHoofdstaat(env) {
   const raw = await env.LEADERBOARD.get(STATE_KEY);
-  return raw ? JSON.parse(raw) : DEFAULT_STATE;
+  return raw ? migreerStaat(JSON.parse(raw)) : DEFAULT_STATE;
 }
 
 async function leesWereldlied(env) {
