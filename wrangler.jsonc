@@ -1,6 +1,7 @@
 {
-  // Cloudflare Worker die de repo-root als statische site serveert (kwimhub.com).
+  // Cloudflare Worker voor kwimhub.com — statische site + leaderboard-API (worker.js).
   "name": "kwimhub",
+  "main": "worker.js",
   "compatibility_date": "2026-07-01",
   "routes": [
     { "pattern": "kwimhub.com", "custom_domain": true },
@@ -8,6 +9,13 @@
   ],
   "assets": {
     "directory": "./",
+    "binding": "ASSETS",
     "not_found_handling": "404-page"
-  }
+  },
+  "kv_namespaces": [
+    {
+      "binding": "LEADERBOARD",
+      "id": "ef1412c922eb4b19b489982e6c499753"
+    }
+  ]
 }

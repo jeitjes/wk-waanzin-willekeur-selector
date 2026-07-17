@@ -1,8 +1,12 @@
-# WK Waanzin Willekeur Selector
+# WK Waanzin — kwimhub.com
 
-Een deelbare single-file HTML-pagina (via WhatsApp) die vrienden van Privekwim door een fake "willekeurige" teamselectie leidt voor de WK Waanzin-avond. Deterministisch onder de motorkap, pure waanzin aan de buitenkant.
+De site van de WK Waanzin-avond. Live op **https://kwimhub.com**.
 
-Live op **https://kwimhub.com** (Cloudflare Workers static assets, auto-deploy vanaf `main`).
+- **`/`** — live klassement in psychedelische trip-stijl: teams, punten, badges onder de namen, en per team een prijzenkast-popup met trofeeën. Ververst zichzelf elke 12 s.
+- **`/admin`** — Federatie Controlekamer (sleutel vereist): teams omhoog/omlaag, punten, badges aan/uit, trofeeën toekennen en teamlogo's uploaden.
+- **`/selector`** — de originele "willekeurige" teamselector (eenmalig gebruikt, gearchiveerd).
+
+De leaderboard-state staat in Cloudflare KV (binding `LEADERBOARD` in `worker.js`); de admin-sleutel is een Worker-secret (`ADMIN_KEY`), nooit in de repo. Badges- en trofeeëncatalogus staan in `catalog.js`.
 
 ## Hosting & workflow
 
