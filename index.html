@@ -3,57 +3,50 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>WK WAANZIN — Officieel Stickeralbum & Willekeur Selector</title>
+<title>WK WAANZIN — De Officiële Willekeur Selector</title>
 <style>
   :root {
-    --paper: #f0e6cd;
-    --paper-dark: #e3d5b3;
-    --ink: #2b1d10;
-    --brown: #4a2c17;
-    --orange: #c8501e;
-    --orange-bright: #e8622a;
-    --teal: #00707a;
-    --gold: #c99a2e;
-    --magenta: #e02690;
-    --cyan: #00b3c8;
+    --void: #0d0a07;
+    --void-2: #171209;
+    --bone: #ece5d3;
+    --acid: #d8f021;
+    --blood: #ff4b12;
+    --pink: #ff2f9e;
+    --ink: #1a140c;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { height: 100%; }
   body {
-    font-family: "Arial Rounded MT Bold", "Arial Black", "Helvetica Neue", Arial, sans-serif;
+    font-family: "Courier New", Courier, monospace;
     background:
-      radial-gradient(circle at 20% 10%, rgba(200,80,30,0.08), transparent 40%),
-      radial-gradient(circle at 85% 90%, rgba(0,112,122,0.08), transparent 40%),
-      var(--paper);
-    color: var(--ink);
+      radial-gradient(ellipse 90% 60% at 70% 15%, rgba(255,75,18,0.10), transparent 60%),
+      radial-gradient(ellipse 70% 50% at 20% 85%, rgba(255,47,158,0.07), transparent 60%),
+      var(--void);
+    color: var(--bone);
     min-height: 100%;
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
     align-items: center;
   }
-  /* aged paper grain + halftone dots */
-  body::before {
-    content: "";
-    position: fixed; inset: 0;
-    background-image: radial-gradient(rgba(43,29,16,0.10) 1px, transparent 1.4px);
-    background-size: 7px 7px;
-    pointer-events: none;
-    z-index: 5;
-    opacity: 0.5;
-  }
+  /* heavy grain — cheap motel film stock */
   body::after {
     content: "";
     position: fixed; inset: -50%;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='130' height='130'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='130' height='130' filter='url(%23n)' opacity='0.09'/%3E%3C/svg%3E");
     pointer-events: none;
-    z-index: 5;
+    animation: grain 0.5s steps(3) infinite;
+    z-index: 6;
+  }
+  @keyframes grain {
+    0% { transform: translate(0,0); } 33% { transform: translate(-1.5%,1%); }
+    66% { transform: translate(1%,-1.5%); } 100% { transform: translate(-1%,1.5%); }
   }
 
   .page {
     width: 100%;
     max-width: 480px;
-    padding: 0 18px 40px;
+    padding: 0 20px 48px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -62,337 +55,355 @@
     z-index: 2;
   }
 
-  /* ---------- album masthead ---------- */
-  .masthead {
-    width: 100%;
-    background: var(--orange);
-    background: linear-gradient(180deg, var(--orange-bright), var(--orange));
-    color: var(--paper);
-    margin: 0 -18px;
-    width: calc(100% + 36px);
-    padding: 12px 18px 10px;
-    border-bottom: 5px solid var(--brown);
-    box-shadow: 0 3px 0 var(--teal);
-  }
-  .masthead {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-  }
-  .masthead .fed {
-    font-family: "Courier New", monospace;
-    font-size: 9px;
+  /* ---------- manuscript header ---------- */
+  .presenteert {
+    width: calc(100% + 40px);
+    margin: 0 -20px;
+    padding: 10px 20px 9px;
+    font-size: 11px;
     font-weight: 700;
-    letter-spacing: 1.5px;
+    letter-spacing: 3px;
     text-transform: uppercase;
-    opacity: 0.85;
-    text-align: left;
+    color: var(--acid);
+    border-bottom: 2px dashed rgba(216,240,33,0.35);
+    background: rgba(216,240,33,0.04);
   }
-  .masthead .album-no {
-    flex-shrink: 0;
-    font-family: "Courier New", monospace;
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    border: 1.5px solid var(--paper);
-    padding: 2px 7px;
-    border-radius: 2px;
+  .quote {
+    margin-top: 16px;
+    font-size: 10px;
+    font-style: italic;
+    letter-spacing: 1.5px;
+    color: rgba(236,229,211,0.5);
+  }
+
+  /* ---------- badge zone: dripping ball + bats ---------- */
+  .badge-zone { position: relative; width: 100%; height: 190px; margin-top: 14px; }
+  .splat-bg {
+    position: absolute; left: 50%; top: 46%;
+    width: 300px; height: 190px;
+    transform: translate(-50%, -50%) rotate(-8deg);
+    opacity: 0.55;
+  }
+  .ball {
+    position: absolute; left: 50%; top: 48%;
+    width: 150px; height: 168px;
+    transform: translate(-50%, -50%);
+    filter: drop-shadow(0 0 26px rgba(255,75,18,0.35));
+    animation: ballSway 6s ease-in-out infinite;
+  }
+  @keyframes ballSway {
+    0%, 100% { transform: translate(-50%, -50%) rotate(-2deg); }
+    50% { transform: translate(-50%, -50%) rotate(2.5deg); }
+  }
+  .bat { position: absolute; width: 40px; height: auto; opacity: 0.95; }
+  .bat path { fill: #060402; stroke: rgba(236,229,211,0.55); stroke-width: 1; }
+  .bat.b1 { left: 6%; top: 6%; transform: rotate(-14deg) scale(0.8); animation: flap 2.3s ease-in-out infinite; }
+  .bat.b2 { right: 8%; top: 12%; transform: rotate(10deg); animation: flap 1.9s ease-in-out infinite 0.4s; }
+  .bat.b3 { right: 20%; top: 68%; transform: rotate(18deg) scale(0.6); animation: flap 2.7s ease-in-out infinite 0.9s; }
+  .bat.b4 { left: 12%; top: 62%; transform: rotate(-6deg) scale(0.5); animation: flap 2.1s ease-in-out infinite 1.3s; }
+  @keyframes flap {
+    0%, 100% { transform: translateY(0) rotate(-12deg) scaleY(1); }
+    50% { transform: translateY(-7px) rotate(-8deg) scaleY(0.82); }
+  }
+
+  /* ---------- ransom title ---------- */
+  .title-wrap { margin-top: 4px; position: relative; }
+  .wk-line {
+    font-family: Impact, "Arial Black", sans-serif;
+    font-size: clamp(30px, 9vw, 42px);
+    letter-spacing: 10px;
+    color: var(--bone);
+    text-transform: uppercase;
+    transform: rotate(-3deg);
+  }
+  .wk-line .k { display: inline-block; transform: rotate(6deg) translateY(3px); color: var(--blood); }
+  h1 {
+    font-family: Impact, "Arial Black", sans-serif;
+    font-size: clamp(58px, 17.5vw, 88px);
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0;
+    margin-top: 2px;
     white-space: nowrap;
   }
-
-  /* ---------- badge ---------- */
-  .badge { width: 140px; height: auto; margin: 26px 0 4px; transform: rotate(-2deg); filter: drop-shadow(2px 3px 0 rgba(43,29,16,0.25)); }
-
-  /* ---------- title with misregistration ---------- */
-  .title-wrap { position: relative; margin-top: 6px; }
-  h1 {
-    font-family: "Arial Black", "Arial Rounded MT Bold", sans-serif;
-    font-size: clamp(52px, 15.5vw, 76px);
-    line-height: 0.9;
-    text-transform: uppercase;
-    letter-spacing: -1px;
-    color: var(--brown);
-    position: relative;
-    z-index: 3;
-  }
-  h1 .wk { color: var(--teal); display: block; font-size: 0.55em; letter-spacing: 8px; }
-  /* misregistered print plates */
-  .plate {
-    position: absolute; inset: 0;
-    font-family: "Arial Black", "Arial Rounded MT Bold", sans-serif;
-    font-size: clamp(52px, 15.5vw, 76px);
-    line-height: 0.9;
-    text-transform: uppercase;
-    letter-spacing: -1px;
-    pointer-events: none;
-    user-select: none;
-  }
-  .plate .wk { display: block; font-size: 0.55em; letter-spacing: 8px; }
-  .plate.magenta { color: var(--magenta); z-index: 1; opacity: 0.55; transform: translate(3px, 2px); animation: driftM 9s ease-in-out infinite; }
-  .plate.cyan { color: var(--cyan); z-index: 2; opacity: 0.5; transform: translate(-3px, -2px); animation: driftC 11s ease-in-out infinite; }
-  @keyframes driftM {
-    0%, 100% { transform: translate(3px, 2px); }
-    50% { transform: translate(5px, 3px) skewX(-1deg); }
-    70% { transform: translate(2px, 4px); }
-  }
-  @keyframes driftC {
-    0%, 100% { transform: translate(-3px, -2px); }
-    40% { transform: translate(-5px, -3px) skewX(1deg); }
-    75% { transform: translate(-2px, -4px); }
+  h1 span { display: inline-block; }
+  /* per-letter ransom jitter — deterministic chaos */
+  h1 .l1 { color: var(--bone);  transform: rotate(-6deg) translateY(2px); }
+  h1 .l2 { color: var(--acid);  transform: rotate(4deg)  translateY(-4px); }
+  h1 .l3 { color: var(--bone);  transform: rotate(-3deg) translateY(3px); }
+  h1 .l4 { color: var(--pink);  transform: rotate(5deg)  translateY(-2px); }
+  h1 .l5 { color: var(--blood); transform: rotate(-5deg) translateY(4px); }
+  h1 .l6 { color: var(--bone);  transform: rotate(3deg)  translateY(-3px); }
+  h1 .l7 { color: var(--acid);  transform: rotate(-4deg) translateY(2px); }
+  /* the whole word twitches now and then */
+  .twitch { animation: twitch 0.14s steps(2) 2; }
+  @keyframes twitch {
+    0% { transform: skewX(0); } 50% { transform: skewX(-3deg) translateX(3px); } 100% { transform: none; }
   }
 
   .subtitle {
-    margin-top: 12px;
-    font-family: "Courier New", monospace;
+    margin-top: 14px;
+    font-size: 11px;
     font-weight: 700;
-    font-size: 12px;
-    letter-spacing: 2px;
+    letter-spacing: 2.5px;
     text-transform: uppercase;
-    color: var(--brown);
+    color: rgba(236,229,211,0.85);
   }
-  .subtitle b { color: var(--orange); }
-  .edition {
+  .subtitle b { color: var(--acid); background: rgba(216,240,33,0.12); padding: 1px 5px; }
+
+  /* ---------- PRIVEKWIM stamp — the club, front and center ---------- */
+  .stamp {
+    margin-top: 22px;
     display: inline-block;
-    margin-top: 8px;
-    font-family: "Courier New", monospace;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 2px;
+    transform: rotate(-4deg);
+    border: 4px double var(--pink);
+    color: var(--pink);
+    padding: 10px 22px 8px;
+    position: relative;
     text-transform: uppercase;
-    color: var(--paper);
-    background: var(--teal);
-    padding: 3px 10px;
-    transform: rotate(-1.5deg);
-    box-shadow: 2px 2px 0 var(--brown);
+    box-shadow: 0 0 22px rgba(255,47,158,0.25), inset 0 0 14px rgba(255,47,158,0.12);
+    animation: stampPulse 4s ease-in-out infinite;
+  }
+  @keyframes stampPulse {
+    0%, 100% { box-shadow: 0 0 22px rgba(255,47,158,0.25), inset 0 0 14px rgba(255,47,158,0.12); }
+    50% { box-shadow: 0 0 34px rgba(255,47,158,0.45), inset 0 0 20px rgba(255,47,158,0.2); }
+  }
+  .stamp .club {
+    font-family: Impact, "Arial Black", sans-serif;
+    font-size: clamp(32px, 10vw, 44px);
+    letter-spacing: 3px;
+    line-height: 1;
+    display: block;
+  }
+  .stamp .ondertitel {
+    display: block;
+    font-family: "Courier New", monospace;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    margin-top: 5px;
+    color: rgba(255,47,158,0.85);
+  }
+  .stamp::after {
+    content: "ECHT";
+    position: absolute; top: -10px; right: -18px;
+    font-size: 9px; font-weight: 700; letter-spacing: 1px;
+    color: var(--acid);
+    border: 1.5px solid var(--acid);
+    padding: 2px 5px;
+    transform: rotate(12deg);
+    background: var(--void);
   }
 
-  /* ---------- section rule ---------- */
-  .rule {
-    width: 100%;
-    margin: 30px 0 18px;
-    border: none;
-    border-top: 3px dashed rgba(74,44,23,0.4);
+  /* ---------- divider: gaffer tape ---------- */
+  .tape {
+    width: 82%;
+    margin: 34px 0 22px;
+    height: 16px;
+    background: repeating-linear-gradient(-45deg, rgba(236,229,211,0.55) 0 8px, rgba(236,229,211,0.38) 8px 16px);
+    transform: rotate(-1.2deg);
     position: relative;
   }
-  .rule::after {
-    content: "✂";
-    position: absolute; left: 8px; top: -11px;
-    color: rgba(74,44,23,0.5);
-    font-size: 14px;
-    background: var(--paper);
-    padding: 0 4px;
+  .tape::after {
+    content: "BEWIJSMATERIAAL — NIET VERWIJDEREN";
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: 700; letter-spacing: 2px;
+    color: rgba(13,10,7,0.85);
+    text-transform: uppercase;
   }
 
   .select-label {
-    font-family: "Courier New", monospace;
-    font-weight: 700;
     font-size: 12px;
+    font-weight: 700;
     letter-spacing: 2px;
     text-transform: uppercase;
-    color: var(--brown);
-    margin-bottom: 16px;
+    color: var(--bone);
+    margin-bottom: 4px;
+  }
+  .select-sub {
+    font-size: 10px;
+    font-style: italic;
+    color: rgba(236,229,211,0.45);
+    margin-bottom: 18px;
+    letter-spacing: 1px;
   }
 
-  /* ---------- sticker grid ---------- */
-  .stickers {
+  /* ---------- name scraps ---------- */
+  .names {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 14px;
+    gap: 14px 12px;
     width: 100%;
   }
-  .sticker {
+  .scrap {
     position: relative;
-    background: var(--paper-dark);
-    border: 2px dashed rgba(74,44,23,0.5);
-    border-radius: 3px;
-    padding: 14px 8px 10px;
-    cursor: pointer;
-    transition: transform 0.15s ease;
-    -webkit-tap-highlight-color: transparent;
-    font-family: inherit;
-    text-align: center;
-  }
-  .sticker:active { transform: scale(0.96); }
-  .sticker .no {
-    position: absolute; top: 5px; left: 7px;
-    font-family: "Courier New", monospace;
-    font-size: 9px;
-    font-weight: 700;
-    color: rgba(74,44,23,0.6);
-  }
-  .sticker .silhouette { width: 52px; height: 52px; margin: 0 auto 8px; display: block; opacity: 0.35; }
-  .sticker .naam {
-    font-size: 15px;
-    font-weight: 900;
-    letter-spacing: 1.5px;
+    font-family: Impact, "Arial Black", sans-serif;
+    font-size: 19px;
+    letter-spacing: 2px;
     text-transform: uppercase;
-    color: rgba(43,29,16,0.55);
+    color: var(--ink);
+    background: var(--bone);
+    border: none;
+    padding: 16px 8px 13px;
+    cursor: pointer;
+    clip-path: polygon(2% 8%, 12% 1%, 55% 4%, 90% 0%, 99% 12%, 96% 55%, 100% 88%, 88% 99%, 45% 95%, 10% 100%, 0% 90%, 3% 45%);
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.12s ease;
   }
-  .sticker .status {
+  .scrap:nth-child(odd)  { transform: rotate(-2deg); }
+  .scrap:nth-child(even) { transform: rotate(1.6deg); }
+  .scrap:nth-child(3n)   { transform: rotate(2.4deg); }
+  .scrap:active { transform: scale(0.95); }
+  .scrap .ex {
     display: block;
     font-family: "Courier New", monospace;
-    font-size: 8.5px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: rgba(74,44,23,0.5);
-    margin-top: 5px;
-  }
-  .sticker .naam { display: block; }
-  /* placed sticker */
-  .sticker.selected {
-    background: linear-gradient(160deg, #fff8ea 0%, #f5e9cf 60%, #eadbb8 100%);
-    border: 3px solid var(--brown);
-    transform: rotate(-2deg) scale(1.03);
-    box-shadow: 3px 4px 0 rgba(43,29,16,0.3), inset 0 0 0 3px var(--orange);
-  }
-  .sticker.selected .silhouette { opacity: 1; }
-  .sticker.selected .silhouette .head { fill: var(--teal); }
-  .sticker.selected .silhouette .shirt { fill: var(--orange); }
-  .sticker.selected .naam { color: var(--brown); }
-  .sticker.selected .status { color: var(--orange); font-weight: 700; }
-  .sticker.selected::after {
-    content: "GEPLAKT!";
-    position: absolute; top: -9px; right: -7px;
-    background: var(--magenta);
-    color: #fff;
-    font-family: "Courier New", monospace;
-    font-size: 9px;
+    font-size: 8px;
     font-weight: 700;
-    letter-spacing: 1px;
-    padding: 2px 6px;
-    transform: rotate(6deg);
-    box-shadow: 1px 2px 0 rgba(43,29,16,0.4);
+    letter-spacing: 1.5px;
+    color: rgba(26,20,12,0.5);
+    margin-bottom: 4px;
   }
+  /* selected: circled in pink marker */
+  .scrap.selected {
+    background: #fff8e6;
+    z-index: 2;
+  }
+  .scrap.selected::before {
+    content: "";
+    position: absolute; inset: -9px -7px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 64' preserveAspectRatio='none'%3E%3Cpath d='M14 32 C 10 14, 44 5, 68 6 C 96 7, 122 13, 119 32 C 116 50, 88 60, 60 58 C 32 56, 17 48, 14 34' fill='none' stroke='%23ff2f9e' stroke-width='5' stroke-linecap='round' opacity='0.9'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+    pointer-events: none;
+  }
+  .scrap.selected .ex { color: var(--pink); }
 
   /* ---------- confirm ---------- */
   .confirm-btn {
-    margin-top: 28px;
+    margin-top: 30px;
     width: 100%;
-    font-family: "Arial Black", sans-serif;
-    font-size: 20px;
-    letter-spacing: 2px;
+    font-family: Impact, "Arial Black", sans-serif;
+    font-size: 21px;
+    letter-spacing: 3px;
     text-transform: uppercase;
-    color: var(--paper);
-    background: var(--orange);
-    border: 3px solid var(--brown);
-    border-radius: 4px;
+    color: var(--void);
+    background: var(--blood);
+    border: 3px solid var(--bone);
     padding: 16px;
     cursor: pointer;
-    box-shadow: 4px 4px 0 var(--brown);
-    opacity: 0.3;
+    transform: rotate(-0.8deg);
+    box-shadow: 5px 5px 0 rgba(216,240,33,0.85);
+    opacity: 0.25;
     pointer-events: none;
-    transform: rotate(-0.5deg);
     transition: opacity 0.25s ease, transform 0.1s ease, box-shadow 0.1s ease;
   }
   .confirm-btn.armed { opacity: 1; pointer-events: auto; }
-  .confirm-btn:active { transform: rotate(-0.5deg) translate(3px, 3px); box-shadow: 1px 1px 0 var(--brown); }
+  .confirm-btn:active { transform: rotate(-0.8deg) translate(4px, 4px); box-shadow: 1px 1px 0 rgba(216,240,33,0.85); }
 
-  /* ---------- album small print ---------- */
+  /* ---------- typewriter small print ---------- */
   .smallprint {
-    margin-top: 22px;
-    font-family: "Courier New", monospace;
-    font-size: 9px;
+    margin-top: 24px;
+    font-size: 9.5px;
     font-weight: 700;
     letter-spacing: 0.5px;
-    line-height: 1.7;
-    color: rgba(74,44,23,0.55);
+    line-height: 1.8;
+    color: rgba(236,229,211,0.42);
     text-transform: uppercase;
   }
+  .smallprint em { color: rgba(255,47,158,0.6); font-style: normal; }
+
   .footer-strip {
-    margin-top: 26px;
-    width: calc(100% + 36px);
-    margin-left: -18px; margin-right: -18px;
-    background: var(--brown);
-    color: var(--paper-dark);
-    font-family: "Courier New", monospace;
+    margin-top: 30px;
+    width: calc(100% + 40px);
+    margin-left: -20px; margin-right: -20px;
+    border-top: 2px dashed rgba(236,229,211,0.2);
+    color: rgba(236,229,211,0.35);
     font-size: 9px;
     font-weight: 700;
-    letter-spacing: 1.5px;
+    letter-spacing: 2px;
     text-transform: uppercase;
-    padding: 8px 18px;
-    border-top: 3px solid var(--teal);
+    padding: 12px 20px 0;
   }
 </style>
 </head>
 <body>
 
 <div class="page">
-  <div class="masthead">
-    <div class="fed">Fed. voor Willekeurige Zaken<br>Afd. Loting</div>
-    <span class="album-no">Album № 1</span>
-  </div>
+  <div class="presenteert">★ Privekwim presenteert ★</div>
 
-  <!-- Dark horse badge: rearing black horse in retro print badge -->
-  <svg class="badge" viewBox="0 0 150 160" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <!-- misregistered plate copies -->
-    <g transform="translate(2.5,1.5)" opacity="0.5">
-      <path d="M75 6 L 138 26 L 138 88 Q 138 128 75 152 Q 12 128 12 88 L 12 26 Z" fill="none" stroke="#e02690" stroke-width="3"/>
-    </g>
-    <g transform="translate(-2.5,-1.5)" opacity="0.45">
-      <path d="M75 6 L 138 26 L 138 88 Q 138 128 75 152 Q 12 128 12 88 L 12 26 Z" fill="none" stroke="#00b3c8" stroke-width="3"/>
-    </g>
-    <!-- shield -->
-    <path d="M75 6 L 138 26 L 138 88 Q 138 128 75 152 Q 12 128 12 88 L 12 26 Z" fill="#f5ecd6" stroke="#4a2c17" stroke-width="4"/>
-    <path d="M75 14 L 130 31 L 130 87 Q 130 121 75 143 Q 20 121 20 87 L 20 31 Z" fill="#c8501e"/>
-    <!-- sun rays behind horse -->
-    <g stroke="#c99a2e" stroke-width="3" opacity="0.9">
-      <path d="M75 78 L 75 34"/><path d="M75 78 L 104 44"/><path d="M75 78 L 46 44"/>
-      <path d="M75 78 L 118 66"/><path d="M75 78 L 32 66"/>
-    </g>
-    <!-- het zwarte paard: chess knight silhouette -->
-    <g fill="#2b1d10">
-      <!-- plinth -->
-      <path d="M50 118 L 100 118 L 97 108 L 53 108 Z"/>
-      <!-- knight body & head -->
-      <path d="M57 108
-               C 57 96, 62 88, 70 82
-               C 63 84, 55 82, 51 76
-               C 49 73, 50 70, 53 69
-               C 57 68, 60 65, 62 61
-               C 65 55, 69 50, 75 47
-               L 73 38
-               L 80 44
-               C 82 43, 84 43, 86 44
-               L 88 38
-               L 92 46
-               C 100 52, 104 62, 104 72
-               C 104 86, 99 98, 96 108 Z"/>
-      <!-- eye -->
-      <circle cx="84" cy="53" r="2.2" fill="#f5ecd6"/>
-    </g>
-    <!-- banner -->
-    <path d="M14 124 L 136 124 L 130 139 L 20 139 Z" fill="#00707a" stroke="#4a2c17" stroke-width="2.5"/>
-    <text x="75" y="135" text-anchor="middle" font-family="Courier New, monospace" font-weight="bold" font-size="8.5" letter-spacing="1" fill="#f0e6cd">HET ZWARTE PAARD</text>
-  </svg>
+  <div class="quote">"Te gek om te leven, te zeldzaam om te sterven."<br>— aantekening in de kantlijn, 04:13 uur</div>
+
+  <!-- badge zone: ink splat, dripping football, bats -->
+  <div class="badge-zone">
+    <!-- ink splat behind -->
+    <svg class="splat-bg" viewBox="0 0 300 190" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path fill="#ff4b12" opacity="0.28" d="M150 30 C 190 18, 235 32, 248 62 C 268 60, 284 74, 276 92 C 292 104, 284 126, 262 128 C 258 152, 224 164, 196 154 C 178 176, 136 174, 120 152 C 84 166, 44 150, 44 122 C 20 116, 14 90, 36 78 C 26 54, 52 34, 82 42 C 96 22, 128 18, 150 30 Z"/>
+      <circle cx="270" cy="44" r="7" fill="#ff2f9e" opacity="0.5"/>
+      <circle cx="286" cy="66" r="3.5" fill="#ff2f9e" opacity="0.45"/>
+      <circle cx="30" cy="150" r="5" fill="#d8f021" opacity="0.4"/>
+      <circle cx="16" cy="132" r="3" fill="#d8f021" opacity="0.35"/>
+    </svg>
+
+    <!-- hand-drawn dripping football -->
+    <svg class="ball" viewBox="0 0 150 168" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <!-- wobbly outline, double-struck like a nervous pen -->
+      <path d="M75 12 C 106 10, 132 36, 133 68 C 134 100, 110 128, 76 130 C 44 132, 18 104, 17 70 C 16 38, 44 14, 75 12 Z"
+            fill="#ded5bf" stroke="#ece5d3" stroke-width="3.5"/>
+      <path d="M75 8 C 109 7, 137 35, 137 69 C 137 103, 109 133, 74 134 C 41 135, 13 105, 13 69 C 13 36, 42 9, 75 8 Z"
+            fill="none" stroke="#ece5d3" stroke-width="1.2" opacity="0.55"/>
+      <!-- wonky black pentagon panels, classic ball gone wrong -->
+      <path d="M75 50 L 94 62 L 88 84 L 62 84 L 56 62 Z" fill="#12100c"/>
+      <path d="M40 34 L 58 28 L 66 42 L 54 54 L 38 48 Z" fill="#12100c"/>
+      <path d="M96 26 L 112 36 L 108 52 L 92 50 L 88 36 Z" fill="#12100c"/>
+      <path d="M28 78 L 44 74 L 50 90 L 40 102 L 26 94 Z" fill="#12100c"/>
+      <path d="M104 82 L 120 76 L 128 90 L 118 102 L 104 96 Z" fill="#12100c"/>
+      <path d="M60 106 L 78 102 L 86 116 L 72 126 L 58 118 Z" fill="#12100c"/>
+      <!-- crazed bloodshot eye on the center panel -->
+      <circle cx="75" cy="67" r="9.5" fill="#ece5d3"/>
+      <circle cx="76" cy="67" r="5" fill="#ff2f9e"/>
+      <circle cx="76" cy="67" r="2.4" fill="#12100c"/>
+      <path d="M67 61 L 71 64 M84 62 L 80 64 M67 73 L 71 71" stroke="#ff4b12" stroke-width="1.2" fill="none"/>
+      <!-- drips -->
+      <path d="M52 128 C 51 140, 53 148, 52 158 C 51.5 163, 48.5 163, 48 158 C 47.5 150, 49 140, 49 129 Z" fill="#ff2f9e"/>
+      <path d="M78 132 C 78 141, 79 146, 78 152 C 77.5 156, 74.5 156, 74 152 C 73.5 147, 75 140, 75 132 Z" fill="#ece5d3" opacity="0.8"/>
+      <path d="M104 124 C 104 134, 106 142, 105 150 C 104.5 154.5, 101.5 154.5, 101 150 C 100.5 143, 101 133, 101 125 Z" fill="#d8f021" opacity="0.9"/>
+    </svg>
+
+    <!-- bats -->
+    <svg class="bat b1" viewBox="0 0 36 16" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M18 9 C 15 3, 8 1, 1 4 C 6 6, 8 8, 7 12 C 11 10, 14 11, 16 14 C 17 12, 19 12, 20 14 C 22 11, 25 10, 29 12 C 28 8, 30 6, 35 4 C 28 1, 21 3, 18 9 Z"/></svg>
+    <svg class="bat b2" viewBox="0 0 36 16" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M18 9 C 15 3, 8 1, 1 4 C 6 6, 8 8, 7 12 C 11 10, 14 11, 16 14 C 17 12, 19 12, 20 14 C 22 11, 25 10, 29 12 C 28 8, 30 6, 35 4 C 28 1, 21 3, 18 9 Z"/></svg>
+    <svg class="bat b3" viewBox="0 0 36 16" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M18 9 C 15 3, 8 1, 1 4 C 6 6, 8 8, 7 12 C 11 10, 14 11, 16 14 C 17 12, 19 12, 20 14 C 22 11, 25 10, 29 12 C 28 8, 30 6, 35 4 C 28 1, 21 3, 18 9 Z"/></svg>
+    <svg class="bat b4" viewBox="0 0 36 16" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M18 9 C 15 3, 8 1, 1 4 C 6 6, 8 8, 7 12 C 11 10, 14 11, 16 14 C 17 12, 19 12, 20 14 C 22 11, 25 10, 29 12 C 28 8, 30 6, 35 4 C 28 1, 21 3, 18 9 Z"/></svg>
+  </div>
 
   <div class="title-wrap">
-    <div class="plate magenta" aria-hidden="true"><span class="wk">WK</span>Waanzin</div>
-    <div class="plate cyan" aria-hidden="true"><span class="wk">WK</span>Waanzin</div>
-    <h1><span class="wk">WK</span>Waanzin</h1>
+    <div class="wk-line">W<span class="k">K</span></div>
+    <h1 id="title"><span class="l1">W</span><span class="l2">A</span><span class="l3">A</span><span class="l4">N</span><span class="l5">Z</span><span class="l6">I</span><span class="l7">N</span></h1>
   </div>
 
-  <div class="subtitle">Officieel stickeralbum &amp; <b>willekeur selector</b></div>
-  <div class="edition">Privekwim Editie · MMXXVI</div>
+  <div class="subtitle">De officiële <b>willekeur selector</b></div>
 
-  <hr class="rule">
-
-  <div class="select-label">Ontbrekende stickers — plak jezelf in het album</div>
-
-  <div class="stickers" id="stickers">
-    <!-- sticker buttons injected by JS -->
+  <div class="stamp">
+    <span class="club">Privekwim</span>
+    <span class="ondertitel">Geen leden · Geen uitweg · Editie MMXXVI</span>
   </div>
 
-  <button class="confirm-btn" id="confirm">Plak &amp; start loting</button>
+  <div class="tape"></div>
+
+  <div class="select-label">Wie ben jij, in godsnaam?</div>
+  <div class="select-sub">wijs jezelf aan — de commissie kijkt mee</div>
+
+  <div class="names" id="names"></div>
+
+  <button class="confirm-btn" id="confirm">Bevestig — geen weg terug</button>
 
   <div class="smallprint">
-    Ruilen van teamgenoten niet toegestaan, ook niet tegen dubbele stickers.
-    De uitslag van de loting is bindend, onherroepelijk en volstrekt willekeurig
-    (op het deterministische gedeelte na). Aan deelname zijn risico's verbonden.
+    De redactie aanvaardt geen enkele aansprakelijkheid voor wat volgt.
+    Onze advocaat is aanwezig, doch <em>Samoaans en onbereikbaar</em>.
+    Wie eenmaal is ingeloot, blijft ingeloot. Koop het kaartje, neem de rit.
   </div>
 
   <div class="footer-strip">
-    Gedrukt op de rand van de waanzin · Made in Kwim · Kleurafwijkingen zijn geen drukfout
+    Getypt om 04:13 uur · Kamer 1850 · De vleermuizen zijn niet echt
   </div>
 </div>
 
@@ -400,30 +411,34 @@
   // placeholder players — real names + team pairs to be filled in
   const SPELERS = ["Speler 1","Speler 2","Speler 3","Speler 4","Speler 5","Speler 6","Speler 7","Speler 8"];
 
-  const silhouette = `
-    <svg class="silhouette" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <circle class="head" cx="30" cy="20" r="12" fill="#4a2c17"/>
-      <path class="shirt" d="M10 58 C 10 42, 18 36, 30 36 C 42 36, 50 42, 50 58 Z" fill="#4a2c17"/>
-    </svg>`;
-
-  const grid = document.getElementById('stickers');
+  const grid = document.getElementById('names');
   const confirmBtn = document.getElementById('confirm');
 
   SPELERS.forEach((naam, i) => {
     const b = document.createElement('button');
-    b.className = 'sticker';
-    b.innerHTML = `<span class="no">№ ${String(i+1).padStart(3,'0')}</span>${silhouette}<span class="naam">${naam}</span><span class="status">ontbreekt</span>`;
+    b.className = 'scrap';
+    b.innerHTML = `<span class="ex">bewijsstuk ${String.fromCharCode(65+i)}</span>${naam}`;
     b.addEventListener('click', () => {
-      document.querySelectorAll('.sticker').forEach(s => {
+      document.querySelectorAll('.scrap').forEach((s, j) => {
         s.classList.remove('selected');
-        s.querySelector('.status').textContent = 'ontbreekt';
+        s.querySelector('.ex').textContent = `bewijsstuk ${String.fromCharCode(65+j)}`;
       });
       b.classList.add('selected');
-      b.querySelector('.status').textContent = 'dat ben ik';
+      b.querySelector('.ex').textContent = '✗ deze gek ✗';
       confirmBtn.classList.add('armed');
     });
     grid.appendChild(b);
   });
+
+  // the word twitches now and then — it knows
+  const title = document.getElementById('title');
+  (function scheduleTwitch() {
+    setTimeout(() => {
+      title.classList.add('twitch');
+      setTimeout(() => title.classList.remove('twitch'), 350);
+      scheduleTwitch();
+    }, 2800 + Math.random() * 4200);
+  })();
 </script>
 </body>
 </html>

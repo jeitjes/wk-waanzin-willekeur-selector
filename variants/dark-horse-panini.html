@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>WK WAANZIN — Officieel Stickeralbum & Willekeur Selector</title>
+<style>
+  :root {
+    --paper: #f0e6cd;
+    --paper-dark: #e3d5b3;
+    --ink: #2b1d10;
+    --brown: #4a2c17;
+    --orange: #c8501e;
+    --orange-bright: #e8622a;
+    --teal: #00707a;
+    --gold: #c99a2e;
+    --magenta: #e02690;
+    --cyan: #00b3c8;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Arial Rounded MT Bold", "Arial Black", "Helvetica Neue", Arial, sans-serif;
+    background:
+      radial-gradient(circle at 20% 10%, rgba(200,80,30,0.08), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(0,112,122,0.08), transparent 40%),
+      var(--paper);
+    color: var(--ink);
+    min-height: 100%;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  /* aged paper grain + halftone dots */
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    background-image: radial-gradient(rgba(43,29,16,0.10) 1px, transparent 1.4px);
+    background-size: 7px 7px;
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0.5;
+  }
+  body::after {
+    content: "";
+    position: fixed; inset: -50%;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  .page {
+    width: 100%;
+    max-width: 480px;
+    padding: 0 18px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ---------- album masthead ---------- */
+  .masthead {
+    width: 100%;
+    background: var(--orange);
+    background: linear-gradient(180deg, var(--orange-bright), var(--orange));
+    color: var(--paper);
+    margin: 0 -18px;
+    width: calc(100% + 36px);
+    padding: 12px 18px 10px;
+    border-bottom: 5px solid var(--brown);
+    box-shadow: 0 3px 0 var(--teal);
+  }
+  .masthead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .masthead .fed {
+    font-family: "Courier New", monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    opacity: 0.85;
+    text-align: left;
+  }
+  .masthead .album-no {
+    flex-shrink: 0;
+    font-family: "Courier New", monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    border: 1.5px solid var(--paper);
+    padding: 2px 7px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  /* ---------- badge ---------- */
+  .badge { width: 140px; height: auto; margin: 26px 0 4px; transform: rotate(-2deg); filter: drop-shadow(2px 3px 0 rgba(43,29,16,0.25)); }
+
+  /* ---------- title with misregistration ---------- */
+  .title-wrap { position: relative; margin-top: 6px; }
+  h1 {
+    font-family: "Arial Black", "Arial Rounded MT Bold", sans-serif;
+    font-size: clamp(52px, 15.5vw, 76px);
+    line-height: 0.9;
+    text-transform: uppercase;
+    letter-spacing: -1px;
+    color: var(--brown);
+    position: relative;
+    z-index: 3;
+  }
+  h1 .wk { color: var(--teal); display: block; font-size: 0.55em; letter-spacing: 8px; }
+  /* misregistered print plates */
+  .plate {
+    position: absolute; inset: 0;
+    font-family: "Arial Black", "Arial Rounded MT Bold", sans-serif;
+    font-size: clamp(52px, 15.5vw, 76px);
+    line-height: 0.9;
+    text-transform: uppercase;
+    letter-spacing: -1px;
+    pointer-events: none;
+    user-select: none;
+  }
+  .plate .wk { display: block; font-size: 0.55em; letter-spacing: 8px; }
+  .plate.magenta { color: var(--magenta); z-index: 1; opacity: 0.55; transform: translate(3px, 2px); animation: driftM 9s ease-in-out infinite; }
+  .plate.cyan { color: var(--cyan); z-index: 2; opacity: 0.5; transform: translate(-3px, -2px); animation: driftC 11s ease-in-out infinite; }
+  @keyframes driftM {
+    0%, 100% { transform: translate(3px, 2px); }
+    50% { transform: translate(5px, 3px) skewX(-1deg); }
+    70% { transform: translate(2px, 4px); }
+  }
+  @keyframes driftC {
+    0%, 100% { transform: translate(-3px, -2px); }
+    40% { transform: translate(-5px, -3px) skewX(1deg); }
+    75% { transform: translate(-2px, -4px); }
+  }
+
+  .subtitle {
+    margin-top: 12px;
+    font-family: "Courier New", monospace;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--brown);
+  }
+  .subtitle b { color: var(--orange); }
+  .edition {
+    display: inline-block;
+    margin-top: 8px;
+    font-family: "Courier New", monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--paper);
+    background: var(--teal);
+    padding: 3px 10px;
+    transform: rotate(-1.5deg);
+    box-shadow: 2px 2px 0 var(--brown);
+  }
+
+  /* ---------- section rule ---------- */
+  .rule {
+    width: 100%;
+    margin: 30px 0 18px;
+    border: none;
+    border-top: 3px dashed rgba(74,44,23,0.4);
+    position: relative;
+  }
+  .rule::after {
+    content: "✂";
+    position: absolute; left: 8px; top: -11px;
+    color: rgba(74,44,23,0.5);
+    font-size: 14px;
+    background: var(--paper);
+    padding: 0 4px;
+  }
+
+  .select-label {
+    font-family: "Courier New", monospace;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--brown);
+    margin-bottom: 16px;
+  }
+
+  /* ---------- sticker grid ---------- */
+  .stickers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    width: 100%;
+  }
+  .sticker {
+    position: relative;
+    background: var(--paper-dark);
+    border: 2px dashed rgba(74,44,23,0.5);
+    border-radius: 3px;
+    padding: 14px 8px 10px;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+    font-family: inherit;
+    text-align: center;
+  }
+  .sticker:active { transform: scale(0.96); }
+  .sticker .no {
+    position: absolute; top: 5px; left: 7px;
+    font-family: "Courier New", monospace;
+    font-size: 9px;
+    font-weight: 700;
+    color: rgba(74,44,23,0.6);
+  }
+  .sticker .silhouette { width: 52px; height: 52px; margin: 0 auto 8px; display: block; opacity: 0.35; }
+  .sticker .naam {
+    font-size: 15px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(43,29,16,0.55);
+  }
+  .sticker .status {
+    display: block;
+    font-family: "Courier New", monospace;
+    font-size: 8.5px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: rgba(74,44,23,0.5);
+    margin-top: 5px;
+  }
+  .sticker .naam { display: block; }
+  /* placed sticker */
+  .sticker.selected {
+    background: linear-gradient(160deg, #fff8ea 0%, #f5e9cf 60%, #eadbb8 100%);
+    border: 3px solid var(--brown);
+    transform: rotate(-2deg) scale(1.03);
+    box-shadow: 3px 4px 0 rgba(43,29,16,0.3), inset 0 0 0 3px var(--orange);
+  }
+  .sticker.selected .silhouette { opacity: 1; }
+  .sticker.selected .silhouette .head { fill: var(--teal); }
+  .sticker.selected .silhouette .shirt { fill: var(--orange); }
+  .sticker.selected .naam { color: var(--brown); }
+  .sticker.selected .status { color: var(--orange); font-weight: 700; }
+  .sticker.selected::after {
+    content: "GEPLAKT!";
+    position: absolute; top: -9px; right: -7px;
+    background: var(--magenta);
+    color: #fff;
+    font-family: "Courier New", monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 2px 6px;
+    transform: rotate(6deg);
+    box-shadow: 1px 2px 0 rgba(43,29,16,0.4);
+  }
+
+  /* ---------- confirm ---------- */
+  .confirm-btn {
+    margin-top: 28px;
+    width: 100%;
+    font-family: "Arial Black", sans-serif;
+    font-size: 20px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--paper);
+    background: var(--orange);
+    border: 3px solid var(--brown);
+    border-radius: 4px;
+    padding: 16px;
+    cursor: pointer;
+    box-shadow: 4px 4px 0 var(--brown);
+    opacity: 0.3;
+    pointer-events: none;
+    transform: rotate(-0.5deg);
+    transition: opacity 0.25s ease, transform 0.1s ease, box-shadow 0.1s ease;
+  }
+  .confirm-btn.armed { opacity: 1; pointer-events: auto; }
+  .confirm-btn:active { transform: rotate(-0.5deg) translate(3px, 3px); box-shadow: 1px 1px 0 var(--brown); }
+
+  /* ---------- album small print ---------- */
+  .smallprint {
+    margin-top: 22px;
+    font-family: "Courier New", monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    line-height: 1.7;
+    color: rgba(74,44,23,0.55);
+    text-transform: uppercase;
+  }
+  .footer-strip {
+    margin-top: 26px;
+    width: calc(100% + 36px);
+    margin-left: -18px; margin-right: -18px;
+    background: var(--brown);
+    color: var(--paper-dark);
+    font-family: "Courier New", monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 8px 18px;
+    border-top: 3px solid var(--teal);
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="masthead">
+    <div class="fed">Fed. voor Willekeurige Zaken<br>Afd. Loting</div>
+    <span class="album-no">Album № 1</span>
+  </div>
+
+  <!-- Dark horse badge: rearing black horse in retro print badge -->
+  <svg class="badge" viewBox="0 0 150 160" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <!-- misregistered plate copies -->
+    <g transform="translate(2.5,1.5)" opacity="0.5">
+      <path d="M75 6 L 138 26 L 138 88 Q 138 128 75 152 Q 12 128 12 88 L 12 26 Z" fill="none" stroke="#e02690" stroke-width="3"/>
+    </g>
+    <g transform="translate(-2.5,-1.5)" opacity="0.45">
+      <path d="M75 6 L 138 26 L 138 88 Q 138 128 75 152 Q 12 128 12 88 L 12 26 Z" fill="none" stroke="#00b3c8" stroke-width="3"/>
+    </g>
+    <!-- shield -->
+    <path d="M75 6 L 138 26 L 138 88 Q 138 128 75 152 Q 12 128 12 88 L 12 26 Z" fill="#f5ecd6" stroke="#4a2c17" stroke-width="4"/>
+    <path d="M75 14 L 130 31 L 130 87 Q 130 121 75 143 Q 20 121 20 87 L 20 31 Z" fill="#c8501e"/>
+    <!-- sun rays behind horse -->
+    <g stroke="#c99a2e" stroke-width="3" opacity="0.9">
+      <path d="M75 78 L 75 34"/><path d="M75 78 L 104 44"/><path d="M75 78 L 46 44"/>
+      <path d="M75 78 L 118 66"/><path d="M75 78 L 32 66"/>
+    </g>
+    <!-- het zwarte paard: chess knight silhouette -->
+    <g fill="#2b1d10">
+      <!-- plinth -->
+      <path d="M50 118 L 100 118 L 97 108 L 53 108 Z"/>
+      <!-- knight body & head -->
+      <path d="M57 108
+               C 57 96, 62 88, 70 82
+               C 63 84, 55 82, 51 76
+               C 49 73, 50 70, 53 69
+               C 57 68, 60 65, 62 61
+               C 65 55, 69 50, 75 47
+               L 73 38
+               L 80 44
+               C 82 43, 84 43, 86 44
+               L 88 38
+               L 92 46
+               C 100 52, 104 62, 104 72
+               C 104 86, 99 98, 96 108 Z"/>
+      <!-- eye -->
+      <circle cx="84" cy="53" r="2.2" fill="#f5ecd6"/>
+    </g>
+    <!-- banner -->
+    <path d="M14 124 L 136 124 L 130 139 L 20 139 Z" fill="#00707a" stroke="#4a2c17" stroke-width="2.5"/>
+    <text x="75" y="135" text-anchor="middle" font-family="Courier New, monospace" font-weight="bold" font-size="8.5" letter-spacing="1" fill="#f0e6cd">HET ZWARTE PAARD</text>
+  </svg>
+
+  <div class="title-wrap">
+    <div class="plate magenta" aria-hidden="true"><span class="wk">WK</span>Waanzin</div>
+    <div class="plate cyan" aria-hidden="true"><span class="wk">WK</span>Waanzin</div>
+    <h1><span class="wk">WK</span>Waanzin</h1>
+  </div>
+
+  <div class="subtitle">Officieel stickeralbum &amp; <b>willekeur selector</b></div>
+  <div class="edition">Privekwim Editie · MMXXVI</div>
+
+  <hr class="rule">
+
+  <div class="select-label">Ontbrekende stickers — plak jezelf in het album</div>
+
+  <div class="stickers" id="stickers">
+    <!-- sticker buttons injected by JS -->
+  </div>
+
+  <button class="confirm-btn" id="confirm">Plak &amp; start loting</button>
+
+  <div class="smallprint">
+    Ruilen van teamgenoten niet toegestaan, ook niet tegen dubbele stickers.
+    De uitslag van de loting is bindend, onherroepelijk en volstrekt willekeurig
+    (op het deterministische gedeelte na). Aan deelname zijn risico's verbonden.
+  </div>
+
+  <div class="footer-strip">
+    Gedrukt op de rand van de waanzin · Made in Kwim · Kleurafwijkingen zijn geen drukfout
+  </div>
+</div>
+
+<script>
+  // placeholder players — real names + team pairs to be filled in
+  const SPELERS = ["Speler 1","Speler 2","Speler 3","Speler 4","Speler 5","Speler 6","Speler 7","Speler 8"];
+
+  const silhouette = `
+    <svg class="silhouette" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle class="head" cx="30" cy="20" r="12" fill="#4a2c17"/>
+      <path class="shirt" d="M10 58 C 10 42, 18 36, 30 36 C 42 36, 50 42, 50 58 Z" fill="#4a2c17"/>
+    </svg>`;
+
+  const grid = document.getElementById('stickers');
+  const confirmBtn = document.getElementById('confirm');
+
+  SPELERS.forEach((naam, i) => {
+    const b = document.createElement('button');
+    b.className = 'sticker';
+    b.innerHTML = `<span class="no">№ ${String(i+1).padStart(3,'0')}</span>${silhouette}<span class="naam">${naam}</span><span class="status">ontbreekt</span>`;
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.sticker').forEach(s => {
+        s.classList.remove('selected');
+        s.querySelector('.status').textContent = 'ontbreekt';
+      });
+      b.classList.add('selected');
+      b.querySelector('.status').textContent = 'dat ben ik';
+      confirmBtn.classList.add('armed');
+    });
+    grid.appendChild(b);
+  });
+</script>
+</body>
+</html>

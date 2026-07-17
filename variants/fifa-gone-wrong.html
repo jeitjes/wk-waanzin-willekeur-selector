@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>WK WAANZIN™ — Officiële Willekeur Selector</title>
+<style>
+  :root {
+    --navy: #0a1030;
+    --navy-deep: #060a1e;
+    --gold: #d4af37;
+    --gold-bright: #ffd75e;
+    --white: #f4f2ec;
+    --red: #e03131;
+    --teal: #1fd4c0;
+    --magenta: #ff3df0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+    background: radial-gradient(ellipse 120% 80% at 50% -10%, #1a2455 0%, var(--navy) 45%, var(--navy-deep) 100%);
+    color: var(--white);
+    min-height: 100%;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  /* subtle animated grain */
+  body::after {
+    content: "";
+    position: fixed; inset: -50%;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+    pointer-events: none;
+    animation: grain 0.6s steps(4) infinite;
+    z-index: 5;
+  }
+  @keyframes grain {
+    0% { transform: translate(0,0); } 25% { transform: translate(-2%,1%); }
+    50% { transform: translate(1%,-2%); } 75% { transform: translate(-1%,2%); } 100% { transform: translate(2%,-1%); }
+  }
+
+  .page {
+    width: 100%;
+    max-width: 480px;
+    padding: 28px 22px 90px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ---------- official header strip ---------- */
+  .fed-strip {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(244,242,236,0.55);
+    border-top: 1px solid rgba(212,175,55,0.4);
+    border-bottom: 1px solid rgba(212,175,55,0.4);
+    padding: 5px 14px;
+    margin-bottom: 26px;
+    white-space: nowrap;
+  }
+
+  /* ---------- crest ---------- */
+  .crest { width: 150px; height: auto; margin-bottom: 4px; filter: drop-shadow(0 6px 24px rgba(212,175,55,0.25)); }
+  .crest .eye-iris { animation: iris 5s ease-in-out infinite; transform-origin: 75px 74px; }
+  @keyframes iris {
+    0%, 42%, 100% { transform: scale(1); }
+    46%, 54% { transform: scale(0.55); }
+    58% { transform: scale(1); }
+  }
+
+  .stars { font-size: 13px; color: var(--gold); letter-spacing: 6px; margin-bottom: 10px; }
+  .stars .odd { display: inline-block; animation: starTilt 7s ease-in-out infinite; }
+  @keyframes starTilt {
+    0%, 80%, 100% { transform: rotate(0deg); }
+    85%, 95% { transform: rotate(160deg) translateY(1px); }
+  }
+
+  /* ---------- title ---------- */
+  h1 {
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: clamp(56px, 17vw, 84px);
+    line-height: 0.92;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--white);
+    position: relative;
+  }
+  h1 .waanzin {
+    display: block;
+    background: linear-gradient(175deg, var(--gold-bright) 20%, var(--gold) 55%, #8a6d1f 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .tm { font-size: 0.22em; vertical-align: super; color: var(--gold); -webkit-background-clip: initial; background-clip: initial; }
+  /* occasional chromatic glitch on the title */
+  .glitching { animation: glitch 0.18s steps(2) 2; }
+  @keyframes glitch {
+    0% { text-shadow: 3px 0 var(--magenta), -3px 0 var(--teal); transform: translateX(0); }
+    50% { text-shadow: -4px 0 var(--magenta), 4px 0 var(--teal); transform: translateX(2px) skewX(-2deg); }
+    100% { text-shadow: none; transform: none; }
+  }
+
+  .subtitle {
+    margin-top: 14px;
+    font-size: 12px;
+    letter-spacing: 3.5px;
+    text-transform: uppercase;
+    color: rgba(244,242,236,0.85);
+  }
+  .subtitle b { color: var(--gold); font-weight: 700; }
+  .edition {
+    margin-top: 6px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(244,242,236,0.45);
+  }
+
+  /* ---------- divider ---------- */
+  .divider {
+    width: 70%;
+    margin: 30px 0 24px;
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  /* ---------- name selection ---------- */
+  .select-label {
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(244,242,236,0.7);
+    margin-bottom: 16px;
+  }
+  .names {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+  }
+  .name-btn {
+    font-family: "Arial Narrow", Arial, sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--white);
+    background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
+    border: 1px solid rgba(212,175,55,0.35);
+    border-radius: 4px;
+    padding: 15px 8px;
+    cursor: pointer;
+    transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .name-btn:active { transform: scale(0.97); }
+  .name-btn.selected {
+    border-color: var(--gold-bright);
+    background: linear-gradient(180deg, rgba(212,175,55,0.28), rgba(212,175,55,0.1));
+    color: var(--gold-bright);
+    box-shadow: 0 0 18px rgba(212,175,55,0.35);
+  }
+
+  .confirm-btn {
+    margin-top: 24px;
+    width: 100%;
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: 22px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--navy-deep);
+    background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+    border: none;
+    border-radius: 4px;
+    padding: 16px;
+    cursor: pointer;
+    opacity: 0.35;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.12s ease;
+  }
+  .confirm-btn.armed { opacity: 1; pointer-events: auto; box-shadow: 0 4px 30px rgba(212,175,55,0.45); }
+  .confirm-btn:active { transform: scale(0.98); }
+
+  .disclaimer {
+    margin-top: 18px;
+    font-size: 9.5px;
+    letter-spacing: 1px;
+    line-height: 1.6;
+    color: rgba(244,242,236,0.35);
+    text-transform: uppercase;
+  }
+
+  /* ---------- news ticker ---------- */
+  .ticker-wrap {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(180deg, #101838, #0a1030);
+    border-top: 2px solid var(--gold);
+    overflow: hidden;
+    z-index: 4;
+    padding: 8px 0;
+  }
+  .ticker-label {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: var(--red);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    display: flex; align-items: center;
+    padding: 0 10px;
+    z-index: 2;
+    text-transform: uppercase;
+  }
+  .ticker {
+    display: inline-block;
+    white-space: nowrap;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(244,242,236,0.8);
+    padding-left: 100%;
+    animation: tick 38s linear infinite;
+  }
+  .ticker b { color: var(--gold-bright); }
+  @keyframes tick { to { transform: translateX(-100%); } }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="fed-strip">Federatie voor Willekeurige Zaken · Afd. Loting</div>
+
+  <!-- Official crest: laurel + football, with an eye where the ball's center panel should be -->
+  <svg class="crest" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#ffd75e"/><stop offset="1" stop-color="#8a6d1f"/>
+      </linearGradient>
+    </defs>
+    <!-- laurel branches -->
+    <g stroke="url(#goldGrad)" stroke-width="2.5" fill="none" stroke-linecap="round">
+      <path d="M32 128 C 14 108, 8 84, 14 58"/>
+      <path d="M118 128 C 136 108, 142 84, 136 58"/>
+    </g>
+    <g fill="url(#goldGrad)">
+      <ellipse cx="18" cy="112" rx="9" ry="3.5" transform="rotate(-52 18 112)"/>
+      <ellipse cx="12" cy="94" rx="9" ry="3.5" transform="rotate(-72 12 94)"/>
+      <ellipse cx="10" cy="75" rx="9" ry="3.5" transform="rotate(-88 10 75)"/>
+      <ellipse cx="12" cy="57" rx="9" ry="3.5" transform="rotate(-104 12 57)"/>
+      <ellipse cx="132" cy="112" rx="9" ry="3.5" transform="rotate(52 132 112)"/>
+      <ellipse cx="138" cy="94" rx="9" ry="3.5" transform="rotate(72 138 94)"/>
+      <ellipse cx="140" cy="75" rx="9" ry="3.5" transform="rotate(88 140 75)"/>
+      <ellipse cx="138" cy="57" rx="9" ry="3.5" transform="rotate(104 138 57)"/>
+    </g>
+    <!-- football -->
+    <circle cx="75" cy="74" r="42" fill="#0d1436" stroke="url(#goldGrad)" stroke-width="3"/>
+    <g stroke="url(#goldGrad)" stroke-width="1.6" fill="none" opacity="0.85">
+      <path d="M75 32 L 75 46"/>
+      <path d="M40 52 L 52 60"/><path d="M110 52 L 98 60"/>
+      <path d="M46 108 L 56 96"/><path d="M104 108 L 94 96"/>
+      <path d="M52 60 L 75 46 L 98 60"/>
+      <path d="M56 96 L 52 60"/><path d="M94 96 L 98 60"/>
+      <path d="M56 96 L 75 104 L 94 96"/><path d="M75 104 L 75 116"/>
+    </g>
+    <!-- the eye (pentagon panel replaced by an eye) -->
+    <g>
+      <path d="M53 74 Q 75 56 97 74 Q 75 92 53 74 Z" fill="#f4f2ec"/>
+      <circle class="eye-iris" cx="75" cy="74" r="10" fill="#0d1436" stroke="url(#goldGrad)" stroke-width="2.5"/>
+      <circle cx="75" cy="74" r="3.6" fill="url(#goldGrad)"/>
+    </g>
+    <!-- banner -->
+    <path d="M28 132 L 122 132 L 116 143 L 34 143 Z" fill="url(#goldGrad)"/>
+    <text x="75" y="141" text-anchor="middle" font-family="Arial Narrow, Arial" font-size="8.5" font-weight="bold" letter-spacing="2" fill="#0d1436">ORDO EX CHAO</text>
+  </svg>
+
+  <div class="stars">★ ★ <span class="odd">★</span> ★ ★</div>
+
+  <h1 id="title">WK<span class="tm">™</span><span class="waanzin">Waanzin</span></h1>
+
+  <div class="subtitle">Officiële <b>Willekeur Selector</b></div>
+  <div class="edition">Privekwim Editie · MMXXVI · Gecertificeerd Willekeurig</div>
+
+  <hr class="divider">
+
+  <div class="select-label">Selecteer uw identiteit om de loting te starten</div>
+
+  <div class="names" id="names">
+    <button class="name-btn">Speler 1</button>
+    <button class="name-btn">Speler 2</button>
+    <button class="name-btn">Speler 3</button>
+    <button class="name-btn">Speler 4</button>
+    <button class="name-btn">Speler 5</button>
+    <button class="name-btn">Speler 6</button>
+    <button class="name-btn">Speler 7</button>
+    <button class="name-btn">Speler 8</button>
+  </div>
+
+  <button class="confirm-btn" id="confirm">Bevestig identiteit</button>
+
+  <div class="disclaimer">
+    De uitslag van de loting is bindend en onherroepelijk. Bezwaar aantekenen is mogelijk bij de Commissie&nbsp;Waanzin, doch volstrekt zinloos. Aan deelname zijn risico's verbonden.
+  </div>
+</div>
+
+<div class="ticker-wrap">
+  <div class="ticker-label">Live</div>
+  <div class="ticker">
+    <b>Laatste nieuws:</b> loting is 100% willekeurig, bevestigt commissie die de uitslag gisteren al kende &nbsp;•&nbsp;
+    FIFA ontkent elke betrokkenheid bij WK Waanzin &nbsp;•&nbsp;
+    weerbericht: kans op chaos 100% &nbsp;•&nbsp;
+    bookmakers weigeren noteringen af te geven &nbsp;•&nbsp;
+    VAR-check op de loting afgebroken wegens "te veel waanzin" &nbsp;•&nbsp;
+    <b>Dit bericht herhaalt zich, net als de geschiedenis</b> &nbsp;•&nbsp;
+  </div>
+</div>
+
+<script>
+  // name selection
+  const buttons = document.querySelectorAll('.name-btn');
+  const confirmBtn = document.getElementById('confirm');
+  buttons.forEach(btn => btn.addEventListener('click', () => {
+    buttons.forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    confirmBtn.classList.add('armed');
+  }));
+
+  // occasional glitch on the title — a crack in the official facade
+  const title = document.getElementById('title');
+  (function scheduleGlitch() {
+    setTimeout(() => {
+      title.classList.add('glitching');
+      setTimeout(() => title.classList.remove('glitching'), 400);
+      scheduleGlitch();
+    }, 3500 + Math.random() * 5000);
+  })();
+</script>
+</body>
+</html>
