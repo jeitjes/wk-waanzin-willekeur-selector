@@ -1,0 +1,43 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Kampioensring">
+  <defs>
+    <linearGradient id="band" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f6e4a1"/>
+      <stop offset="45%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#8a6a15"/>
+    </linearGradient>
+    <linearGradient id="plate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f9edc2"/>
+      <stop offset="55%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#a3801f"/>
+    </linearGradient>
+    <radialGradient id="gem" cx="35%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#3550c9"/>
+      <stop offset="55%" stop-color="#0d1436"/>
+      <stop offset="100%" stop-color="#060a1e"/>
+    </radialGradient>
+  </defs>
+
+  <!-- band (shank), viewed at an angle -->
+  <path d="M52 118 C52 168 74 190 100 190 C126 190 148 168 148 118 L148 108 C148 108 126 128 100 128 C74 128 52 108 52 108 Z"
+        fill="url(#band)" stroke="#5b430c" stroke-width="2"/>
+
+  <!-- top plate -->
+  <rect x="38" y="30" width="124" height="86" rx="16" fill="url(#plate)" stroke="#5b430c" stroke-width="3"/>
+  <rect x="46" y="38" width="108" height="70" rx="11" fill="none" stroke="#5b430c" stroke-width="1.5" opacity="0.55"/>
+
+  <!-- small diamonds along the plate edge -->
+  <g fill="#f4f2ec" stroke="#8a6a15" stroke-width="1">
+    <circle cx="50" cy="44" r="4"/>
+    <circle cx="150" cy="44" r="4"/>
+    <circle cx="50" cy="102" r="4"/>
+    <circle cx="150" cy="102" r="4"/>
+  </g>
+
+  <!-- central gem -->
+  <ellipse cx="100" cy="73" rx="34" ry="26" fill="url(#gem)" stroke="#d4af37" stroke-width="3"/>
+  <path d="M78 62 L100 50 L122 62 L114 90 L86 90 Z" fill="none" stroke="#d4af37" stroke-width="1.5" opacity="0.6"/>
+
+  <!-- star on the gem -->
+  <path d="M100 58 L104.7 68.5 L116 69.6 L107.5 77.1 L110 88.3 L100 82.3 L90 88.3 L92.5 77.1 L84 69.6 L95.3 68.5 Z"
+        fill="#d4af37"/>
+</svg>
