@@ -1,11 +1,9 @@
 // Cloudflare Worker voor kwimhub.com — serveert statische assets + leaderboard-API.
-// State staat in KV (binding LEADERBOARD), admin-sleutel als secret ADMIN_KEY.
+// State staat in KV (binding LEADERBOARD). /admin is bewust ongeauthenticeerd.
 
 const STATE_KEY = "state:v1";
 const MAX_BODY = 4 * 1024 * 1024; // 4 MB — ruim genoeg voor 5 logo's als data-URL
 const LOGO_MAX_BODY = 1.5 * 1024 * 1024; // 1.5 MB — ruim genoeg voor één verkleind profielfotootje
-const MAX_POGINGEN = 8; // mislukte inlogpogingen voor een IP wordt vergrendeld
-const VERGRENDEL_SECONDEN = 15 * 60;
 
 const WERELDLIED_KEY = "wereldlied:v1";
 const WERELDLIED_CODES_KEY = "wereldlied:codes:v1"; // aparte KV-entry: nooit meesturen met de publieke GET
@@ -34,8 +32,7 @@ const DEFAULT_STATE = {
   ]
 };
 
-// CORS staat open op /api zodat beheer-tools ook vanaf andere origins kunnen werken;
-// schrijven blijft beschermd door de ADMIN_KEY-check.
+// CORS staat open op /api zodat beheer-tools ook vanaf andere origins kunnen werken.
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, PUT, POST, OPTIONS",
@@ -51,46 +48,6 @@ function json(data, status = 200) {
       ...CORS
     }
   });
-}
-
-function checkAuth(request, env) {
-  const auth = request.headers.get("Authorization") || "";
-  const key = auth.replace(/^Bearer\s+/i, "");
-  const expected = env.ADMIN_KEY || "";
-  if (!expected || key.length !== expected.length) return false;
-  let diff = 0;
-  for (let i = 0; i < expected.length; i++) {
-    diff |= key.charCodeAt(i) ^ expected.charCodeAt(i);
-  }
-  return diff === 0;
-}
-
-// Simpele brute-force-bescherming op IP-niveau via KV: na MAX_POGINGEN mislukte
-// pogingen wordt het IP voor VERGRENDEL_SECONDEN vergrendeld voor /api/login en /api/state PUT.
-function clientIp(request) {
-  return request.headers.get("CF-Connecting-IP") || "onbekend";
-}
-
-async function geverifieerd(request, env) {
-  const ip = clientIp(request);
-  const lockKey = `login-lock:${ip}`;
-  if (await env.LEADERBOARD.get(lockKey)) return { ok: false, vergrendeld: true };
-
-  const ok = checkAuth(request, env);
-  const pogingenKey = `login-pogingen:${ip}`;
-  if (ok) {
-    await env.LEADERBOARD.delete(pogingenKey);
-  } else {
-    const raw = await env.LEADERBOARD.get(pogingenKey);
-    const aantal = (raw ? Number(raw) : 0) + 1;
-    if (aantal >= MAX_POGINGEN) {
-      await env.LEADERBOARD.put(lockKey, "1", { expirationTtl: VERGRENDEL_SECONDEN });
-      await env.LEADERBOARD.delete(pogingenKey);
-    } else {
-      await env.LEADERBOARD.put(pogingenKey, String(aantal), { expirationTtl: VERGRENDEL_SECONDEN });
-    }
-  }
-  return { ok, vergrendeld: false };
 }
 
 function valideerState(state) {
@@ -178,9 +135,6 @@ export default {
         return json(await leesHoofdstaat(env));
       }
       if (request.method === "PUT") {
-        const auth = await geverifieerd(request, env);
-        if (auth.vergrendeld) return json({ fout: "Te veel mislukte pogingen, probeer het over 15 minuten opnieuw" }, 429);
-        if (!auth.ok) return json({ fout: "Geen toegang" }, 401);
         const len = Number(request.headers.get("Content-Length") || 0);
         if (len > MAX_BODY) return json({ fout: "Te groot" }, 413);
         let state;
@@ -196,7 +150,6 @@ export default {
       return json({ fout: "Methode niet toegestaan" }, 405);
     }
 
-    // Iedereen mag ieders profielfoto zetten — bewust geen ADMIN_KEY hier, dat is de grap.
     // Alleen het logo-veld van één team wordt aangeraakt, de rest van de staat blijft ongemoeid.
     if (url.pathname === "/api/logo" && request.method === "POST") {
       const len = Number(request.headers.get("Content-Length") || 0);
@@ -226,9 +179,6 @@ export default {
     }
 
     if (url.pathname === "/api/wereldlied/start" && request.method === "POST") {
-      const auth = await geverifieerd(request, env);
-      if (auth.vergrendeld) return json({ fout: "Te veel mislukte pogingen, probeer het over 15 minuten opnieuw" }, 429);
-      if (!auth.ok) return json({ fout: "Geen toegang" }, 401);
       let body;
       try { body = await request.json(); } catch { body = {}; }
       const hoofdstaat = await leesHoofdstaat(env);
@@ -259,18 +209,12 @@ export default {
     }
 
     if (url.pathname === "/api/wereldlied/reset" && request.method === "POST") {
-      const auth = await geverifieerd(request, env);
-      if (auth.vergrendeld) return json({ fout: "Te veel mislukte pogingen, probeer het over 15 minuten opnieuw" }, 429);
-      if (!auth.ok) return json({ fout: "Geen toegang" }, 401);
       await schrijfWereldlied(env, DEFAULT_WERELDLIED);
       await env.LEADERBOARD.put(WERELDLIED_CODES_KEY, JSON.stringify({}));
       return json({ ok: true });
     }
 
     if (url.pathname === "/api/wereldlied/codes" && request.method === "GET") {
-      const auth = await geverifieerd(request, env);
-      if (auth.vergrendeld) return json({ fout: "Te veel mislukte pogingen, probeer het over 15 minuten opnieuw" }, 429);
-      if (!auth.ok) return json({ fout: "Geen toegang" }, 401);
       return json(await leesWereldliedCodes(env));
     }
 
@@ -318,12 +262,6 @@ export default {
       volgendeBeurt(w);
       await schrijfWereldlied(env, w);
       return json(w);
-    }
-
-    if (url.pathname === "/api/login" && request.method === "POST") {
-      const auth = await geverifieerd(request, env);
-      if (auth.vergrendeld) return json({ fout: "Te veel mislukte pogingen, probeer het over 15 minuten opnieuw" }, 429);
-      return auth.ok ? json({ ok: true }) : json({ fout: "Onjuiste sleutel" }, 401);
     }
 
     return env.ASSETS.fetch(request);

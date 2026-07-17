@@ -69,51 +69,6 @@
     margin: 6px 0 18px;
   }
 
-  /* ---------- login-poort ---------- */
-  #poort { text-align: center; padding-top: 8vh; }
-  .poort-panel {
-    border: 1px solid rgba(212,175,55,0.4);
-    border-radius: 8px;
-    background: rgba(255,255,255,0.03);
-    padding: 26px 20px;
-    max-width: 380px;
-    margin: 0 auto;
-  }
-  .poort-panel p { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: rgba(244,242,236,0.7); margin-bottom: 14px; }
-  .sleutel-input {
-    width: 100%;
-    font-family: "Courier New", monospace;
-    font-size: 16px;
-    color: var(--gold-bright);
-    background: rgba(6,10,30,0.8);
-    border: 1px solid rgba(212,175,55,0.5);
-    border-radius: 4px;
-    padding: 13px 12px;
-    outline: none;
-    text-align: center;
-  }
-  .sleutel-input:focus { border-color: var(--gold-bright); box-shadow: 0 0 12px rgba(212,175,55,0.3); }
-  .btn-gold {
-    margin-top: 14px;
-    width: 100%;
-    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
-    font-size: 19px;
-    letter-spacing: 2.5px;
-    text-transform: uppercase;
-    color: var(--navy-deep);
-    background: linear-gradient(180deg, var(--gold-bright), var(--gold));
-    border: none;
-    border-radius: 4px;
-    padding: 14px;
-  }
-  .poort-fout {
-    margin-top: 12px;
-    font-family: "Courier New", monospace;
-    font-size: 12px;
-    color: var(--red);
-    min-height: 16px;
-  }
-
   /* ---------- statusbalk ---------- */
   .statusbalk {
     position: fixed;
@@ -132,7 +87,6 @@
   .statusbalk .ok { color: var(--green); }
   .statusbalk .bezig { color: var(--gold-bright); }
   .statusbalk .fout { color: var(--red); }
-  .uitlog { background: none; border: 1px solid rgba(212,175,55,0.4); border-radius: 4px; color: rgba(244,242,236,0.6); font-size: 11px; letter-spacing: 1px; padding: 4px 10px; text-transform: uppercase; }
 
   /* ---------- teamkaarten ---------- */
   #teams { display: none; flex-direction: column; gap: 14px; }
@@ -318,16 +272,6 @@
   <h1>Geen <b>Controlekamer</b></h1>
   <div class="sub">Alleen voor organisatoren · Kwim-protocol v4.5.12</div>
 
-  <!-- login -->
-  <div id="poort">
-    <div class="poort-panel">
-      <p>🔒 Voer de Federatie-sleutel in</p>
-      <input class="sleutel-input" id="sleutel" type="password" autocomplete="off" placeholder="KWIM-XXXX-XXXX-…">
-      <button class="btn-gold" id="poort-btn">Ontgrendel</button>
-      <div class="poort-fout" id="poort-fout"></div>
-    </div>
-  </div>
-
   <!-- wereldlied-beheer (ververst apart, zodat het bewerken van teams niet steeds onderbroken wordt) -->
   <div id="wereldlied-houder" style="display:none"></div>
 
@@ -337,54 +281,20 @@
 
 <div class="statusbalk" id="statusbalk" style="display:none">
   <span id="opslag-status">—</span>
-  <button class="uitlog" id="uitlog">Vergrendel</button>
 </div>
 
 <script src="/catalog.js"></script>
 <script>
   const $ = id => document.getElementById(id);
   const CAT = window.KWIM_CATALOGUS;
-  const SLEUTEL_OPSLAG = 'kwimAdminSleutel';
 
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
 
-  let sleutel = localStorage.getItem(SLEUTEL_OPSLAG) || '';
   let staat = null;
   let opslaanTimer = null;
   let wereldliedStaat = null;
-
-  /* ================= login ================= */
-  async function probeerLogin(kandidaat) {
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + kandidaat }
-    });
-    return res;
-  }
-
-  $('poort-btn').addEventListener('click', async () => {
-    const kandidaat = $('sleutel').value.trim();
-    if (!kandidaat) return;
-    $('poort-fout').textContent = '';
-    const res = await probeerLogin(kandidaat);
-    if (res.ok) {
-      sleutel = kandidaat;
-      localStorage.setItem(SLEUTEL_OPSLAG, sleutel);
-      start();
-    } else if (res.status === 429) {
-      $('poort-fout').textContent = '✗ Te veel mislukte pogingen. Probeer het over 15 minuten opnieuw.';
-    } else {
-      $('poort-fout').textContent = '✗ Sleutel afgewezen door de Federatie.';
-    }
-  });
-  $('sleutel').addEventListener('keydown', e => { if (e.key === 'Enter') $('poort-btn').click(); });
-
-  $('uitlog').addEventListener('click', () => {
-    localStorage.removeItem(SLEUTEL_OPSLAG);
-    location.reload();
-  });
 
   /* ================= opslaan ================= */
   function zetStatus(tekst, klasse) {
@@ -402,10 +312,7 @@
     try {
       const res = await fetch('/api/state', {
         method: 'PUT',
-        headers: {
-          'Authorization': 'Bearer ' + sleutel,
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(staat)
       });
       if (!res.ok) throw new Error(res.status);
@@ -471,7 +378,7 @@
       try {
         const res = await fetch('/api/wereldlied/start', {
           method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + sleutel, 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ duur, shuffle })
         });
         if (res.ok) {
@@ -486,7 +393,7 @@
     kaart.querySelector('.wl-reset').addEventListener('click', async () => {
       if (!confirm('Wereldlied resetten? Alle regels en codes gaan verloren.')) return;
       try {
-        await fetch('/api/wereldlied/reset', { method: 'POST', headers: { 'Authorization': 'Bearer ' + sleutel } });
+        await fetch('/api/wereldlied/reset', { method: 'POST' });
       } catch {}
       wereldliedStaat = null;
       wereldliedGetoondeCodes = null;
@@ -495,7 +402,7 @@
 
     kaart.querySelector('.wl-codes-btn').addEventListener('click', async () => {
       try {
-        const res = await fetch('/api/wereldlied/codes', { headers: { 'Authorization': 'Bearer ' + sleutel } });
+        const res = await fetch('/api/wereldlied/codes');
         if (res.ok) toonWereldliedCodes(await res.json());
       } catch {}
     });
@@ -683,7 +590,6 @@
 
   /* ================= start ================= */
   async function start() {
-    $('poort').style.display = 'none';
     $('statusbalk').style.display = 'flex';
     const res = await fetch('/api/state', { cache: 'no-store' });
     staat = await res.json();
@@ -695,14 +601,7 @@
     setInterval(async () => { await laadWereldlied(); renderWereldliedBeheer(); }, 5000);
   }
 
-  (async () => {
-    if (sleutel && await probeerLogin(sleutel)) {
-      start();
-    } else {
-      localStorage.removeItem(SLEUTEL_OPSLAG);
-      setTimeout(() => $('sleutel').focus(), 300);
-    }
-  })();
+  start();
 </script>
 </body>
 </html>
