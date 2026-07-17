@@ -372,17 +372,20 @@
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + kandidaat }
     });
-    return res.ok;
+    return res;
   }
 
   $('poort-btn').addEventListener('click', async () => {
     const kandidaat = $('sleutel').value.trim();
     if (!kandidaat) return;
     $('poort-fout').textContent = '';
-    if (await probeerLogin(kandidaat)) {
+    const res = await probeerLogin(kandidaat);
+    if (res.ok) {
       sleutel = kandidaat;
       localStorage.setItem(SLEUTEL_OPSLAG, sleutel);
       start();
+    } else if (res.status === 429) {
+      $('poort-fout').textContent = '✗ Te veel mislukte pogingen. Probeer het over 15 minuten opnieuw.';
     } else {
       $('poort-fout').textContent = '✗ Sleutel afgewezen door de Federatie.';
     }

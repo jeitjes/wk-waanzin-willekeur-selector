@@ -3,6 +3,8 @@
 
 const STATE_KEY = "state:v1";
 const MAX_BODY = 4 * 1024 * 1024; // 4 MB — ruim genoeg voor 5 logo's als data-URL
+const MAX_POGINGEN = 8; // mislukte inlogpogingen voor een IP wordt vergrendeld
+const VERGRENDEL_SECONDEN = 15 * 60;
 
 const DEFAULT_STATE = {
   badgeDefs: [],
@@ -46,6 +48,34 @@ function checkAuth(request, env) {
   return diff === 0;
 }
 
+// Simpele brute-force-bescherming op IP-niveau via KV: na MAX_POGINGEN mislukte
+// pogingen wordt het IP voor VERGRENDEL_SECONDEN vergrendeld voor /api/login en /api/state PUT.
+function clientIp(request) {
+  return request.headers.get("CF-Connecting-IP") || "onbekend";
+}
+
+async function geverifieerd(request, env) {
+  const ip = clientIp(request);
+  const lockKey = `login-lock:${ip}`;
+  if (await env.LEADERBOARD.get(lockKey)) return { ok: false, vergrendeld: true };
+
+  const ok = checkAuth(request, env);
+  const pogingenKey = `login-pogingen:${ip}`;
+  if (ok) {
+    await env.LEADERBOARD.delete(pogingenKey);
+  } else {
+    const raw = await env.LEADERBOARD.get(pogingenKey);
+    const aantal = (raw ? Number(raw) : 0) + 1;
+    if (aantal >= MAX_POGINGEN) {
+      await env.LEADERBOARD.put(lockKey, "1", { expirationTtl: VERGRENDEL_SECONDEN });
+      await env.LEADERBOARD.delete(pogingenKey);
+    } else {
+      await env.LEADERBOARD.put(pogingenKey, String(aantal), { expirationTtl: VERGRENDEL_SECONDEN });
+    }
+  }
+  return { ok, vergrendeld: false };
+}
+
 function valideerState(state) {
   if (!state || !Array.isArray(state.teams) || state.teams.length === 0 || state.teams.length > 20) return false;
   if (state.badgeDefs !== undefined) {
@@ -82,7 +112,9 @@ export default {
         return json(raw ? JSON.parse(raw) : DEFAULT_STATE);
       }
       if (request.method === "PUT") {
-        if (!checkAuth(request, env)) return json({ fout: "Geen toegang" }, 401);
+        const auth = await geverifieerd(request, env);
+        if (auth.vergrendeld) return json({ fout: "Te veel mislukte pogingen, probeer het over 15 minuten opnieuw" }, 429);
+        if (!auth.ok) return json({ fout: "Geen toegang" }, 401);
         const len = Number(request.headers.get("Content-Length") || 0);
         if (len > MAX_BODY) return json({ fout: "Te groot" }, 413);
         let state;
@@ -99,7 +131,9 @@ export default {
     }
 
     if (url.pathname === "/api/login" && request.method === "POST") {
-      return checkAuth(request, env) ? json({ ok: true }) : json({ fout: "Onjuiste sleutel" }, 401);
+      const auth = await geverifieerd(request, env);
+      if (auth.vergrendeld) return json({ fout: "Te veel mislukte pogingen, probeer het over 15 minuten opnieuw" }, 429);
+      return auth.ok ? json({ ok: true }) : json({ fout: "Onjuiste sleutel" }, 401);
     }
 
     return env.ASSETS.fetch(request);
