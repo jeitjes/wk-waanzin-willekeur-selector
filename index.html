@@ -53,18 +53,27 @@
     z-index: 2;
   }
 
-  /* ---------- official header strip ---------- */
+  /* ---------- scrolling header strip ---------- */
   .fed-strip {
+    width: calc(100% + 44px);
+    margin: 0 -22px 26px;
+    overflow: hidden;
     font-size: 10px;
     letter-spacing: 3px;
     text-transform: uppercase;
-    color: rgba(244,242,236,0.55);
+    color: rgba(244,242,236,0.65);
     border-top: 1px solid rgba(212,175,55,0.4);
     border-bottom: 1px solid rgba(212,175,55,0.4);
-    padding: 5px 14px;
-    margin-bottom: 26px;
+    padding: 5px 0;
     white-space: nowrap;
   }
+  .fed-scroll {
+    display: inline-block;
+    white-space: nowrap;
+    animation: fedscroll 16s linear infinite;
+  }
+  .fed-scroll b { color: var(--gold); font-weight: 700; }
+  @keyframes fedscroll { to { transform: translateX(-50%); } }
 
   /* ---------- crest ---------- */
   .crest { width: 150px; height: auto; margin-bottom: 4px; filter: drop-shadow(0 6px 24px rgba(212,175,55,0.25)); }
@@ -229,17 +238,16 @@
     letter-spacing: 1.5px;
     text-transform: uppercase;
     color: rgba(244,242,236,0.8);
-    padding-left: 100%;
-    animation: tick 38s linear infinite;
+    animation: tick 9s linear infinite;
   }
   .ticker b { color: var(--gold-bright); }
-  @keyframes tick { to { transform: translateX(-100%); } }
+  @keyframes tick { to { transform: translateX(-50%); } }
 </style>
 </head>
 <body>
 
 <div class="page">
-  <div class="fed-strip">Federatie voor Willekeurige Zaken · Afd. Loting</div>
+  <div class="fed-strip"><div class="fed-scroll"><b>10 kwimmers</b> · 5 teams · 1 winnaar &nbsp;★&nbsp; <b>10 kwimmers</b> · 5 teams · 1 winnaar &nbsp;★&nbsp; <b>10 kwimmers</b> · 5 teams · 1 winnaar &nbsp;★&nbsp; <b>10 kwimmers</b> · 5 teams · 1 winnaar &nbsp;★&nbsp; </div></div>
 
   <!-- Official crest: laurel + football, with an eye where the ball's center panel should be -->
   <svg class="crest" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -288,12 +296,12 @@
 
   <h1 id="title">WK<span class="tm">™</span><span class="waanzin">Waanzin</span></h1>
 
-  <div class="subtitle">Officiële <b>Willekeur Selector</b></div>
-  <div class="edition">Privekwim Editie · MMXXVI · Gecertificeerd Willekeurig</div>
+  <div class="subtitle">Privekwim <b>Willekeur Selector</b></div>
+  <div class="edition">De achterkamer komt naar voren</div>
 
   <hr class="divider">
 
-  <div class="select-label">Selecteer uw identiteit om de loting te starten</div>
+  <div class="select-label">Selecteer je naam</div>
 
   <div class="names" id="names">
     <button class="name-btn">Speler 1</button>
@@ -304,25 +312,20 @@
     <button class="name-btn">Speler 6</button>
     <button class="name-btn">Speler 7</button>
     <button class="name-btn">Speler 8</button>
+    <button class="name-btn">Speler 9</button>
+    <button class="name-btn">Speler 10</button>
   </div>
 
   <button class="confirm-btn" id="confirm">Bevestig identiteit</button>
 
   <div class="disclaimer">
-    De uitslag van de loting is bindend en onherroepelijk. Bezwaar aantekenen is mogelijk bij de Commissie&nbsp;Waanzin, doch volstrekt zinloos. Aan deelname zijn risico's verbonden.
+    De uitslag van de loting is eerlijk en volledig willekeurig bepaald. Neem cash mee zaterdag als je wil wisselen.
   </div>
 </div>
 
 <div class="ticker-wrap">
   <div class="ticker-label">Live</div>
-  <div class="ticker">
-    <b>Laatste nieuws:</b> loting is 100% willekeurig, bevestigt commissie die de uitslag gisteren al kende &nbsp;•&nbsp;
-    FIFA ontkent elke betrokkenheid bij WK Waanzin &nbsp;•&nbsp;
-    weerbericht: kans op chaos 100% &nbsp;•&nbsp;
-    bookmakers weigeren noteringen af te geven &nbsp;•&nbsp;
-    VAR-check op de loting afgebroken wegens "te veel waanzin" &nbsp;•&nbsp;
-    <b>Dit bericht herhaalt zich, net als de geschiedenis</b> &nbsp;•&nbsp;
-  </div>
+  <div class="ticker"><b>Loting is nu live!</b> &nbsp;•&nbsp; <b>Loting is nu live!</b> &nbsp;•&nbsp; <b>Loting is nu live!</b> &nbsp;•&nbsp; <b>Loting is nu live!</b> &nbsp;•&nbsp; <b>Loting is nu live!</b> &nbsp;•&nbsp; <b>Loting is nu live!</b> &nbsp;•&nbsp; </div>
 </div>
 
 <script>
