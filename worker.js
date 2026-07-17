@@ -15,12 +15,21 @@ const DEFAULT_STATE = {
   ]
 };
 
+// CORS staat open op /api zodat beheer-tools ook vanaf andere origins kunnen werken;
+// schrijven blijft beschermd door de ADMIN_KEY-check.
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, PUT, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Authorization, Content-Type"
+};
+
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "no-store"
+      "Cache-Control": "no-store",
+      ...CORS
     }
   });
 }
@@ -61,6 +70,10 @@ function valideerState(state) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    if (url.pathname.startsWith("/api/") && request.method === "OPTIONS") {
+      return new Response(null, { status: 204, headers: CORS });
+    }
 
     if (url.pathname === "/api/state") {
       if (request.method === "GET") {
