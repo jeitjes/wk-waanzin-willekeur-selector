@@ -339,13 +339,6 @@
   .wl-instel-rij { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; letter-spacing: 1px; color: rgba(244,242,236,0.7); }
   .wl-instel-rij input[type="number"] { width: 60px; background: rgba(6,10,30,0.8); border: 1px solid rgba(212,175,55,0.4); border-radius: 4px; color: var(--white); padding: 5px; text-align: center; }
   .wl-knoppen { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-  .wl-codes { display: none; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
-  .wl-code-item {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 12px; border: 1px solid rgba(212,175,55,0.3); border-radius: 5px;
-    background: rgba(6,10,30,0.5); padding: 6px 10px;
-  }
-  .wl-code-item span { font-family: "Courier New", monospace; color: var(--gold-bright); font-size: 14px; letter-spacing: 1px; }
   .wl-regels { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; max-height: 220px; overflow-y: auto; }
   .wl-regel-item { font-size: 12px; border: 1px solid rgba(212,175,55,0.2); border-radius: 5px; background: rgba(6,10,30,0.4); padding: 6px 9px; text-align: left; }
   .wl-geschiedenis { margin-top: 14px; }
@@ -517,7 +510,6 @@
   }
 
   /* ================= wereldlied-beheer ================= */
-  let wereldliedGetoondeCodes = null; // blijft zichtbaar over automatische ververs-ticks heen
   async function laadWereldlied() {
     try {
       const res = await fetch('/api/wereldlied', { cache: 'no-store' });
@@ -552,9 +544,11 @@
           : '<b>' + escapeHtml(naamVan(r.teamId)) + ':</b> ' + escapeHtml(r.tekst)}</div>`).join('')
       : '';
 
+    const bezig = !!(w && w.actief && !w.klaar);
+
     kaart.innerHTML = `
       <div class="kaart-titel">🌍 Wereldlied</div>
-      <div class="kaart-uitleg">Elk team plakt een zin aan het Wereldlied vast — pagina: <a href="/wereldlied" target="_blank">/wereldlied</a></div>
+      <div class="kaart-uitleg">Elk team kiest zichzelf, zonder code — pagina: <a href="/wereldlied" target="_blank">/wereldlied</a></div>
       <div class="wl-status">${statusHtml}</div>
       <div class="regel">
         <div class="regel-label">Instellingen voor een nieuwe ronde</div>
@@ -564,11 +558,9 @@
         </div>
       </div>
       <div class="wl-knoppen">
-        <button class="t-plus wl-start">▶ ${w && w.actief && !w.klaar ? 'Herstart' : 'Start'}</button>
-        <button class="logo-weg wl-reset">✕ Reset</button>
-        <button class="upload-knop wl-codes-btn">🔑 Toon codes</button>
+        <button class="t-plus wl-start">▶ ${bezig ? 'Stop &amp; herstart' : 'Start'}</button>
+        ${bezig ? `<button class="logo-weg wl-stop">⛔ Stop</button>` : ''}
       </div>
-      <div class="wl-codes"></div>
       ${regelsHtml ? `<div class="wl-regels">${regelsHtml}</div>` : ''}
       <details class="wl-geschiedenis">
         <summary>📜 Eerdere wereldliederen (${(wereldliedGeschiedenis || []).length})</summary>
@@ -578,11 +570,12 @@
     kaart.querySelector('.wl-start').addEventListener('click', async () => {
       const duur = parseInt(kaart.querySelector('.wl-duur').value, 10) || 20;
       const shuffle = kaart.querySelector('.wl-shuffle').checked;
-      if (w && w.actief && !w.klaar && !confirm('Er loopt al een ronde — opnieuw starten?')) return;
+      if (bezig && !confirm('Er loopt al een ronde — deze stoppen en een nieuwe starten?')) return;
       try {
+        if (bezig) await fetch('/api/wereldlied/reset', { method: 'POST' });
         const res = await fetch('/api/wereldlied/start', {
           method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + sleutel, 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ duur, shuffle })
         });
         if (res.ok) {
@@ -590,31 +583,22 @@
           wereldliedStaat = data.staat;
           await laadWereldliedGeschiedenis();
           renderWereldliedBeheer();
-          toonWereldliedCodes(data.codes);
         }
       } catch {}
     });
 
-    kaart.querySelector('.wl-reset').addEventListener('click', async () => {
-      if (!confirm('Wereldlied resetten? De ronde tot nu toe wordt bewaard in de geschiedenis.')) return;
+    const stopBtn = kaart.querySelector('.wl-stop');
+    if (stopBtn) stopBtn.addEventListener('click', async () => {
+      if (!confirm('Wereldlied stoppen voor alle teams? De ronde tot nu toe wordt bewaard in de geschiedenis.')) return;
       try {
-        await fetch('/api/wereldlied/reset', { method: 'POST', headers: { 'Authorization': 'Bearer ' + sleutel } });
+        await fetch('/api/wereldlied/reset', { method: 'POST' });
       } catch {}
-      wereldliedStaat = null;
-      wereldliedGetoondeCodes = null;
+      await laadWereldlied();
       await laadWereldliedGeschiedenis();
       renderWereldliedBeheer();
     });
 
-    kaart.querySelector('.wl-codes-btn').addEventListener('click', async () => {
-      try {
-        const res = await fetch('/api/wereldlied/codes', { headers: { 'Authorization': 'Bearer ' + sleutel } });
-        if (res.ok) toonWereldliedCodes(await res.json());
-      } catch {}
-    });
-
     houder.appendChild(kaart);
-    if (wereldliedGetoondeCodes) toonWereldliedCodes(wereldliedGetoondeCodes);
   }
 
   function renderWereldliedGeschiedenis() {
@@ -631,18 +615,6 @@
         <div class="wl-ronde-tekst">${tekst}</div>
       </div>`;
     }).join('');
-  }
-
-  // los van renderWereldliedBeheer() opgezocht, want de kaart is dan al opnieuw opgebouwd
-  function toonWereldliedCodes(codes) {
-    wereldliedGetoondeCodes = codes;
-    const el = document.querySelector('#wereldlied-houder .wl-codes');
-    if (!el) return;
-    const naamVan = id => (staat.teams.find(t => t.id === id) || {}).naam || id;
-    const items = Object.entries(codes || {}).map(([id, code]) =>
-      `<div class="wl-code-item"><b>${escapeHtml(naamVan(id))}</b><span>${escapeHtml(code)}</span></div>`).join('');
-    el.innerHTML = items || '<i>geen codes</i>';
-    el.style.display = 'flex';
   }
 
   function render() {

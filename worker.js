@@ -7,7 +7,6 @@ const MAX_POGINGEN = 8; // mislukte inlogpogingen voor een IP wordt vergrendeld
 const VERGRENDEL_SECONDEN = 15 * 60;
 
 const WERELDLIED_KEY = "wereldlied:v1";
-const WERELDLIED_CODES_KEY = "wereldlied:codes:v1"; // aparte KV-entry: nooit meesturen met de publieke GET
 const WERELDLIED_HISTORY_KEY = "wereldlied:geschiedenis:v1";
 const WERELDLIED_HISTORY_MAX = 30;
 const WERELDLIED_MAX_TEKST = 140;
@@ -114,10 +113,6 @@ function valideerState(state) {
   return true;
 }
 
-function genereerWereldliedCode() {
-  return String(Math.floor(1000 + Math.random() * 9000)); // 4 cijfers, hardop voor te lezen
-}
-
 async function leesHoofdstaat(env) {
   const raw = await env.LEADERBOARD.get(STATE_KEY);
   return raw ? JSON.parse(raw) : DEFAULT_STATE;
@@ -130,11 +125,6 @@ async function leesWereldlied(env) {
 
 async function schrijfWereldlied(env, w) {
   await env.LEADERBOARD.put(WERELDLIED_KEY, JSON.stringify(w));
-}
-
-async function leesWereldliedCodes(env) {
-  const raw = await env.LEADERBOARD.get(WERELDLIED_CODES_KEY);
-  return raw ? JSON.parse(raw) : {};
 }
 
 async function leesWereldliedGeschiedenis(env) {
@@ -208,19 +198,12 @@ export default {
     }
 
     if (url.pathname === "/api/wereldlied/start" && request.method === "POST") {
-      // iedereen mag een nieuwe ronde starten zolang er geen ronde loopt — alleen het
-      // herstarten van een actieve, nog niet afgeronde ronde is aan de Federatie voorbehouden.
-      // Zonder Authorization-header tellen we dit niet mee als mislukte inlogpoging: anders
-      // zou een groep teamleden op hetzelfde wifi-netwerk elkaars IP-adres kunnen vergrendelen.
-      let isAdmin = false;
-      if (request.headers.get("Authorization")) {
-        const auth = await geverifieerd(request, env);
-        if (auth.vergrendeld) return json({ fout: "Te veel mislukte pogingen, probeer het over 15 minuten opnieuw" }, 429);
-        isAdmin = auth.ok;
-      }
+      // volledig publiek — iedereen mag een nieuwe ronde starten. Er kan maar één ronde
+      // tegelijk lopen: is de huidige nog actief én niet afgerond, dan moet die eerst
+      // gestopt worden via /api/wereldlied/reset.
       const huidig = await leesWereldlied(env);
-      if (huidig.actief && !huidig.klaar && !isAdmin) {
-        return json({ fout: "Er loopt al een ronde — alleen de Federatie kan die herstarten" }, 403);
+      if (huidig.actief && !huidig.klaar) {
+        return json({ fout: "Er loopt al een ronde — stop die eerst" }, 409);
       }
       let body;
       try { body = await request.json(); } catch { body = {}; }
@@ -235,9 +218,6 @@ export default {
         }
       }
       const duur = Number.isFinite(body.duur) && body.duur >= 5 && body.duur <= 300 ? Math.round(body.duur) : 20;
-      const codes = {};
-      volgorde.forEach(id => { codes[id] = genereerWereldliedCode(); });
-      await env.LEADERBOARD.put(WERELDLIED_CODES_KEY, JSON.stringify(codes));
       await archiveerWereldlied(env, huidig);
       const w = {
         actief: true,
@@ -249,19 +229,15 @@ export default {
         regels: []
       };
       await schrijfWereldlied(env, w);
-      // codes gaan alleen mee naar een geverifieerde admin — een team dat zelf op "start"
-      // drukt mag niet in de netwerktab de codes van alle andere teams kunnen aflezen
-      return json(isAdmin ? { ok: true, staat: w, codes } : { ok: true, staat: w });
+      return json({ ok: true, staat: w });
     }
 
+    // volledig publiek — iedereen mag de lopende ronde afbreken (de client toont
+    // hiervoor een bevestigingsdialoog). De ronde tot nu toe blijft in de geschiedenis.
     if (url.pathname === "/api/wereldlied/reset" && request.method === "POST") {
-      const auth = await geverifieerd(request, env);
-      if (auth.vergrendeld) return json({ fout: "Te veel mislukte pogingen, probeer het over 15 minuten opnieuw" }, 429);
-      if (!auth.ok) return json({ fout: "Geen toegang" }, 401);
       const huidig = await leesWereldlied(env);
       await archiveerWereldlied(env, huidig);
       await schrijfWereldlied(env, DEFAULT_WERELDLIED);
-      await env.LEADERBOARD.put(WERELDLIED_CODES_KEY, JSON.stringify({}));
       return json({ ok: true });
     }
 
@@ -269,32 +245,15 @@ export default {
       return json(await leesWereldliedGeschiedenis(env));
     }
 
-    if (url.pathname === "/api/wereldlied/codes" && request.method === "GET") {
-      const auth = await geverifieerd(request, env);
-      if (auth.vergrendeld) return json({ fout: "Te veel mislukte pogingen, probeer het over 15 minuten opnieuw" }, 429);
-      if (!auth.ok) return json({ fout: "Geen toegang" }, 401);
-      return json(await leesWereldliedCodes(env));
-    }
-
-    if (url.pathname === "/api/wereldlied/login" && request.method === "POST") {
-      let body;
-      try { body = await request.json(); } catch { return json({ fout: "Ongeldige JSON" }, 400); }
-      const codes = await leesWereldliedCodes(env);
-      const ok = typeof body.teamId === "string" && typeof body.code === "string" && codes[body.teamId] === body.code;
-      return ok ? json({ ok: true }) : json({ fout: "Onjuiste code" }, 401);
-    }
-
     if (url.pathname === "/api/wereldlied/inzenden" && request.method === "POST") {
       let body;
       try { body = await request.json(); } catch { return json({ fout: "Ongeldige JSON" }, 400); }
-      const { teamId, code, tekst } = body || {};
-      if (typeof teamId !== "string" || typeof code !== "string" || typeof tekst !== "string") {
+      const { teamId, tekst } = body || {};
+      if (typeof teamId !== "string" || typeof tekst !== "string") {
         return json({ fout: "Ongeldig verzoek" }, 400);
       }
       const schoon = tekst.trim();
       if (!schoon || schoon.length > WERELDLIED_MAX_TEKST) return json({ fout: "Ongeldige tekst" }, 400);
-      const codes = await leesWereldliedCodes(env);
-      if (codes[teamId] !== code) return json({ fout: "Onjuiste code" }, 401);
       const w = await leesWereldlied(env);
       if (!w.actief || w.klaar) return json({ fout: "Het Wereldlied is niet actief" }, 409);
       if (w.volgorde[w.huidige] !== teamId) return json({ fout: "Niet jullie beurt" }, 409);

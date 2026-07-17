@@ -141,7 +141,6 @@
     border: none; border-radius: 4px; padding: 14px;
   }
   .btn-gold:active { transform: scale(0.98); }
-  .poort-fout { margin-top: 12px; font-family: "Courier New", monospace; font-size: 12px; color: var(--red); min-height: 16px; }
 
   /* ---------- beurt-kop ---------- */
   .beurt-kop { width: 100%; margin-bottom: 20px; }
@@ -297,7 +296,7 @@
     }
   }
 
-  /* ================= spel starten ================= */
+  /* ================= spel starten / afbreken ================= */
   async function startWereldlied() {
     if (!confirm('Dit start het Wereldlied voor alle teams — iedereen kan meteen meedoen. Weet je het zeker?')) return;
     const btn = $('wl-start-btn');
@@ -319,7 +318,15 @@
     }
   }
 
-  /* ================= inloggen als team ================= */
+  async function stopWereldlied() {
+    if (!confirm('Dit stopt het Wereldlied voor alle teams — de regels tot nu toe gaan niet verloren, maar de ronde is voorbij. Weet je het zeker?')) return;
+    try {
+      await fetch('/api/wereldlied/reset', { method: 'POST' });
+    } catch {}
+    await laadWereld();
+  }
+
+  /* ================= team kiezen ================= */
   function renderPoort() {
     const teams = (wereld.volgorde.length ? wereld.volgorde : (hoofdstaat ? hoofdstaat.teams.map(t => t.id) : []))
       .map(id => teamVan(id)).filter(Boolean);
@@ -328,34 +335,13 @@
       <div class="poort-panel">
         <p>🎤 Welk team ben jij?</p>
         <select id="wl-team">${opties}</select>
-        <input id="wl-code" type="text" inputmode="numeric" autocomplete="off" placeholder="Team-code">
         <button class="btn-gold" id="wl-login-btn">Meedoen</button>
-        <div class="poort-fout" id="wl-poort-fout"></div>
       </div>`;
-    $('wl-login-btn').addEventListener('click', probeerInloggen);
-    $('wl-code').addEventListener('keydown', e => { if (e.key === 'Enter') probeerInloggen(); });
-  }
-
-  async function probeerInloggen() {
-    const teamId = $('wl-team').value;
-    const code = $('wl-code').value.trim();
-    if (!code) return;
-    $('wl-poort-fout').textContent = '';
-    try {
-      const res = await fetch('/api/wereldlied/login', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ teamId, code })
-      });
-      if (res.ok) {
-        identiteit = { teamId, code };
-        localStorage.setItem(IDENT_KEY, JSON.stringify(identiteit));
-        render();
-      } else {
-        $('wl-poort-fout').textContent = '✗ code afgewezen door de Federatie';
-      }
-    } catch {
-      $('wl-poort-fout').textContent = '✗ verbinding mislukt';
-    }
+    $('wl-login-btn').addEventListener('click', () => {
+      identiteit = { teamId: $('wl-team').value };
+      localStorage.setItem(IDENT_KEY, JSON.stringify(identiteit));
+      render();
+    });
   }
 
   /* ================= inzenden ================= */
@@ -368,15 +354,11 @@
     try {
       const res = await fetch('/api/wereldlied/inzenden', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ teamId: identiteit.teamId, code: identiteit.code, tekst })
+        body: JSON.stringify({ teamId: identiteit.teamId, tekst })
       });
       const data = await res.json();
       if (res.ok) {
         wereld = data.staat;
-        render();
-      } else if (res.status === 401) {
-        localStorage.removeItem(IDENT_KEY);
-        identiteit = null;
         render();
       } else {
         veld.disabled = false;
@@ -477,8 +459,12 @@
     $('inhoud').innerHTML = `
       ${boven}
       <div class="ketting">${renderKetting()}</div>
-      ${wereld.klaar ? `<div class="voorlezen">${wereld.regels.filter(r => !r.overgeslagen).map(r => escapeHtml(r.tekst)).join(' ')}</div>` : ''}
+      ${wereld.klaar
+        ? `<div class="voorlezen">${wereld.regels.filter(r => !r.overgeslagen).map(r => escapeHtml(r.tekst)).join(' ')}</div>
+           <button class="btn-gold" id="wl-start-btn" style="margin-top:20px">▶ Nieuw Wereldlied starten</button>`
+        : ''}
       <button class="uitloggen" id="wl-uitlog">niet jullie team? wissel van team</button>
+      ${!wereld.klaar ? `<button class="uitloggen" id="wl-stop-btn">⛔ stop het Wereldlied voor iedereen</button>` : ''}
     `;
     vorigAantalRegels = wereld.regels.length;
 
@@ -496,6 +482,10 @@
       identiteit = null;
       render();
     });
+    const startBtn = $('wl-start-btn');
+    if (startBtn) startBtn.addEventListener('click', startWereldlied);
+    const stopBtn = $('wl-stop-btn');
+    if (stopBtn) stopBtn.addEventListener('click', stopWereldlied);
   }
 
   /* ================= start + live verversen ================= */
