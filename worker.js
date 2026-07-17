@@ -8,6 +8,8 @@ const VERGRENDEL_SECONDEN = 15 * 60;
 
 const WERELDLIED_KEY = "wereldlied:v1";
 const WERELDLIED_CODES_KEY = "wereldlied:codes:v1"; // aparte KV-entry: nooit meesturen met de publieke GET
+const WERELDLIED_HISTORY_KEY = "wereldlied:geschiedenis:v1";
+const WERELDLIED_HISTORY_MAX = 30;
 const WERELDLIED_MAX_TEKST = 140;
 
 const DEFAULT_WERELDLIED = {
@@ -135,6 +137,28 @@ async function leesWereldliedCodes(env) {
   return raw ? JSON.parse(raw) : {};
 }
 
+async function leesWereldliedGeschiedenis(env) {
+  const raw = await env.LEADERBOARD.get(WERELDLIED_HISTORY_KEY);
+  return raw ? JSON.parse(raw) : [];
+}
+
+// bewaart een afgeronde of afgebroken ronde in de geschiedenis vóórdat hij overschreven wordt;
+// rondes zonder een enkele regel zijn niet interessant en worden niet bewaard
+async function archiveerWereldlied(env, w) {
+  if (!w || !Array.isArray(w.regels) || w.regels.length === 0) return;
+  const geschiedenis = await leesWereldliedGeschiedenis(env);
+  geschiedenis.unshift({
+    id: `wl-${Date.now()}`,
+    geeindigd: Date.now(),
+    klaar: w.klaar,
+    volgorde: w.volgorde,
+    duur: w.duur,
+    regels: w.regels
+  });
+  if (geschiedenis.length > WERELDLIED_HISTORY_MAX) geschiedenis.length = WERELDLIED_HISTORY_MAX;
+  await env.LEADERBOARD.put(WERELDLIED_HISTORY_KEY, JSON.stringify(geschiedenis));
+}
+
 // zet de beurt een stap door en rondt de ronde af als iedereen geweest is
 function volgendeBeurt(w) {
   w.huidige += 1;
@@ -184,9 +208,20 @@ export default {
     }
 
     if (url.pathname === "/api/wereldlied/start" && request.method === "POST") {
-      const auth = await geverifieerd(request, env);
-      if (auth.vergrendeld) return json({ fout: "Te veel mislukte pogingen, probeer het over 15 minuten opnieuw" }, 429);
-      if (!auth.ok) return json({ fout: "Geen toegang" }, 401);
+      // iedereen mag een nieuwe ronde starten zolang er geen ronde loopt — alleen het
+      // herstarten van een actieve, nog niet afgeronde ronde is aan de Federatie voorbehouden.
+      // Zonder Authorization-header tellen we dit niet mee als mislukte inlogpoging: anders
+      // zou een groep teamleden op hetzelfde wifi-netwerk elkaars IP-adres kunnen vergrendelen.
+      let isAdmin = false;
+      if (request.headers.get("Authorization")) {
+        const auth = await geverifieerd(request, env);
+        if (auth.vergrendeld) return json({ fout: "Te veel mislukte pogingen, probeer het over 15 minuten opnieuw" }, 429);
+        isAdmin = auth.ok;
+      }
+      const huidig = await leesWereldlied(env);
+      if (huidig.actief && !huidig.klaar && !isAdmin) {
+        return json({ fout: "Er loopt al een ronde — alleen de Federatie kan die herstarten" }, 403);
+      }
       let body;
       try { body = await request.json(); } catch { body = {}; }
       const hoofdstaat = await leesHoofdstaat(env);
@@ -203,6 +238,7 @@ export default {
       const codes = {};
       volgorde.forEach(id => { codes[id] = genereerWereldliedCode(); });
       await env.LEADERBOARD.put(WERELDLIED_CODES_KEY, JSON.stringify(codes));
+      await archiveerWereldlied(env, huidig);
       const w = {
         actief: true,
         klaar: volgorde.length === 0,
@@ -213,16 +249,24 @@ export default {
         regels: []
       };
       await schrijfWereldlied(env, w);
-      return json({ ok: true, staat: w, codes });
+      // codes gaan alleen mee naar een geverifieerde admin — een team dat zelf op "start"
+      // drukt mag niet in de netwerktab de codes van alle andere teams kunnen aflezen
+      return json(isAdmin ? { ok: true, staat: w, codes } : { ok: true, staat: w });
     }
 
     if (url.pathname === "/api/wereldlied/reset" && request.method === "POST") {
       const auth = await geverifieerd(request, env);
       if (auth.vergrendeld) return json({ fout: "Te veel mislukte pogingen, probeer het over 15 minuten opnieuw" }, 429);
       if (!auth.ok) return json({ fout: "Geen toegang" }, 401);
+      const huidig = await leesWereldlied(env);
+      await archiveerWereldlied(env, huidig);
       await schrijfWereldlied(env, DEFAULT_WERELDLIED);
       await env.LEADERBOARD.put(WERELDLIED_CODES_KEY, JSON.stringify({}));
       return json({ ok: true });
+    }
+
+    if (url.pathname === "/api/wereldlied/geschiedenis" && request.method === "GET") {
+      return json(await leesWereldliedGeschiedenis(env));
     }
 
     if (url.pathname === "/api/wereldlied/codes" && request.method === "GET") {

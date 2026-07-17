@@ -348,6 +348,12 @@
   .wl-code-item span { font-family: "Courier New", monospace; color: var(--gold-bright); font-size: 14px; letter-spacing: 1px; }
   .wl-regels { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; max-height: 220px; overflow-y: auto; }
   .wl-regel-item { font-size: 12px; border: 1px solid rgba(212,175,55,0.2); border-radius: 5px; background: rgba(6,10,30,0.4); padding: 6px 9px; text-align: left; }
+  .wl-geschiedenis { margin-top: 14px; }
+  .wl-geschiedenis summary { font-size: 12px; letter-spacing: 1px; color: rgba(244,242,236,0.7); cursor: pointer; }
+  .wl-geschiedenis-lijst { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; max-height: 320px; overflow-y: auto; }
+  .wl-ronde { border: 1px solid rgba(212,175,55,0.25); border-radius: 6px; background: rgba(6,10,30,0.4); padding: 8px 10px; text-align: left; }
+  .wl-ronde-datum { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(244,242,236,0.45); margin-bottom: 6px; }
+  .wl-ronde-tekst { font-size: 12px; line-height: 1.5; }
 </style>
 </head>
 <body>
@@ -392,6 +398,7 @@
   let staat = null;
   let opslaanTimer = null;
   let wereldliedStaat = null;
+  let wereldliedGeschiedenis = null;
 
   /* ================= login ================= */
   async function probeerLogin(kandidaat) {
@@ -518,6 +525,13 @@
     } catch {}
   }
 
+  async function laadWereldliedGeschiedenis() {
+    try {
+      const res = await fetch('/api/wereldlied/geschiedenis', { cache: 'no-store' });
+      wereldliedGeschiedenis = await res.json();
+    } catch {}
+  }
+
   function renderWereldliedBeheer() {
     const houder = $('wereldlied-houder');
     houder.style.display = 'block';
@@ -555,7 +569,11 @@
         <button class="upload-knop wl-codes-btn">🔑 Toon codes</button>
       </div>
       <div class="wl-codes"></div>
-      ${regelsHtml ? `<div class="wl-regels">${regelsHtml}</div>` : ''}`;
+      ${regelsHtml ? `<div class="wl-regels">${regelsHtml}</div>` : ''}
+      <details class="wl-geschiedenis">
+        <summary>📜 Eerdere wereldliederen (${(wereldliedGeschiedenis || []).length})</summary>
+        <div class="wl-geschiedenis-lijst">${renderWereldliedGeschiedenis()}</div>
+      </details>`;
 
     kaart.querySelector('.wl-start').addEventListener('click', async () => {
       const duur = parseInt(kaart.querySelector('.wl-duur').value, 10) || 20;
@@ -570,6 +588,7 @@
         if (res.ok) {
           const data = await res.json();
           wereldliedStaat = data.staat;
+          await laadWereldliedGeschiedenis();
           renderWereldliedBeheer();
           toonWereldliedCodes(data.codes);
         }
@@ -577,12 +596,13 @@
     });
 
     kaart.querySelector('.wl-reset').addEventListener('click', async () => {
-      if (!confirm('Wereldlied resetten? Alle regels en codes gaan verloren.')) return;
+      if (!confirm('Wereldlied resetten? De ronde tot nu toe wordt bewaard in de geschiedenis.')) return;
       try {
         await fetch('/api/wereldlied/reset', { method: 'POST', headers: { 'Authorization': 'Bearer ' + sleutel } });
       } catch {}
       wereldliedStaat = null;
       wereldliedGetoondeCodes = null;
+      await laadWereldliedGeschiedenis();
       renderWereldliedBeheer();
     });
 
@@ -595,6 +615,22 @@
 
     houder.appendChild(kaart);
     if (wereldliedGetoondeCodes) toonWereldliedCodes(wereldliedGetoondeCodes);
+  }
+
+  function renderWereldliedGeschiedenis() {
+    const rondes = wereldliedGeschiedenis || [];
+    if (!rondes.length) return '<i>nog geen eerdere rondes</i>';
+    return rondes.map(r => {
+      const datum = new Date(r.geeindigd).toLocaleString('nl-NL', { dateStyle: 'medium', timeStyle: 'short' });
+      const tekst = r.regels
+        .filter(x => !x.overgeslagen)
+        .map(x => escapeHtml(x.tekst))
+        .join(' ') || '<i>alleen overgeslagen beurten</i>';
+      return `<div class="wl-ronde">
+        <div class="wl-ronde-datum">${escapeHtml(datum)}${r.klaar ? '' : ' — afgebroken'}</div>
+        <div class="wl-ronde-tekst">${tekst}</div>
+      </div>`;
+    }).join('');
   }
 
   // los van renderWereldliedBeheer() opgezocht, want de kaart is dan al opnieuw opgebouwd
@@ -865,6 +901,7 @@
     staat = await res.json();
     staat.badgeDefs = staat.badgeDefs || [];
     await laadWereldlied();
+    await laadWereldliedGeschiedenis();
     $('teams').style.display = 'flex';
     render();
     renderWereldliedBeheer();

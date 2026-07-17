@@ -297,6 +297,28 @@
     }
   }
 
+  /* ================= spel starten ================= */
+  async function startWereldlied() {
+    if (!confirm('Dit start het Wereldlied voor alle teams — iedereen kan meteen meedoen. Weet je het zeker?')) return;
+    const btn = $('wl-start-btn');
+    if (btn) btn.disabled = true;
+    try {
+      const res = await fetch('/api/wereldlied/start', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({})
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        wereld = data.staat;
+        render();
+      } else {
+        alert(data.fout || 'Starten is niet gelukt — probeer het opnieuw');
+        await laadWereld();
+      }
+    } catch {
+      if (btn) btn.disabled = false;
+    }
+  }
+
   /* ================= inloggen als team ================= */
   function renderPoort() {
     const teams = (wereld.volgorde.length ? wereld.volgorde : (hoofdstaat ? hoofdstaat.teams.map(t => t.id) : []))
@@ -411,9 +433,11 @@
     if (!wereld.actief) {
       $('inhoud').innerHTML = `
         <div class="wacht">
-          <div class="wacht-tekst"><span class="stip"></span>Wacht tot de Federatie<br>het Wereldlied start…</div>
+          <div class="wacht-tekst"><span class="stip"></span>Wacht tot het Wereldlied start…</div>
+          <button class="btn-gold" id="wl-start-btn" style="margin-top:24px;max-width:280px">▶ Start het Wereldlied</button>
         </div>`;
       vorigAantalRegels = -1;
+      $('wl-start-btn').addEventListener('click', startWereldlied);
       return;
     }
 
