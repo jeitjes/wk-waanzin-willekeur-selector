@@ -2,6 +2,11 @@
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
+<script>
+  // De GitHub Pages-link is gedeeld als selector-link en heeft geen API achter zich:
+  // daar hoort de originele selector te staan. Alleen kwimhub.com toont het klassement.
+  if (location.hostname.endsWith('github.io')) location.replace('selector.html');
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>WK WAANZIN™ — Live Klassement</title>
 <meta name="theme-color" content="#060a1e">
