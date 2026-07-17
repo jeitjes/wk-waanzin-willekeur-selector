@@ -4,6 +4,20 @@
 const STATE_KEY = "state:v1";
 const MAX_BODY = 4 * 1024 * 1024; // 4 MB — ruim genoeg voor 5 logo's als data-URL
 
+const WERELDLIED_KEY = "wereldlied:v1";
+const WERELDLIED_CODES_KEY = "wereldlied:codes:v1"; // aparte KV-entry: nooit meesturen met de publieke GET
+const WERELDLIED_MAX_TEKST = 140;
+
+const DEFAULT_WERELDLIED = {
+  actief: false,
+  klaar: false,
+  volgorde: [],
+  huidige: 0,
+  duur: 20,
+  beurtStart: null,
+  regels: []
+};
+
 const DEFAULT_STATE = {
   badgeDefs: [],
   teams: [
@@ -68,6 +82,40 @@ function valideerState(state) {
   return true;
 }
 
+function genereerWereldliedCode() {
+  return String(Math.floor(1000 + Math.random() * 9000)); // 4 cijfers, hardop voor te lezen
+}
+
+async function leesHoofdstaat(env) {
+  const raw = await env.LEADERBOARD.get(STATE_KEY);
+  return raw ? JSON.parse(raw) : DEFAULT_STATE;
+}
+
+async function leesWereldlied(env) {
+  const raw = await env.LEADERBOARD.get(WERELDLIED_KEY);
+  return raw ? JSON.parse(raw) : DEFAULT_WERELDLIED;
+}
+
+async function schrijfWereldlied(env, w) {
+  await env.LEADERBOARD.put(WERELDLIED_KEY, JSON.stringify(w));
+}
+
+async function leesWereldliedCodes(env) {
+  const raw = await env.LEADERBOARD.get(WERELDLIED_CODES_KEY);
+  return raw ? JSON.parse(raw) : {};
+}
+
+// zet de beurt een stap door en rondt de ronde af als iedereen geweest is
+function volgendeBeurt(w) {
+  w.huidige += 1;
+  if (w.huidige >= w.volgorde.length) {
+    w.klaar = true;
+    w.beurtStart = null;
+  } else {
+    w.beurtStart = Date.now();
+  }
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -96,6 +144,100 @@ export default {
         return json({ ok: true });
       }
       return json({ fout: "Methode niet toegestaan" }, 405);
+    }
+
+    if (url.pathname === "/api/wereldlied") {
+      if (request.method === "GET") return json(await leesWereldlied(env));
+      return json({ fout: "Methode niet toegestaan" }, 405);
+    }
+
+    if (url.pathname === "/api/wereldlied/start" && request.method === "POST") {
+      if (!checkAuth(request, env)) return json({ fout: "Geen toegang" }, 401);
+      let body;
+      try { body = await request.json(); } catch { body = {}; }
+      const hoofdstaat = await leesHoofdstaat(env);
+      let volgorde = Array.isArray(body.volgorde) && body.volgorde.length
+        ? body.volgorde.filter(id => hoofdstaat.teams.some(t => t.id === id))
+        : hoofdstaat.teams.map(t => t.id);
+      if (body.shuffle) {
+        for (let i = volgorde.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [volgorde[i], volgorde[j]] = [volgorde[j], volgorde[i]];
+        }
+      }
+      const duur = Number.isFinite(body.duur) && body.duur >= 5 && body.duur <= 300 ? Math.round(body.duur) : 20;
+      const codes = {};
+      volgorde.forEach(id => { codes[id] = genereerWereldliedCode(); });
+      await env.LEADERBOARD.put(WERELDLIED_CODES_KEY, JSON.stringify(codes));
+      const w = {
+        actief: true,
+        klaar: volgorde.length === 0,
+        volgorde,
+        huidige: 0,
+        duur,
+        beurtStart: volgorde.length ? Date.now() : null,
+        regels: []
+      };
+      await schrijfWereldlied(env, w);
+      return json({ ok: true, staat: w, codes });
+    }
+
+    if (url.pathname === "/api/wereldlied/reset" && request.method === "POST") {
+      if (!checkAuth(request, env)) return json({ fout: "Geen toegang" }, 401);
+      await schrijfWereldlied(env, DEFAULT_WERELDLIED);
+      await env.LEADERBOARD.put(WERELDLIED_CODES_KEY, JSON.stringify({}));
+      return json({ ok: true });
+    }
+
+    if (url.pathname === "/api/wereldlied/codes" && request.method === "GET") {
+      if (!checkAuth(request, env)) return json({ fout: "Geen toegang" }, 401);
+      return json(await leesWereldliedCodes(env));
+    }
+
+    if (url.pathname === "/api/wereldlied/login" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ fout: "Ongeldige JSON" }, 400); }
+      const codes = await leesWereldliedCodes(env);
+      const ok = typeof body.teamId === "string" && typeof body.code === "string" && codes[body.teamId] === body.code;
+      return ok ? json({ ok: true }) : json({ fout: "Onjuiste code" }, 401);
+    }
+
+    if (url.pathname === "/api/wereldlied/inzenden" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ fout: "Ongeldige JSON" }, 400); }
+      const { teamId, code, tekst } = body || {};
+      if (typeof teamId !== "string" || typeof code !== "string" || typeof tekst !== "string") {
+        return json({ fout: "Ongeldig verzoek" }, 400);
+      }
+      const schoon = tekst.trim();
+      if (!schoon || schoon.length > WERELDLIED_MAX_TEKST) return json({ fout: "Ongeldige tekst" }, 400);
+      const codes = await leesWereldliedCodes(env);
+      if (codes[teamId] !== code) return json({ fout: "Onjuiste code" }, 401);
+      const w = await leesWereldlied(env);
+      if (!w.actief || w.klaar) return json({ fout: "Het Wereldlied is niet actief" }, 409);
+      if (w.volgorde[w.huidige] !== teamId) return json({ fout: "Niet jullie beurt" }, 409);
+      const hoofdstaat = await leesHoofdstaat(env);
+      const team = hoofdstaat.teams.find(t => t.id === teamId);
+      w.regels.push({ teamId, teamNaam: team ? team.naam : teamId, tekst: schoon, tijd: Date.now(), overgeslagen: false });
+      volgendeBeurt(w);
+      await schrijfWereldlied(env, w);
+      return json({ ok: true, staat: w });
+    }
+
+    // ieder scherm dat een afgelopen countdown ziet mag dit aanroepen — de server
+    // controleert zelf of de tijd echt om is, dus dubbele of te vroege aanroepen zijn onschadelijk
+    if (url.pathname === "/api/wereldlied/overslaan" && request.method === "POST") {
+      const w = await leesWereldlied(env);
+      if (!w.actief || w.klaar || w.beurtStart === null || Date.now() - w.beurtStart < w.duur * 1000) {
+        return json(w);
+      }
+      const teamId = w.volgorde[w.huidige];
+      const hoofdstaat = await leesHoofdstaat(env);
+      const team = hoofdstaat.teams.find(t => t.id === teamId);
+      w.regels.push({ teamId, teamNaam: team ? team.naam : teamId, tekst: null, tijd: Date.now(), overgeslagen: true });
+      volgendeBeurt(w);
+      await schrijfWereldlied(env, w);
+      return json(w);
     }
 
     if (url.pathname === "/api/login" && request.method === "POST") {
