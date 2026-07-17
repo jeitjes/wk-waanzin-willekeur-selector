@@ -2,11 +2,11 @@
 
 De site van de WK Waanzin-avond. Live op **https://kwimhub.com**.
 
-- **`/`** — live klassement in psychedelische trip-stijl: teams, punten, badges onder de namen, en per team een prijzenkast-popup met trofeeën. Ververst zichzelf elke 12 s.
-- **`/admin`** — Federatie Controlekamer (sleutel vereist): teams omhoog/omlaag, punten, badges aan/uit, trofeeën toekennen en teamlogo's uploaden.
+- **`/`** — live klassement in psychedelische trip-stijl: teams, punten, prijzen onder de namen, en per team een prijzenkast-popup met alle gewonnen prijzen. Ververst zichzelf elke 12 s.
+- **`/admin`** — Federatie Controlekamer (sleutel vereist): teams omhoog/omlaag, punten, eigen prijzen uploaden en per team toekennen, teamlogo's uploaden.
 - **`/selector`** — de originele "willekeurige" teamselector (eenmalig gebruikt, gearchiveerd).
 
-De leaderboard-state staat in Cloudflare KV (binding `LEADERBOARD` in `worker.js`); de admin-sleutel is een Worker-secret (`ADMIN_KEY`), nooit in de repo. Badges- en trofeeëncatalogus staan in `catalog.js`.
+De leaderboard-state staat in Cloudflare KV (binding `LEADERBOARD` in `worker.js`); de admin-sleutel is een Worker-secret (`ADMIN_KEY`), nooit in de repo. De prijzencatalogus (de Kampioensring) staat in `catalog.js`; overige prijzen zijn geüploade afbeeldingen, beheerd via `/admin`.
 
 ## Hosting & workflow
 
