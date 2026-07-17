@@ -69,6 +69,51 @@
     margin: 6px 0 18px;
   }
 
+  /* ---------- toegangspoort ---------- */
+  #poort { text-align: center; padding-top: 8vh; }
+  .poort-panel {
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.03);
+    padding: 26px 20px;
+    max-width: 380px;
+    margin: 0 auto;
+  }
+  .poort-panel p { font-size: 12px; letter-spacing: 1px; color: rgba(244,242,236,0.7); margin-bottom: 14px; line-height: 1.5; }
+  .sleutel-input {
+    width: 100%;
+    font-family: "Courier New", monospace;
+    font-size: 13px;
+    color: var(--gold-bright);
+    background: rgba(6,10,30,0.8);
+    border: 1px solid rgba(212,175,55,0.5);
+    border-radius: 4px;
+    padding: 13px 12px;
+    outline: none;
+    text-align: center;
+  }
+  .sleutel-input:focus { border-color: var(--gold-bright); box-shadow: 0 0 12px rgba(212,175,55,0.3); }
+  .btn-gold {
+    margin-top: 14px;
+    width: 100%;
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: 19px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--navy-deep);
+    background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+    border: none;
+    border-radius: 4px;
+    padding: 14px;
+  }
+  .poort-fout {
+    margin-top: 12px;
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    color: var(--red);
+    min-height: 16px;
+  }
+
   /* ---------- statusbalk ---------- */
   .statusbalk {
     position: fixed;
@@ -272,6 +317,16 @@
   <h1>Geen <b>Controlekamer</b></h1>
   <div class="sub">Alleen voor organisatoren · Kwim-protocol v4.5.12</div>
 
+  <!-- toegangspoort: alleen zichtbaar als de link-sleutel ontbreekt of ongeldig is -->
+  <div id="poort" style="display:none">
+    <div class="poort-panel">
+      <p>🔒 Deze link is ongeldig of verlopen.<br>Vraag een organisator om een nieuwe adminlink, of plak de sleutel hieronder.</p>
+      <input class="sleutel-input" id="sleutel" type="text" autocomplete="off" placeholder="sleutel">
+      <button class="btn-gold" id="poort-btn">Ontgrendel</button>
+      <div class="poort-fout" id="poort-fout"></div>
+    </div>
+  </div>
+
   <!-- wereldlied-beheer (ververst apart, zodat het bewerken van teams niet steeds onderbroken wordt) -->
   <div id="wereldlied-houder" style="display:none"></div>
 
@@ -287,14 +342,41 @@
 <script>
   const $ = id => document.getElementById(id);
   const CAT = window.KWIM_CATALOGUS;
+  const SLEUTEL_OPSLAG = 'kwimAdminSleutel';
 
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
 
+  let sleutel = '';
   let staat = null;
   let opslaanTimer = null;
   let wereldliedStaat = null;
+
+  /* ================= link-toegang ================= */
+  async function probeerLogin(kandidaat) {
+    return fetch('/api/login', { method: 'POST', headers: { 'Authorization': 'Bearer ' + kandidaat } });
+  }
+
+  function toonPoort(fout) {
+    $('poort').style.display = 'block';
+    $('poort-fout').textContent = fout || '';
+  }
+
+  $('poort-btn').addEventListener('click', async () => {
+    const kandidaat = $('sleutel').value.trim();
+    if (!kandidaat) return;
+    $('poort-fout').textContent = '';
+    if ((await probeerLogin(kandidaat)).ok) {
+      sleutel = kandidaat;
+      localStorage.setItem(SLEUTEL_OPSLAG, sleutel);
+      $('poort').style.display = 'none';
+      start();
+    } else {
+      $('poort-fout').textContent = '✗ Sleutel afgewezen.';
+    }
+  });
+  $('sleutel').addEventListener('keydown', e => { if (e.key === 'Enter') $('poort-btn').click(); });
 
   /* ================= opslaan ================= */
   function zetStatus(tekst, klasse) {
@@ -312,7 +394,7 @@
     try {
       const res = await fetch('/api/state', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Authorization': 'Bearer ' + sleutel, 'Content-Type': 'application/json' },
         body: JSON.stringify(staat)
       });
       if (!res.ok) throw new Error(res.status);
@@ -378,7 +460,7 @@
       try {
         const res = await fetch('/api/wereldlied/start', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Authorization': 'Bearer ' + sleutel, 'Content-Type': 'application/json' },
           body: JSON.stringify({ duur, shuffle })
         });
         if (res.ok) {
@@ -393,7 +475,7 @@
     kaart.querySelector('.wl-reset').addEventListener('click', async () => {
       if (!confirm('Wereldlied resetten? Alle regels en codes gaan verloren.')) return;
       try {
-        await fetch('/api/wereldlied/reset', { method: 'POST' });
+        await fetch('/api/wereldlied/reset', { method: 'POST', headers: { 'Authorization': 'Bearer ' + sleutel } });
       } catch {}
       wereldliedStaat = null;
       wereldliedGetoondeCodes = null;
@@ -402,7 +484,7 @@
 
     kaart.querySelector('.wl-codes-btn').addEventListener('click', async () => {
       try {
-        const res = await fetch('/api/wereldlied/codes');
+        const res = await fetch('/api/wereldlied/codes', { headers: { 'Authorization': 'Bearer ' + sleutel } });
         if (res.ok) toonWereldliedCodes(await res.json());
       } catch {}
     });
@@ -601,7 +683,19 @@
     setInterval(async () => { await laadWereldlied(); renderWereldliedBeheer(); }, 5000);
   }
 
-  start();
+  (async () => {
+    const urlSleutel = new URL(location.href).searchParams.get('k');
+    const kandidaat = urlSleutel || localStorage.getItem(SLEUTEL_OPSLAG) || '';
+    if (kandidaat && (await probeerLogin(kandidaat)).ok) {
+      sleutel = kandidaat;
+      localStorage.setItem(SLEUTEL_OPSLAG, sleutel);
+      if (urlSleutel) history.replaceState(null, '', location.pathname);
+      start();
+    } else {
+      localStorage.removeItem(SLEUTEL_OPSLAG);
+      toonPoort(urlSleutel ? '✗ Deze link is ongeldig of verlopen.' : '');
+    }
+  })();
 </script>
 </body>
 </html>

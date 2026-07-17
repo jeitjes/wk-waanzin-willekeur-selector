@@ -1,5 +1,6 @@
 // Cloudflare Worker voor kwimhub.com — serveert statische assets + leaderboard-API.
-// State staat in KV (binding LEADERBOARD). /admin is bewust ongeauthenticeerd.
+// State staat in KV (binding LEADERBOARD). /admin-toegang loopt via een lange,
+// willekeurige link-token (secret ADMIN_KEY) — geen wachtwoordveld, gewoon delen.
 
 const STATE_KEY = "state:v1";
 const MAX_BODY = 4 * 1024 * 1024; // 4 MB — ruim genoeg voor 5 logo's als data-URL
@@ -48,6 +49,20 @@ function json(data, status = 200) {
       ...CORS
     }
   });
+}
+
+// Constant-time vergelijking tegen de link-token — lengte lekt via vroege return,
+// maar dat is onvermijdelijk en onschadelijk voor een token van vaste lengte.
+function checkAuth(request, env) {
+  const auth = request.headers.get("Authorization") || "";
+  const key = auth.replace(/^Bearer\s+/i, "");
+  const expected = env.ADMIN_KEY || "";
+  if (!expected || key.length !== expected.length) return false;
+  let diff = 0;
+  for (let i = 0; i < expected.length; i++) {
+    diff |= key.charCodeAt(i) ^ expected.charCodeAt(i);
+  }
+  return diff === 0;
 }
 
 function valideerState(state) {
@@ -135,6 +150,7 @@ export default {
         return json(await leesHoofdstaat(env));
       }
       if (request.method === "PUT") {
+        if (!checkAuth(request, env)) return json({ fout: "Geen toegang" }, 401);
         const len = Number(request.headers.get("Content-Length") || 0);
         if (len > MAX_BODY) return json({ fout: "Te groot" }, 413);
         let state;
@@ -179,6 +195,7 @@ export default {
     }
 
     if (url.pathname === "/api/wereldlied/start" && request.method === "POST") {
+      if (!checkAuth(request, env)) return json({ fout: "Geen toegang" }, 401);
       let body;
       try { body = await request.json(); } catch { body = {}; }
       const hoofdstaat = await leesHoofdstaat(env);
@@ -209,13 +226,19 @@ export default {
     }
 
     if (url.pathname === "/api/wereldlied/reset" && request.method === "POST") {
+      if (!checkAuth(request, env)) return json({ fout: "Geen toegang" }, 401);
       await schrijfWereldlied(env, DEFAULT_WERELDLIED);
       await env.LEADERBOARD.put(WERELDLIED_CODES_KEY, JSON.stringify({}));
       return json({ ok: true });
     }
 
     if (url.pathname === "/api/wereldlied/codes" && request.method === "GET") {
+      if (!checkAuth(request, env)) return json({ fout: "Geen toegang" }, 401);
       return json(await leesWereldliedCodes(env));
+    }
+
+    if (url.pathname === "/api/login" && request.method === "POST") {
+      return checkAuth(request, env) ? json({ ok: true }) : json({ fout: "Onjuiste sleutel" }, 401);
     }
 
     if (url.pathname === "/api/wereldlied/login" && request.method === "POST") {
