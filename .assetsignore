@@ -1,5 +1,7 @@
 .git
 .github
+.claude
+.wrangler
 .assetsignore
 .mcp.json
 wrangler.jsonc
