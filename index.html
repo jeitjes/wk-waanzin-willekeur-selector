@@ -375,6 +375,33 @@
     font-size: 12px; color: rgba(244,242,236,0.45);
     padding: 14px 0 6px;
   }
+  .kast-foto {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(212,175,55,0.25);
+  }
+  .foto-knop {
+    display: inline-block;
+    font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--gold-bright);
+    border: 1px solid rgba(212,175,55,0.5);
+    border-radius: 4px;
+    padding: 9px 14px;
+    cursor: pointer;
+    background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
+  }
+  .foto-knop input { display: none; }
+  .foto-uitleg {
+    margin-top: 8px;
+    font-size: 9.5px;
+    letter-spacing: 0.5px;
+    color: rgba(244,242,236,0.4);
+    text-transform: uppercase;
+  }
+  .foto-status { margin-top: 8px; font-size: 11px; letter-spacing: 1px; }
+  .foto-status.bezig { color: var(--gold-bright); }
+  .foto-status.ok { color: var(--green); }
+  .foto-status.fout { color: var(--red); }
   .badge-lijst { display: flex; flex-direction: column; gap: 8px; text-align: left; }
   .badge-regel {
     display: flex; align-items: center; gap: 10px;
@@ -595,9 +622,12 @@
     }
   }
 
+  let huidigeKastTeam = null;
+
   function openKast(teamId) {
     const team = staat.teams.find(t => t.id === teamId);
     if (!team) return;
+    huidigeKastTeam = teamId;
     const trofeeen = (team.trofeeen || []).map(tr => `
       <div class="trofee">
         <div class="trofee-emoji">${tr.afbeelding ? `<img src="${tr.afbeelding}" alt="">` : escapeHtml(tr.emoji)}</div>
@@ -616,11 +646,71 @@
       <div class="kast-kop">★ <b>Prijzenkast</b> ★</div>
       ${trofeeen ? `<div class="plank-grid">${trofeeen}</div>` : `<div class="kast-leeg">> de kast is leeg. triest.</div>`}
       <div class="kast-kop">Verdiende <b>badges</b></div>
-      ${badges ? `<div class="badge-lijst">${badges}</div>` : `<div class="kast-leeg">> nog geen badges verdiend.</div>`}`;
+      ${badges ? `<div class="badge-lijst">${badges}</div>` : `<div class="kast-leeg">> nog geen badges verdiend.</div>`}
+      <div class="kast-foto">
+        <label class="foto-knop" id="foto-knop">📷 Wijzig profielfoto<input type="file" accept="image/*" id="foto-input"></label>
+        <div class="foto-uitleg">Iedereen mag deze foto aanpassen — voor elk team. Dat is de bedoeling.</div>
+        <div class="foto-status" id="foto-status"></div>
+      </div>`;
     $('kast-sluit').addEventListener('click', sluitKast);
+    $('foto-input').addEventListener('change', onFotoGekozen);
     $('kast').scrollTop = 0;
     modal.classList.add('open');
     zetScrollSlot(true);
+  }
+
+  /* ================= profielfoto uploaden (publiek, geen sleutel nodig) ================= */
+  function verkleinFoto(bestand) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(bestand);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const MAAT = 256;
+        const canvas = document.createElement('canvas');
+        canvas.width = MAAT; canvas.height = MAAT;
+        const ctx = canvas.getContext('2d');
+        const kant = Math.min(img.width, img.height);
+        const sx = (img.width - kant) / 2;
+        const sy = (img.height - kant) / 2;
+        ctx.drawImage(img, sx, sy, kant, kant, 0, 0, MAAT, MAAT);
+        let data = canvas.toDataURL('image/webp', 0.85);
+        if (!data.startsWith('data:image/webp')) data = canvas.toDataURL('image/jpeg', 0.85);
+        resolve(data);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('ongeldig beeld')); };
+      img.src = url;
+    });
+  }
+
+  function zetFotoStatus(tekst, klasse) {
+    const el = $('foto-status');
+    if (!el) return;
+    el.textContent = tekst;
+    el.className = 'foto-status' + (klasse ? ' ' + klasse : '');
+  }
+
+  async function onFotoGekozen(e) {
+    const bestand = e.target.files[0];
+    if (!bestand || !huidigeKastTeam) return;
+    const teamId = huidigeKastTeam;
+    zetFotoStatus('● bezig…', 'bezig');
+    try {
+      const data = await verkleinFoto(bestand);
+      const res = await fetch('/api/logo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamId, logo: data })
+      });
+      if (!res.ok) throw new Error(res.status);
+      const uitkomst = await res.json();
+      staat = uitkomst.staat;
+      renderBord();
+      if (modal.classList.contains('open') && huidigeKastTeam === teamId) openKast(teamId);
+      zetFotoStatus('✓ gelukt', 'ok');
+    } catch (err) {
+      zetFotoStatus('✗ mislukt — probeer opnieuw', 'fout');
+    }
   }
   function sluitKast() {
     if (!modal.classList.contains('open')) return;

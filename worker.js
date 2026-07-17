@@ -3,6 +3,7 @@
 
 const STATE_KEY = "state:v1";
 const MAX_BODY = 4 * 1024 * 1024; // 4 MB — ruim genoeg voor 5 logo's als data-URL
+const LOGO_MAX_BODY = 1.5 * 1024 * 1024; // 1.5 MB — ruim genoeg voor één verkleind profielfotootje
 const MAX_POGINGEN = 8; // mislukte inlogpogingen voor een IP wordt vergrendeld
 const VERGRENDEL_SECONDEN = 15 * 60;
 
@@ -176,6 +177,30 @@ export default {
         return json({ ok: true });
       }
       return json({ fout: "Methode niet toegestaan" }, 405);
+    }
+
+    // Iedereen mag ieders profielfoto zetten — bewust geen ADMIN_KEY hier, dat is de grap.
+    // Alleen het logo-veld van één team wordt aangeraakt, de rest van de staat blijft ongemoeid.
+    if (url.pathname === "/api/logo" && request.method === "POST") {
+      const len = Number(request.headers.get("Content-Length") || 0);
+      if (len > LOGO_MAX_BODY) return json({ fout: "Te groot" }, 413);
+      let body;
+      try {
+        body = await request.json();
+      } catch {
+        return json({ fout: "Ongeldige JSON" }, 400);
+      }
+      const { teamId, logo } = body || {};
+      if (typeof teamId !== "string") return json({ fout: "Ongeldig verzoek" }, 400);
+      if (logo !== null && (typeof logo !== "string" || !logo.startsWith("data:image/") || logo.length > LOGO_MAX_BODY)) {
+        return json({ fout: "Ongeldige afbeelding" }, 400);
+      }
+      const staat = await leesHoofdstaat(env);
+      const team = staat.teams.find(t => t.id === teamId);
+      if (!team) return json({ fout: "Onbekend team" }, 404);
+      team.logo = logo;
+      await env.LEADERBOARD.put(STATE_KEY, JSON.stringify(staat));
+      return json({ ok: true, staat });
     }
 
     if (url.pathname === "/api/wereldlied") {
