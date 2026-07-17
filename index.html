@@ -361,15 +361,6 @@
     color: rgba(244,242,236,0.7);
   }
   .kast-kop b { color: var(--gold); }
-  .plank-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 10px; }
-  .trofee {
-    padding: 10px 4px 8px;
-    border-bottom: 3px solid;
-    border-image: linear-gradient(90deg, transparent, var(--gold), transparent) 1;
-  }
-  .trofee-emoji { font-size: 34px; line-height: 1.1; filter: drop-shadow(0 4px 10px rgba(212,175,55,0.4)); }
-  .trofee-emoji img { width: 40px; height: 40px; object-fit: contain; display: block; margin: 0 auto; }
-  .trofee-naam { margin-top: 6px; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: rgba(244,242,236,0.8); line-height: 1.4; }
   .kast-leeg {
     font-family: "Courier New", monospace;
     font-size: 12px; color: rgba(244,242,236,0.45);
@@ -385,7 +376,6 @@
   .badge-regel .b-emoji { font-size: 20px; }
   .badge-regel .b-emoji img { width: 52px; height: 52px; object-fit: contain; display: block; filter: drop-shadow(0 3px 8px rgba(0,0,0,0.5)); }
   .badge-regel .b-naam { font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
-  .badge-regel .b-info { font-size: 10px; letter-spacing: 1px; color: rgba(244,242,236,0.5); text-transform: uppercase; }
 
   /* ---------- CCTV ticker ---------- */
   .ticker-wrap {
@@ -489,13 +479,11 @@
 <script>
   const $ = id => document.getElementById(id);
   const CAT = window.KWIM_CATALOGUS;
-  // badge kan uit de vaste catalogus komen (emoji) of een geüploade badge zijn (afbeelding)
-  const badgeVan = id =>
-    CAT.badges.find(b => b.id === id) ||
-    ((staat && staat.badgeDefs) || []).find(b => b.id === id);
-  const badgeIcoon = b => b.afbeelding
-    ? `<img src="${b.afbeelding}" alt="">`
-    : escapeHtml(b.emoji || '');
+  // een prijs komt uit de vaste catalogus (kampioensring) of is een geüploade prijs (afbeelding)
+  const prijsVan = id =>
+    CAT.prijzen.find(p => p.id === id) ||
+    ((staat && staat.prijsDefs) || []).find(p => p.id === id);
+  const prijsIcoon = p => `<img src="${p.afbeelding}" alt="">`;
 
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -540,9 +528,9 @@
       const rij = document.createElement('button');
       rij.className = 'rij plek-' + plek;
       rij.style.animationDelay = (i * 0.07) + 's';
-      const badges = (team.badges || [])
-        .map(badgeVan).filter(Boolean)
-        .map(b => `<span class="badge" title="${escapeHtml(b.naam)}">${badgeIcoon(b)}</span>`)
+      const badges = (team.prijzen || [])
+        .map(prijsVan).filter(Boolean)
+        .map(p => `<span class="badge" title="${escapeHtml(p.naam)}">${prijsIcoon(p)}</span>`)
         .join('');
       rij.innerHTML = `
         <div class="plek">${plek}</div>
@@ -598,15 +586,10 @@
   function openKast(teamId) {
     const team = staat.teams.find(t => t.id === teamId);
     if (!team) return;
-    const trofeeen = (team.trofeeen || []).map(tr => `
-      <div class="trofee">
-        <div class="trofee-emoji">${tr.afbeelding ? `<img src="${tr.afbeelding}" alt="">` : escapeHtml(tr.emoji)}</div>
-        <div class="trofee-naam">${escapeHtml(tr.naam)}</div>
-      </div>`).join('');
-    const badges = (team.badges || []).map(badgeVan).filter(Boolean).map(b => `
+    const prijzen = (team.prijzen || []).map(prijsVan).filter(Boolean).map(p => `
       <div class="badge-regel">
-        <span class="b-emoji">${badgeIcoon(b)}</span>
-        <span><div class="b-naam">${escapeHtml(b.naam)}</div>${b.info ? `<div class="b-info">${escapeHtml(b.info)}</div>` : ''}</span>
+        <span class="b-emoji">${prijsIcoon(p)}</span>
+        <span class="b-naam">${escapeHtml(p.naam)}</span>
       </div>`).join('');
     $('kast').innerHTML = `
       <button class="kast-sluit" id="kast-sluit">✕ sluit</button>
@@ -614,9 +597,7 @@
       <div class="kast-naam">${escapeHtml(team.naam)}</div>
       <div class="kast-spelers">${team.spelers.map(escapeHtml).join(' & ')}</div>
       <div class="kast-kop">★ <b>Prijzenkast</b> ★</div>
-      ${trofeeen ? `<div class="plank-grid">${trofeeen}</div>` : `<div class="kast-leeg">> de kast is leeg. triest.</div>`}
-      <div class="kast-kop">Verdiende <b>badges</b></div>
-      ${badges ? `<div class="badge-lijst">${badges}</div>` : `<div class="kast-leeg">> nog geen badges verdiend.</div>`}`;
+      ${prijzen ? `<div class="badge-lijst">${prijzen}</div>` : `<div class="kast-leeg">> de kast is leeg. triest.</div>`}`;
     $('kast-sluit').addEventListener('click', sluitKast);
     $('kast').scrollTop = 0;
     modal.classList.add('open');
