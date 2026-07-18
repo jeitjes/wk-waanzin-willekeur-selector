@@ -49,6 +49,8 @@ const DEFAULT_SPELLEN = { wereldlied: true, infantino: false };
 
 const DEFAULT_STATE = {
   spellen: { ...DEFAULT_SPELLEN },
+  // configureerbare foto voor de nep-donatieflow (/doneer) — data-URL of null voor de standaard placeholder
+  doneerFoto: null,
   teams: [
     { id: "t1", naam: "Team 1", spelers: ["Jelle", "Pepijn"], punten: 0, logo: null, land: null, prijzen: [] },
     { id: "t2", naam: "Team 2", spelers: ["Daniel", "Sep"], punten: 0, logo: null, land: null, prijzen: [] },
@@ -100,6 +102,8 @@ function valideerState(state) {
     if (t.logo !== null && (typeof t.logo !== "string" || !t.logo.startsWith("data:image/"))) return false;
     if (t.land !== undefined && t.land !== null && (typeof t.land !== "string" || !/^[A-Za-z]{2}$/.test(t.land))) return false;
   }
+  if (state.doneerFoto !== undefined && state.doneerFoto !== null &&
+      (typeof state.doneerFoto !== "string" || !state.doneerFoto.startsWith("data:image/"))) return false;
   if (state.spellen !== undefined) {
     if (!state.spellen || typeof state.spellen !== "object" || Array.isArray(state.spellen)) return false;
     const spellen = Object.entries(state.spellen);
@@ -135,6 +139,7 @@ function migreerStaat(state) {
   });
   const spellen = state.spellen && typeof state.spellen === "object" && !Array.isArray(state.spellen) ? state.spellen : {};
   state.spellen = { ...DEFAULT_SPELLEN, ...spellen };
+  if (state.doneerFoto === undefined) state.doneerFoto = null;
   return state;
 }
 
@@ -239,6 +244,21 @@ export default {
       const team = staat.teams.find(t => t.id === teamId);
       if (!team) return json({ fout: "Onbekend team" }, 404);
       team.logo = logo;
+      await env.LEADERBOARD.put(STATE_KEY, JSON.stringify(staat));
+      return json({ ok: true, staat });
+    }
+
+    // volledig publiek — de nep-donatieflow (/doneer) eindigt hierin: een team krijgt
+    // of verliest exact één punt. Even willekeurig en "legitiem" als de rest van het klassement.
+    if (url.pathname === "/api/doneer" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ fout: "Ongeldige JSON" }, 400); }
+      const { teamId, delta } = body || {};
+      if (typeof teamId !== "string" || (delta !== 1 && delta !== -1)) return json({ fout: "Ongeldig verzoek" }, 400);
+      const staat = await leesHoofdstaat(env);
+      const team = staat.teams.find(t => t.id === teamId);
+      if (!team) return json({ fout: "Onbekend team" }, 404);
+      team.punten = (team.punten || 0) + delta;
       await env.LEADERBOARD.put(STATE_KEY, JSON.stringify(staat));
       return json({ ok: true, staat });
     }
