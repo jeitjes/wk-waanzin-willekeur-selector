@@ -343,7 +343,7 @@
 
   // ---- de wizard-staat ----
   let stap = 'intro'; // intro | bedrag | betaling | verwerken | bank | team | klaar
-  const donatie = { bedrag: 50, valuta: 'EUR', bank: null, teamId: null, delta: null };
+  const donatie = { bedrag: 50, valuta: 'EUR', bank: null, teamId: null, delta: null, gelukt: null };
 
   async function laadStaat() {
     try {
@@ -362,6 +362,7 @@
 
   function renderIntro() {
     const foto = hoofdstaat && hoofdstaat.doneerFoto;
+    const actief = !hoofdstaat || hoofdstaat.doneerActief !== false;
     return `
       <div class="portret">
         ${foto ? `<img src="${foto}" alt="">` : `<span class="emoji">🕴️</span>`}
@@ -380,6 +381,8 @@
           ${foto ? `<button type="button" class="foto-weg" id="foto-weg">✕ Verwijder</button>` : ''}
           <div class="foto-status" id="foto-status"></div>
         </div>
+        <button type="button" class="foto-bewerk-knop" id="actief-toggle-knop">${actief ? '🔌 Omkoping staat AAN — zet UIT (admin)' : '🔌 Omkoping staat UIT — zet AAN (admin)'}</button>
+        <div class="foto-status" id="actief-status"></div>
       ` : ''}
       <button class="btn-groen" id="start-btn">Start donatie →</button>
       <div class="fineprint">Volstrekt fictieve betaalflow. Er wordt niets echt afgeschreven — dit is een easter egg.</div>
@@ -401,6 +404,20 @@
         zetFotoStatus('✓ verwijderd', 'ok');
         setTimeout(render, 600);
       } catch { zetFotoStatus('✗ mislukt', 'fout'); }
+    });
+    const actiefKnop = $('actief-toggle-knop');
+    if (actiefKnop) actiefKnop.addEventListener('click', async () => {
+      const nieuweWaarde = !(hoofdstaat && hoofdstaat.doneerActief !== false);
+      actiefKnop.disabled = true;
+      zetActiefStatus('● bezig…', 'bezig');
+      try {
+        await zetDoneerActief(nieuweWaarde);
+        zetActiefStatus('✓ opgeslagen', 'ok');
+        setTimeout(render, 600);
+      } catch {
+        zetActiefStatus('✗ mislukt', 'fout');
+        actiefKnop.disabled = false;
+      }
     });
   }
 
@@ -529,7 +546,10 @@
       });
     });
     const verder = $('verder-btn');
-    if (donatie.bank) verder.addEventListener('click', () => gaNaar('team'));
+    if (donatie.bank) verder.addEventListener('click', () => {
+      const actief = !hoofdstaat || hoofdstaat.doneerActief !== false;
+      gaNaar(actief ? 'team' : 'klaar');
+    });
     $('terug-btn').addEventListener('click', () => gaNaar('betaling'));
   }
 
@@ -572,6 +592,7 @@
           hoofdstaat = uitkomst.staat;
           donatie.teamId = teamId;
           donatie.delta = delta;
+          donatie.gelukt = uitkomst.gelukt;
           gaNaar('klaar');
         } catch {
           k.disabled = false;
@@ -584,22 +605,44 @@
 
   function renderKlaar() {
     const bank = bankVan(donatie.bank);
-    const team = teamVan(donatie.teamId);
     const c = currencyVan(donatie.valuta);
+
+    // omkoping stond uit voor deze donatie — geen team gekozen, gewoon een bedankje
+    if (!donatie.teamId) {
+      return `
+        <div class="stap-label">Bedankt</div>
+        <h1>Donatie<br>voltooid</h1>
+        <hr class="divider">
+        <div class="bon">
+          <div class="bon-kop">✓ Ontvangstbewijs</div>
+          <div class="bon-regel"><span class="bon-label">Bedrag</span><span class="bon-waarde">${c.symbool} ${donatie.bedrag}</span></div>
+          <div class="bon-regel"><span class="bon-label">Bestemming</span><span class="bon-waarde">${bank ? bank.vlag + ' ' + escapeHtml(bank.naam) : '—'}</span></div>
+        </div>
+        <div class="flavor" style="margin-top:18px;">
+          Deze donatie was geheel legaal, volledig transparant en op geen enkele wijze bedoeld om de einduitslag te beïnvloeden.
+          De Federatie dankt u voor uw vertrouwen.
+        </div>
+        <button class="btn-groen" id="nog-een-btn">Nog een donatie doen</button>
+      `;
+    }
+
+    const team = teamVan(donatie.teamId);
+    const gelukt = donatie.gelukt !== false;
     return `
       <div class="stap-label">Bedankt</div>
       <h1>Donatie<br>voltooid</h1>
       <hr class="divider">
       <div class="bon">
-        <div class="bon-kop">✓ Ontvangstbewijs</div>
+        <div class="bon-kop">${gelukt ? '✓ Ontvangstbewijs' : '✗ Ontvangstbewijs'}</div>
         <div class="bon-regel"><span class="bon-label">Bedrag</span><span class="bon-waarde">${c.symbool} ${donatie.bedrag}</span></div>
         <div class="bon-regel"><span class="bon-label">Bestemming</span><span class="bon-waarde">${bank ? bank.vlag + ' ' + escapeHtml(bank.naam) : '—'}</span></div>
         <div class="bon-regel"><span class="bon-label">Begunstigd team</span><span class="bon-waarde">${team ? escapeHtml(team.naam) : '—'}</span></div>
-        <div class="bon-regel"><span class="bon-label">Effect op klassement</span><span class="bon-waarde ${donatie.delta > 0 ? 'plus' : 'min'}">${donatie.delta > 0 ? '+1 punt' : '−1 punt'}</span></div>
+        <div class="bon-regel"><span class="bon-label">Effect op klassement</span><span class="bon-waarde ${gelukt ? (donatie.delta > 0 ? 'plus' : 'min') : 'min'}">${gelukt ? (donatie.delta > 0 ? '+1 punt' : '−1 punt') : 'geen — omkoping mislukt'}</span></div>
       </div>
       <div class="flavor" style="margin-top:18px;">
-        Deze donatie was geheel legaal, volledig transparant en op geen enkele wijze bedoeld om de einduitslag te beïnvloeden.
-        De Federatie dankt u voor uw vertrouwen.
+        ${gelukt
+          ? 'Deze donatie was geheel legaal, volledig transparant en op geen enkele wijze bedoeld om de einduitslag te beïnvloeden. De Federatie dankt u voor uw vertrouwen.'
+          : 'Helaas — dit team heeft in deze richting al het maximum aan "donaties" ontvangen. Uw bijdrage is niettemin genoteerd. De Federatie dankt u voor uw vertrouwen (en uw discretie).'}
       </div>
       <button class="btn-groen" id="nog-een-btn">Nog een donatie doen</button>
     `;
@@ -607,7 +650,7 @@
 
   function koppelKlaar() {
     $('nog-een-btn').addEventListener('click', () => {
-      donatie.bank = null; donatie.teamId = null; donatie.delta = null;
+      donatie.bank = null; donatie.teamId = null; donatie.delta = null; donatie.gelukt = null;
       gaNaar('intro');
     });
   }
@@ -663,6 +706,27 @@
     if (!res.ok) throw new Error(res.status);
     const vers = await res.json();
     vers.doneerFoto = dataUrlOfNull;
+    const put = await fetch('/api/state', {
+      method: 'PUT',
+      headers: { 'Authorization': 'Bearer ' + sleutel, 'Content-Type': 'application/json' },
+      body: JSON.stringify(vers)
+    });
+    if (!put.ok) throw new Error(put.status);
+    hoofdstaat = vers;
+  }
+
+  function zetActiefStatus(tekst, klasse) {
+    const el = $('actief-status');
+    if (!el) return;
+    el.textContent = tekst;
+    el.className = 'foto-status' + (klasse ? ' ' + klasse : '');
+  }
+
+  async function zetDoneerActief(waarde) {
+    const res = await fetch('/api/state', { cache: 'no-store' });
+    if (!res.ok) throw new Error(res.status);
+    const vers = await res.json();
+    vers.doneerActief = waarde;
     const put = await fetch('/api/state', {
       method: 'PUT',
       headers: { 'Authorization': 'Bearer ' + sleutel, 'Content-Type': 'application/json' },

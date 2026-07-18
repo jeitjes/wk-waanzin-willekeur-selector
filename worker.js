@@ -68,16 +68,22 @@ const PRIJS_IDS = ["fairplay", "flairplay", "legacy", "kampioensring"];
 // de spel-definities staan in games.html
 const DEFAULT_SPELLEN = { wereldlied: true, infantino: false };
 
+// per-team cumulatieve limiet op de nep-donatieflow: hoeveel punten er ooit via
+// /doneer bij een team opgeteld/afgetrokken mogen worden, ongeacht wie het doet
+const DONATIE_CAP = 2;
+
 const DEFAULT_STATE = {
   spellen: { ...DEFAULT_SPELLEN },
   // configureerbare foto voor de nep-donatieflow (/doneer) — data-URL of null voor de standaard placeholder
   doneerFoto: null,
+  // admin-schakelaar: staat de donatieflow (/doneer) open om teams te bevoordelen/benadelen?
+  doneerActief: true,
   teams: [
-    { id: "t1", naam: "Team 1", spelers: ["Jelle", "Pepijn"], punten: 0, logo: null, land: null, prijzen: [] },
-    { id: "t2", naam: "Team 2", spelers: ["Daniel", "Sep"], punten: 0, logo: null, land: null, prijzen: [] },
-    { id: "t3", naam: "Team 3", spelers: ["Rob", "Lars"], punten: 0, logo: null, land: null, prijzen: [] },
-    { id: "t4", naam: "Team 4", spelers: ["Thomas", "Zowi"], punten: 0, logo: null, land: null, prijzen: [] },
-    { id: "t5", naam: "Team 5", spelers: ["Jaap", "Shayan"], punten: 0, logo: null, land: null, prijzen: [] }
+    { id: "t1", naam: "Team 1", spelers: ["Jelle", "Pepijn"], punten: 0, logo: null, land: null, prijzen: [], donatiePlus: 0, donatieMin: 0 },
+    { id: "t2", naam: "Team 2", spelers: ["Daniel", "Sep"], punten: 0, logo: null, land: null, prijzen: [], donatiePlus: 0, donatieMin: 0 },
+    { id: "t3", naam: "Team 3", spelers: ["Rob", "Lars"], punten: 0, logo: null, land: null, prijzen: [], donatiePlus: 0, donatieMin: 0 },
+    { id: "t4", naam: "Team 4", spelers: ["Thomas", "Zowi"], punten: 0, logo: null, land: null, prijzen: [], donatiePlus: 0, donatieMin: 0 },
+    { id: "t5", naam: "Team 5", spelers: ["Jaap", "Shayan"], punten: 0, logo: null, land: null, prijzen: [], donatiePlus: 0, donatieMin: 0 }
   ]
 };
 
@@ -122,9 +128,12 @@ function valideerState(state) {
     if (typeof t.punten !== "number" || !Number.isFinite(t.punten)) return false;
     if (t.logo !== null && (typeof t.logo !== "string" || !t.logo.startsWith("data:image/"))) return false;
     if (t.land !== undefined && t.land !== null && (typeof t.land !== "string" || !/^[A-Za-z]{2}$/.test(t.land))) return false;
+    if (t.donatiePlus !== undefined && (typeof t.donatiePlus !== "number" || !Number.isInteger(t.donatiePlus) || t.donatiePlus < 0)) return false;
+    if (t.donatieMin !== undefined && (typeof t.donatieMin !== "number" || !Number.isInteger(t.donatieMin) || t.donatieMin < 0)) return false;
   }
   if (state.doneerFoto !== undefined && state.doneerFoto !== null &&
       (typeof state.doneerFoto !== "string" || !state.doneerFoto.startsWith("data:image/"))) return false;
+  if (state.doneerActief !== undefined && typeof state.doneerActief !== "boolean") return false;
   if (state.spellen !== undefined) {
     if (!state.spellen || typeof state.spellen !== "object" || Array.isArray(state.spellen)) return false;
     const spellen = Object.entries(state.spellen);
@@ -157,10 +166,13 @@ function migreerStaat(state) {
     t.prijzen = [...new Set(oud.map(id => OUDE_PRIJS_IDS[id] || id))].filter(id => PRIJS_IDS.includes(id));
     delete t.badges;
     delete t.trofeeen;
+    if (typeof t.donatiePlus !== "number") t.donatiePlus = 0;
+    if (typeof t.donatieMin !== "number") t.donatieMin = 0;
   });
   const spellen = state.spellen && typeof state.spellen === "object" && !Array.isArray(state.spellen) ? state.spellen : {};
   state.spellen = { ...DEFAULT_SPELLEN, ...spellen };
   if (state.doneerFoto === undefined) state.doneerFoto = null;
+  if (typeof state.doneerActief !== "boolean") state.doneerActief = true;
   return state;
 }
 
@@ -292,17 +304,25 @@ export default {
 
     // volledig publiek — de nep-donatieflow (/doneer) eindigt hierin: een team krijgt
     // of verliest exact één punt. Even willekeurig en "legitiem" als de rest van het klassement.
+    // Per team zit er een cumulatief plafond op (DONATIE_CAP in elke richting, ongeacht wie
+    // doneert) — is dat al bereikt, dan "mislukt" de omkoping stilzwijgend zonder puntenwijziging.
     if (url.pathname === "/api/doneer" && request.method === "POST") {
       let body;
       try { body = await request.json(); } catch { return json({ fout: "Ongeldige JSON" }, 400); }
       const { teamId, delta } = body || {};
       if (typeof teamId !== "string" || (delta !== 1 && delta !== -1)) return json({ fout: "Ongeldig verzoek" }, 400);
       const staat = await leesHoofdstaat(env);
+      if (staat.doneerActief === false) return json({ fout: "Donatiefunctie staat uit" }, 409);
       const team = staat.teams.find(t => t.id === teamId);
       if (!team) return json({ fout: "Onbekend team" }, 404);
-      team.punten = (team.punten || 0) + delta;
-      await env.LEADERBOARD.put(STATE_KEY, JSON.stringify(staat));
-      return json({ ok: true, staat });
+      const telveld = delta === 1 ? "donatiePlus" : "donatieMin";
+      const gelukt = (team[telveld] || 0) < DONATIE_CAP;
+      if (gelukt) {
+        team.punten = (team.punten || 0) + delta;
+        team[telveld] = (team[telveld] || 0) + 1;
+        await env.LEADERBOARD.put(STATE_KEY, JSON.stringify(staat));
+      }
+      return json({ ok: true, gelukt, staat });
     }
 
     if (url.pathname === "/api/wereldlied") {
