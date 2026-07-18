@@ -5,10 +5,10 @@ Static site (plain HTML, no build step) plus a small leaderboard-API, served by 
 ## Architecture
 
 - `index.html` — live leaderboard (homepage); polls `GET /api/state` every 12 s.
-- `admin.html` (→ `/admin`) — admin panel; mutations go through `PUT /api/state` with `Authorization: Bearer <ADMIN_KEY>`, validated server-side in `worker.js`.
+- `admin.html` (→ `/admin`) — admin panel; mutations go through `PUT /api/state` with `Authorization: Bearer <ADMIN_KEY>`. There's no password field — access is via a shareable link `https://kwimhub.com/admin?k=<ADMIN_KEY>`: the page reads the `k` query param, verifies it against `POST /api/login`, stores it in `localStorage`, and strips it from the URL. Anyone with the link has full admin access; there's no per-user distinction.
 - `selector.html` (→ `/selector`) — the original one-time team selector, archived.
 - `catalog.js` — shared badge/trophy catalog for both pages.
-- Leaderboard state lives in KV (binding `LEADERBOARD`, namespace id in `wrangler.jsonc`); team logos are stored inside the state as small data-URLs. The admin key is the Worker secret `ADMIN_KEY` (production: `wrangler secret put ADMIN_KEY`; local dev: `.dev.vars`, which is git- and assets-ignored).
+- Leaderboard state lives in KV (binding `LEADERBOARD`, namespace id in `wrangler.jsonc`); team logos are stored inside the state as small data-URLs. The admin key is the Worker secret `ADMIN_KEY` (production: `wrangler secret put ADMIN_KEY`; local dev: `.dev.vars`, which is git- and assets-ignored). To rotate it, set a new secret and reshare the `/admin?k=...` link — the old link stops working immediately.
 - Local dev: `npx wrangler dev` (local KV simulation, independent of production state).
 
 ## Hosting & deploy (Cloudflare)
