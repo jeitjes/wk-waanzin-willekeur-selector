@@ -325,6 +325,24 @@ export default {
       return json({ ok: true, staat: w });
     }
 
+    // alleen admins: verwijdert de inzending van beurt {index}. De regel blijft als
+    // placeholder staan (overgeslagen + verwijderd) zodat de koppeling tussen beurten
+    // en refreinregels intact blijft — de originele refreinregel geldt dan weer.
+    if (url.pathname === "/api/wereldlied/verwijder" && request.method === "POST") {
+      if (!checkAuth(request, env)) return json({ fout: "Geen toegang" }, 401);
+      let body;
+      try { body = await request.json(); } catch { return json({ fout: "Ongeldige JSON" }, 400); }
+      const index = body ? body.index : undefined;
+      const w = await leesWereldlied(env);
+      if (!Number.isInteger(index) || index < 0 || index >= w.regels.length) {
+        return json({ fout: "Onbekende regel" }, 400);
+      }
+      const r = w.regels[index];
+      w.regels[index] = { teamId: r.teamId, teamNaam: r.teamNaam, tekst: null, tijd: Date.now(), overgeslagen: true, verwijderd: true };
+      await schrijfWereldlied(env, w);
+      return json({ ok: true, staat: w });
+    }
+
     // ieder scherm dat een afgelopen countdown ziet mag dit aanroepen — de server
     // controleert zelf of de tijd echt om is, dus dubbele of te vroege aanroepen zijn onschadelijk
     if (url.pathname === "/api/wereldlied/overslaan" && request.method === "POST") {

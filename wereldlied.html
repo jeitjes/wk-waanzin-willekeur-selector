@@ -193,6 +193,7 @@
   /* ---------- de ketting ---------- */
   .ketting { width: 100%; display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
   .regel-kaart {
+    position: relative;
     text-align: left;
     border: 1px solid rgba(212,175,55,0.3);
     border-radius: 8px;
@@ -291,6 +292,37 @@
     outline: none;
   }
   .team-balk select:focus { border-color: var(--gold-bright); }
+
+  /* ---------- adminmodus: regels verwijderen ---------- */
+  .regel-verwijder {
+    position: absolute; top: 7px; right: 8px;
+    background: none;
+    border: 1px solid rgba(224,49,49,0.5);
+    border-radius: 4px;
+    color: var(--red);
+    font-size: 12px;
+    line-height: 1;
+    padding: 4px 8px;
+    cursor: pointer;
+  }
+  .regel-verwijder:active { transform: scale(0.92); }
+  .regel-kaart .regel-team { padding-right: 40px; }
+  .admin-badge {
+    position: fixed;
+    right: 10px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    z-index: 30;
+    display: none;
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--green);
+    background: rgba(6,10,30,0.88);
+    border: 1px solid rgba(212,175,55,0.6);
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
 </style>
 </head>
 <body>
@@ -319,6 +351,9 @@
   <div id="inhoud"></div>
 </div>
 
+<!-- adminbadge: alleen zichtbaar in adminmodus -->
+<button class="admin-badge" id="admin-badge" title="Adminmodus — tik om uit te loggen">🔑 admin</button>
+
 <script src="/catalog.js"></script>
 <script>
   const $ = id => document.getElementById(id);
@@ -330,6 +365,12 @@
 
   let hoofdstaat = null;   // /api/state — voor teamnamen, logo's, vlaggen
   let wereld = null;       // /api/wereldlied — de ronde zelf
+
+  // adminmodus: zelfde sleutelmechanisme als de homepage (/?k=<sleutel>) —
+  // een admin krijgt een 🗑-knop op elke ingezonden regel
+  const SLEUTEL_OPSLAG = 'kwimAdminSleutel';
+  let sleutel = '';
+  let adminmodus = false;
   let identiteit = JSON.parse(localStorage.getItem(IDENT_KEY) || 'null');
   let vorigAantalRegels = -1;
   let overslaanBezig = false;
@@ -456,6 +497,41 @@
     }
   }
 
+  /* ================= regel verwijderen (alleen adminmodus) ================= */
+  async function verwijderRegel(index) {
+    const r = wereld && wereld.regels[index];
+    if (!r) return;
+    if (!confirm(`Regel van ${teamNaam(r.teamId)} verwijderen? De originele refreinregel komt dan weer terug.`)) return;
+    try {
+      const res = await fetch('/api/wereldlied/verwijder', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + sleutel, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ index })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        wereld = data.staat;
+        vorigeWereldJson = JSON.stringify(wereld);
+        render();
+      } else {
+        alert(data.fout || 'Verwijderen is niet gelukt — probeer het opnieuw.');
+      }
+    } catch {
+      alert('Verwijderen is niet gelukt — probeer het opnieuw.');
+    }
+  }
+
+  function verwijderKnop(r, i) {
+    return adminmodus && r && !r.overgeslagen
+      ? `<button class="regel-verwijder" data-index="${i}" title="Verwijder deze regel">🗑</button>`
+      : '';
+  }
+
+  function bindVerwijderKnoppen() {
+    document.querySelectorAll('.regel-verwijder').forEach(b =>
+      b.addEventListener('click', () => verwijderRegel(Number(b.dataset.index))));
+  }
+
   /* ================= countdown-ring ================= */
   function tekenRing(percentage, dringend) {
     const omtrek = 2 * Math.PI * 44;
@@ -546,10 +622,11 @@
     const refrein = refreinVan();
     if (!refrein) {
       // oude ronde zonder refrein in de staat — toon de klassieke ketting
-      return wereld.regels.map(r => `<div class="regel-kaart">
+      return wereld.regels.map((r, i) => `<div class="regel-kaart">
+        ${verwijderKnop(r, i)}
         <div class="regel-team">${teamVlag(r.teamId)} ${escapeHtml(teamNaam(r.teamId))}</div>
         ${r.overgeslagen
-          ? `<div class="regel-tekst overgeslagen">⏭ tijd verstreken — geen regel</div>`
+          ? `<div class="regel-tekst overgeslagen">${r.verwijderd ? '🗑 verwijderd door de Federatie' : '⏭ tijd verstreken — geen regel'}</div>`
           : `<div class="regel-tekst">${escapeHtml(r.tekst)}</div>`}
       </div>`).join('');
     }
@@ -562,7 +639,7 @@
       if (r) {
         inhoud = r.overgeslagen
           ? `<div class="regel-origineel">♪ ${escapeHtml(origineel)}</div>
-             <div class="regel-tekst overgeslagen">⏭ tijd om — de originele regel blijft staan</div>`
+             <div class="regel-tekst overgeslagen">${r.verwijderd ? '🗑 verwijderd door de Federatie — de originele regel geldt weer' : '⏭ tijd om — de originele regel blijft staan'}</div>`
           : `<div class="regel-origineel doorgestreept">♪ ${escapeHtml(origineel)}</div>
              <div class="regel-tekst">${escapeHtml(r.tekst)}</div>`;
       } else if (isNu) {
@@ -572,6 +649,7 @@
         inhoud = `<div class="regel-origineel">♪ ${escapeHtml(origineel)}</div>`;
       }
       return `<div class="regel-kaart${isNu ? ' nu' : ''}${!r && !isNu ? ' straks' : ''}${nieuw ? ' nieuw' : ''}">
+        ${verwijderKnop(r, i)}
         <div class="regel-team">${i + 1}/${refrein.length} · ${teamVlag(teamId)} ${escapeHtml(teamNaam(teamId))}${isNu ? ' — NU' : ''}</div>
         ${inhoud}
       </div>`;
@@ -694,10 +772,35 @@
     const stopBtn = $('wl-stop-btn');
     if (stopBtn) stopBtn.addEventListener('click', stopWereldlied);
     bindVersieKnoppen();
+    bindVerwijderKnoppen();
   }
 
   /* ================= start + live verversen ================= */
+  $('admin-badge').addEventListener('click', () => {
+    if (!confirm('Adminmodus verlaten? Je hebt de adminlink nodig om weer in te loggen.')) return;
+    localStorage.removeItem(SLEUTEL_OPSLAG);
+    location.reload();
+  });
+
   (async () => {
+    // adminsleutel uit ?k= of localStorage verifiëren vóór de eerste render,
+    // zodat de 🗑-knoppen er meteen staan
+    const urlSleutel = new URL(location.href).searchParams.get('k');
+    const kandidaat = urlSleutel || localStorage.getItem(SLEUTEL_OPSLAG) || '';
+    if (kandidaat) {
+      try {
+        const res = await fetch('/api/login', { method: 'POST', headers: { 'Authorization': 'Bearer ' + kandidaat } });
+        if (res.ok) {
+          sleutel = kandidaat;
+          adminmodus = true;
+          localStorage.setItem(SLEUTEL_OPSLAG, sleutel);
+        } else {
+          localStorage.removeItem(SLEUTEL_OPSLAG);
+        }
+      } catch {}
+      if (urlSleutel) history.replaceState(null, '', location.pathname);
+    }
+    if (adminmodus) $('admin-badge').style.display = 'block';
     await laadHoofdstaat();
     await laadGeschiedenis();
     await laadWereld(true);
