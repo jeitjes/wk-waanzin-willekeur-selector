@@ -26,6 +26,18 @@ The zone-level `POST /client/v4/zones/<id>/purge_cache` API (`purge_everything` 
 
 **What actually works**: force a real content change (e.g. a throwaway HTML comment) so wrangler re-uploads the file with a new hash — that's what actually busts the edge cache. Verify with `curl -s <url> | grep -c <marker-string-only-in-new-version>` before declaring a deploy live; `wrangler deploy`'s own success output is not sufficient proof the *served* content changed.
 
+## Working across multiple sessions — deploy discipline
+
+This project is worked on from **several Claude sessions in parallel**, each on its own branch, and all deploying to the same single Worker. `wrangler deploy` publishes the **entire working directory** — so the last session to deploy wins wholesale, silently wiping any feature that isn't in that session's checkout. This has already caused a production regression once (a session deployed from a checkout without the Wereldlied changes, five minutes after they went live).
+
+Rules to prevent it:
+
+1. **Always `git fetch origin main` and merge `origin/main` into your branch immediately before every deploy.** Never deploy a checkout that is behind main — you'd be un-shipping other sessions' work. This applies even if your own change is tiny.
+2. **After verifying a feature live, merge your branch into `main` promptly** (ask the user first — pushing to main needs explicit permission). Work that only lives on a feature branch is invisible to other sessions and will be overwritten by their next deploy.
+3. **If live behavior doesn't match your code**, don't assume caching: first check the Worker's deployment list (`GET /accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/kwimhub/deployments`) for deploys you didn't make. A version ID you don't recognize means another session deployed over you — re-merge and redeploy rather than debugging phantom cache issues.
+4. **Merge conflicts**: resolve by keeping *both* features whenever possible (they're usually orthogonal — e.g. main's state-migration alongside this branch's endpoint changes). After resolving, sanity-check with `node --check worker.js` and parse each HTML file's inline `<script>` blocks with `new Function(...)` before committing.
+5. **After every deploy, verify the live site actually serves your change** (curl + grep for a marker string unique to the new version) — and re-check a few minutes later if the user reports it broken, since another session may have deployed in between.
+
 ## Asset hygiene
 
 `.assetsignore` controls what gets published. Everything in the repo root that is not listed there **becomes publicly downloadable** — when adding internal files or directories (dotdirs, configs, notes), add them to `.assetsignore` before deploying. `.claude` and `.wrangler` are already excluded.
