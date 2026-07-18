@@ -40,6 +40,27 @@ const DEFAULT_WERELDLIED = {
   refrein: []
 };
 
+// Secret Infantino — de rollendeler. Alleen het uitdelen en geheim tonen van de
+// rollen gebeurt online; het spel zelf wordt live aan tafel gespeeld.
+const INFANTINO_KEY = "infantino:v1";
+const INFANTINO_MIN = 5;
+const INFANTINO_MAX = 10;
+const INFANTINO_NAAM_MAX = 40;
+
+const DEFAULT_INFANTINO = {
+  actief: false,
+  gestart: null,
+  spelers: [],
+  rollen: {},
+  gezien: {},
+  onthuld: false
+};
+
+// aantal gewone fascisten (Infantino niet meegerekend), volgens de officiële verdeling
+function infantinoAantalFascisten(aantalSpelers) {
+  return aantalSpelers <= 6 ? 1 : aantalSpelers <= 8 ? 2 : 3;
+}
+
 // De vier vaste prijzen — moet gelijk lopen met catalog.js
 const PRIJS_IDS = ["fairplay", "flairplay", "legacy", "kampioensring"];
 
@@ -178,6 +199,27 @@ async function archiveerWereldlied(env, w) {
   });
   if (geschiedenis.length > WERELDLIED_HISTORY_MAX) geschiedenis.length = WERELDLIED_HISTORY_MAX;
   await env.LEADERBOARD.put(WERELDLIED_HISTORY_KEY, JSON.stringify(geschiedenis));
+}
+
+async function leesInfantino(env) {
+  const raw = await env.LEADERBOARD.get(INFANTINO_KEY);
+  return raw ? JSON.parse(raw) : { ...DEFAULT_INFANTINO };
+}
+
+async function schrijfInfantino(env, s) {
+  await env.LEADERBOARD.put(INFANTINO_KEY, JSON.stringify(s));
+}
+
+// wat iedereen mag zien: de rollen blijven weggelaten tot ze onthuld zijn
+function publiekInfantino(s) {
+  return {
+    actief: s.actief,
+    gestart: s.gestart,
+    onthuld: s.onthuld,
+    spelers: s.spelers,
+    gezien: s.gezien,
+    rollen: s.onthuld ? s.rollen : undefined
+  };
 }
 
 // zet de beurt een stap door en rondt de ronde af als iedereen geweest is
@@ -377,6 +419,88 @@ export default {
       volgendeBeurt(w);
       await schrijfWereldlied(env, w);
       return json(w);
+    }
+
+    /* ================= Secret Infantino ================= */
+
+    if (url.pathname === "/api/infantino") {
+      if (request.method === "GET") return json(publiekInfantino(await leesInfantino(env)));
+      return json({ fout: "Methode niet toegestaan" }, 405);
+    }
+
+    // volledig publiek, net als het Wereldlied — de client toont een bevestigingsdialoog.
+    // De server schudt en deelt de rollen; ze verlaten de server alleen via /api/infantino/rol
+    // (per speler) of na /api/infantino/onthul (allemaal tegelijk).
+    if (url.pathname === "/api/infantino/start" && request.method === "POST") {
+      const huidig = await leesInfantino(env);
+      if (huidig.actief && !huidig.onthuld) {
+        return json({ fout: "Er loopt al een spel — onthul de rollen of schud opnieuw" }, 409);
+      }
+      let body;
+      try { body = await request.json(); } catch { return json({ fout: "Ongeldige JSON" }, 400); }
+      const spelers = Array.isArray(body && body.spelers)
+        ? body.spelers.filter(n => typeof n === "string").map(n => n.trim()).filter(Boolean)
+        : [];
+      if (new Set(spelers).size !== spelers.length) return json({ fout: "Dubbele spelersnamen" }, 400);
+      if (spelers.some(n => n.length > INFANTINO_NAAM_MAX)) return json({ fout: "Ongeldige spelersnaam" }, 400);
+      if (spelers.length < INFANTINO_MIN || spelers.length > INFANTINO_MAX) {
+        return json({ fout: `Secret Infantino is voor ${INFANTINO_MIN} tot ${INFANTINO_MAX} spelers` }, 400);
+      }
+      const schud = [...spelers];
+      for (let i = schud.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [schud[i], schud[j]] = [schud[j], schud[i]];
+      }
+      const aantalFascisten = infantinoAantalFascisten(spelers.length);
+      const rollen = {};
+      schud.forEach((naam, i) => {
+        rollen[naam] = i === 0 ? "infantino" : i <= aantalFascisten ? "fascist" : "liberaal";
+      });
+      const s = { actief: true, gestart: Date.now(), spelers, rollen, gezien: {}, onthuld: false };
+      await schrijfInfantino(env, s);
+      return json({ ok: true, staat: publiekInfantino(s) });
+    }
+
+    // gooit het lopende spel weg (client bevestigt eerst) — daarna kan er opnieuw geschud worden
+    if (url.pathname === "/api/infantino/reset" && request.method === "POST") {
+      await schrijfInfantino(env, { ...DEFAULT_INFANTINO });
+      return json({ ok: true });
+    }
+
+    // een speler bekijkt zijn eigen geheime rol. Wie wat weet volgt de officiële regels:
+    // fascisten kennen elkaar én Infantino; Infantino kent zijn fascisten alleen bij 5-6
+    // spelers; liberalen weten niets. Het bekijken wordt geregistreerd zodat de lobby
+    // toont wie zijn rol al gezien heeft.
+    if (url.pathname === "/api/infantino/rol" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ fout: "Ongeldige JSON" }, 400); }
+      const speler = body ? body.speler : undefined;
+      const s = await leesInfantino(env);
+      if (!s.actief) return json({ fout: "Er loopt geen spel" }, 409);
+      if (typeof speler !== "string" || !s.rollen[speler]) return json({ fout: "Onbekende speler" }, 404);
+      if (!s.gezien[speler]) {
+        s.gezien[speler] = Date.now();
+        await schrijfInfantino(env, s);
+      }
+      const rol = s.rollen[speler];
+      const fascisten = s.spelers.filter(n => s.rollen[n] === "fascist");
+      const antwoord = { rol };
+      if (rol === "fascist") {
+        antwoord.medefascisten = fascisten.filter(n => n !== speler);
+        antwoord.infantino = s.spelers.find(n => s.rollen[n] === "infantino");
+      } else if (rol === "infantino") {
+        antwoord.medefascisten = s.spelers.length <= 6 ? fascisten : null;
+      }
+      return json(antwoord);
+    }
+
+    // na afloop van het echte spel: alle rollen op tafel, voor iedereen zichtbaar
+    if (url.pathname === "/api/infantino/onthul" && request.method === "POST") {
+      const s = await leesInfantino(env);
+      if (!s.actief) return json({ fout: "Er loopt geen spel" }, 409);
+      s.onthuld = true;
+      await schrijfInfantino(env, s);
+      return json({ ok: true, staat: publiekInfantino(s) });
     }
 
     return env.ASSETS.fetch(request);

@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>WK WAANZIN™ — Secret Infantino</title>
+<meta name="theme-color" content="#060a1e">
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root {
+    --navy: #0a1030;
+    --navy-deep: #060a1e;
+    --gold: #d4af37;
+    --gold-bright: #ffd75e;
+    --white: #f4f2ec;
+    --red: #e03131;
+    --teal: #1fd4c0;
+    --magenta: #ff3df0;
+    --green: #3ddc84;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overscroll-behavior-y: none; }
+  html { -webkit-text-size-adjust: 100%; background: var(--navy-deep); }
+  body {
+    font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background: var(--navy-deep);
+    color: var(--white);
+    min-height: 100%;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  button, input, select { font-family: inherit; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  button { user-select: none; -webkit-user-select: none; cursor: pointer; }
+
+  /* ---------- de permanente trip (zelfde als de homepage) ---------- */
+  .trip {
+    position: fixed; inset: 0;
+    display: grid; place-items: center;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    --spd: 30s;
+    animation: hueSpin 22s linear infinite;
+  }
+  .ring { position: absolute; width: 130vmax; height: 130vmax; border-radius: 50%; opacity: 0.14; will-change: transform; }
+  .r1 { background: repeating-conic-gradient(from 0deg, var(--gold-bright) 0 8deg, transparent 8deg 24deg); animation: spin var(--spd) linear infinite; }
+  .r2 { background: repeating-radial-gradient(circle, rgba(255,61,240,0.7) 0 3vmax, transparent 3vmax 7vmax); animation: spinRev calc(var(--spd) * 0.7) linear infinite, breathe 7s ease-in-out infinite; }
+  .r3 { background: conic-gradient(var(--teal), var(--magenta), var(--gold-bright), var(--teal)); filter: blur(32px); animation: spin calc(var(--spd) * 0.5) linear infinite; mix-blend-mode: screen; }
+  .r4 { background: repeating-conic-gradient(from 10deg, rgba(31,212,192,0.8) 0 4deg, transparent 4deg 18deg); animation: spinRev calc(var(--spd) * 0.35) linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes spinRev { to { transform: rotate(-360deg); } }
+  @keyframes breathe { 0%,100% { scale: 1; } 50% { scale: 1.25; } }
+  @keyframes hueSpin { to { filter: hue-rotate(360deg); } }
+  .waas {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(ellipse 110% 80% at 50% 40%, rgba(6,10,30,0.25) 0%, rgba(6,10,30,0.78) 100%);
+  }
+
+  .page {
+    width: 100%;
+    max-width: 560px;
+    padding: 22px 18px calc(30px + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+  }
+
+  h1 {
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: clamp(34px, 10vw, 48px);
+    line-height: 0.95;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background: linear-gradient(175deg, var(--gold-bright) 20%, var(--gold) 55%, #8a6d1f 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .subtitle {
+    margin-top: 8px;
+    font-size: 11.5px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(244,242,236,0.7);
+  }
+  .subtitle b {
+    background: linear-gradient(90deg, var(--teal), var(--magenta), var(--gold-bright));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    font-weight: 700;
+    animation: hueSpin 8s linear infinite;
+  }
+  .divider {
+    width: 70%; margin: 18px 0; border: none; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  .wacht-tekst { font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(244,242,236,0.75); line-height: 1.9; padding-top: 10vh; }
+
+  /* ---------- uitleg + startscherm ---------- */
+  .uitleg {
+    text-align: left;
+    border: 1px solid rgba(212,175,55,0.35);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.03);
+    padding: 16px 18px;
+    width: 100%;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: rgba(244,242,236,0.85);
+  }
+  .uitleg b { color: var(--gold-bright); }
+  .uitleg .rol-r { color: var(--red); font-weight: 700; }
+  .uitleg .rol-t { color: var(--teal); font-weight: 700; }
+
+  .start-panel {
+    width: 100%;
+    margin-top: 16px;
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.03);
+    padding: 18px;
+  }
+  .start-kop { font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: rgba(244,242,236,0.65); margin-bottom: 12px; }
+  .speler-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .speler-vink {
+    display: flex; align-items: center; gap: 8px;
+    border: 1px solid rgba(212,175,55,0.35);
+    border-radius: 6px;
+    background: rgba(6,10,30,0.6);
+    padding: 10px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none; -webkit-user-select: none;
+    text-align: left;
+  }
+  .speler-vink input { accent-color: var(--gold); width: 16px; height: 16px; flex-shrink: 0; }
+  .speler-vink.aan { border-color: var(--gold-bright); background: rgba(212,175,55,0.12); }
+  .verdeling {
+    margin-top: 14px;
+    font-size: 12px; letter-spacing: 1px; text-transform: uppercase;
+    color: rgba(244,242,236,0.7);
+    line-height: 1.7;
+  }
+  .verdeling.fout { color: var(--red); }
+  .btn-gold {
+    margin-top: 14px; width: 100%;
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: 19px; letter-spacing: 2.5px; text-transform: uppercase;
+    color: var(--navy-deep);
+    background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+    border: none; border-radius: 4px; padding: 14px;
+  }
+  .btn-gold:active { transform: scale(0.98); }
+  .btn-gold:disabled { opacity: 0.4; }
+
+  /* ---------- inlogpoort ---------- */
+  .poort-panel {
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.03);
+    padding: 26px 20px;
+    width: 100%;
+    max-width: 380px;
+    margin: 6vh auto 0;
+  }
+  .poort-panel p { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: rgba(244,242,236,0.7); margin-bottom: 14px; }
+  .poort-panel select {
+    width: 100%;
+    font-size: 16px;
+    color: var(--gold-bright);
+    background: rgba(6,10,30,0.8);
+    border: 1px solid rgba(212,175,55,0.5);
+    border-radius: 4px;
+    padding: 13px 12px;
+    outline: none;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  .poort-waarschuwing { font-size: 11px; color: rgba(244,242,236,0.5); line-height: 1.5; margin-top: 10px; }
+
+  /* ---------- spelerbalk bovenin ---------- */
+  .speler-balk {
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-bottom: 16px;
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: rgba(244,242,236,0.55);
+  }
+  .speler-balk select {
+    background: rgba(6,10,30,0.8);
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 4px;
+    color: var(--gold-bright);
+    padding: 7px 10px;
+    font-size: 13px;
+    text-align: center;
+    outline: none;
+  }
+
+  /* ---------- de geheime rolkaart ---------- */
+  .rol-kaart {
+    width: 100%;
+    min-height: 210px;
+    border: 2px solid var(--gold);
+    border-radius: 12px;
+    background: radial-gradient(ellipse 120% 70% at 50% 0%, rgba(212,175,55,0.12), transparent 55%), linear-gradient(180deg, #121a3e, var(--navy-deep));
+    box-shadow: 0 0 40px rgba(212,175,55,0.2);
+    display: flex; align-items: center; justify-content: center;
+    padding: 22px 18px;
+    cursor: pointer;
+    user-select: none; -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+  .rol-kaart.open { border-color: var(--gold-bright); box-shadow: 0 0 55px rgba(212,175,55,0.45); }
+  .rol-dicht-emoji { font-size: 44px; margin-bottom: 10px; }
+  .rol-dicht-titel {
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: 22px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--gold-bright);
+  }
+  .rol-dicht-hint { margin-top: 8px; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(244,242,236,0.5); line-height: 1.6; }
+  .rol-titel {
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: 32px; letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .rol-titel.liberaal { color: var(--teal); text-shadow: 0 0 18px rgba(31,212,192,0.5); }
+  .rol-titel.fascist { color: var(--red); text-shadow: 0 0 18px rgba(224,49,49,0.5); }
+  .rol-titel.infantino { color: var(--gold-bright); text-shadow: 0 0 18px rgba(255,215,94,0.5); }
+  .rol-uitleg { font-size: 14px; line-height: 1.65; color: rgba(244,242,236,0.9); }
+  .rol-uitleg b { color: var(--gold-bright); }
+
+  /* ---------- lobby ---------- */
+  .lobby { width: 100%; margin-top: 22px; text-align: left; }
+  .lobby-kop { font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: rgba(244,242,236,0.55); text-align: center; margin-bottom: 10px; line-height: 1.8; }
+  .lobby-rij {
+    display: flex; align-items: center; justify-content: space-between;
+    border: 1px solid rgba(212,175,55,0.25);
+    border-radius: 7px;
+    background: rgba(255,255,255,0.03);
+    padding: 9px 13px;
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+  .lobby-rij.jij { border-color: var(--gold-bright); }
+  .lobby-status { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: rgba(244,242,236,0.4); }
+  .lobby-status.gezien { color: var(--green); }
+  .lobby-rol { font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .lobby-rol.liberaal { color: var(--teal); }
+  .lobby-rol.fascist { color: var(--red); }
+  .lobby-rol.infantino { color: var(--gold-bright); }
+
+  .klaar-banner {
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: 26px; letter-spacing: 1.5px; text-transform: uppercase;
+    background: linear-gradient(175deg, var(--gold-bright) 20%, var(--gold) 60%, #8a6d1f 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    margin-bottom: 14px;
+  }
+
+  .stille-knop {
+    margin-top: 22px;
+    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: rgba(244,242,236,0.35);
+    background: none; border: none; text-decoration: underline;
+  }
+  .stille-knop.rood { color: rgba(224,49,49,0.65); }
+
+  .terug { margin-top: 26px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(212,175,55,0.7); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="trip" aria-hidden="true">
+  <div class="ring r3"></div>
+  <div class="ring r1"></div>
+  <div class="ring r2"></div>
+  <div class="ring r4"></div>
+</div>
+<div class="waas" aria-hidden="true"></div>
+
+<div class="page">
+  <h1>Secret Infantino</h1>
+  <div class="subtitle"><b>Iemand aan deze tafel is Gianni Infantino</b> — vertrouw niemand</div>
+  <hr class="divider">
+
+  <div id="inhoud" style="width:100%"></div>
+
+  <a class="terug" href="/games">← terug naar de spellen</a>
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const IDENT_KEY = 'kwimInfantinoIdentiteit';
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  let hoofdstaat = null;      // /api/state — voor de spelerslijst op het startscherm
+  let spel = null;            // /api/infantino
+  let vorigeSpelJson = null;
+  let identiteit = JSON.parse(localStorage.getItem(IDENT_KEY) || 'null'); // { speler: "Naam" }
+  let mijnRol = null;         // geheime rol van de huidige identiteit
+  let mijnRolVoor = null;     // "<speler>|<gestart>" waarvoor mijnRol geldt
+  let rolFout = false;
+  let vasthoudActief = false; // render uitstellen zolang de rolkaart open is
+  let renderNaHold = false;
+  let startVink = null;       // aangevinkte spelers op het startscherm (blijft staan tussen renders)
+
+  const ROL_INFO = {
+    liberaal:  { emoji: '⚽', naam: 'Liberaal' },
+    fascist:   { emoji: '🕴', naam: 'Fascist' },
+    infantino: { emoji: '🤫', naam: 'Infantino' }
+  };
+
+  function verdeling(n) {
+    const fascisten = n <= 6 ? 1 : n <= 8 ? 2 : 3;
+    return { liberalen: n - fascisten - 1, fascisten };
+  }
+
+  function allePersonen() {
+    if (!hoofdstaat) return [];
+    const namen = [];
+    hoofdstaat.teams.forEach(t => (t.spelers || []).forEach(n => { if (n && !namen.includes(n)) namen.push(n); }));
+    return namen;
+  }
+
+  async function laadHoofdstaat() {
+    try {
+      const res = await fetch('/api/state', { cache: 'no-store' });
+      hoofdstaat = await res.json();
+      if (spel && !spel.actief) render(); // spelerslijst op het startscherm kan nu pas gevuld zijn
+    } catch {}
+  }
+
+  async function laadSpel(eerste = false) {
+    try {
+      const res = await fetch('/api/infantino', { cache: 'no-store' });
+      const vers = await res.json();
+      const json = JSON.stringify(vers);
+      spel = vers;
+      if (json !== vorigeSpelJson) {
+        vorigeSpelJson = json;
+        render();
+      }
+    } catch {
+      if (eerste) $('inhoud').innerHTML = '<div class="wacht-tekst">✗ verbinding mislukt — herlaad de pagina</div>';
+    }
+  }
+
+  function zetSpel(staat) {
+    spel = staat;
+    vorigeSpelJson = JSON.stringify(staat);
+    render();
+  }
+
+  /* ================= starten / opnieuw schudden / onthullen ================= */
+  async function startSpel(spelers) {
+    if (!confirm(`Dit deelt nu geheime rollen uit aan ${spelers.length} spelers. Iedereen bekijkt daarna zijn eigen rol op zijn eigen telefoon. Starten?`)) return;
+    const btn = $('inf-start-btn');
+    if (btn) btn.disabled = true;
+    try {
+      const res = await fetch('/api/infantino/start', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ spelers })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        zetSpel(data.staat);
+      } else {
+        alert(data.fout || 'Starten is niet gelukt — probeer het opnieuw');
+        if (btn) btn.disabled = false;
+        await laadSpel();
+      }
+    } catch {
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  async function opnieuwSchudden() {
+    if (!confirm('Dit gooit ALLE huidige rollen weg en begint opnieuw — voor iedereen. Weet je het zeker?')) return;
+    try { await fetch('/api/infantino/reset', { method: 'POST' }); } catch {}
+    startVink = spel && spel.spelers.length ? [...spel.spelers] : startVink;
+    await laadSpel();
+  }
+
+  async function onthulRollen() {
+    if (!confirm('Is het spel aan tafel echt afgelopen? Dit toont ALLE rollen aan iedereen — daarna valt er niets meer te verbergen.')) return;
+    try {
+      const res = await fetch('/api/infantino/onthul', { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) zetSpel(data.staat);
+      else alert(data.fout || 'Onthullen is niet gelukt — probeer het opnieuw');
+    } catch {}
+  }
+
+  /* ================= identiteit ================= */
+  function kiesSpeler(naam) {
+    identiteit = { speler: naam };
+    localStorage.setItem(IDENT_KEY, JSON.stringify(identiteit));
+    mijnRol = null;
+    mijnRolVoor = null;
+    rolFout = false;
+    render();
+  }
+
+  function wisselWaarschuwing(naar) {
+    return confirm(`Wisselen naar ${naar}?\n\n⚠️ Alleen doen als dit écht jouw naam is. Andermans geheime rol bekijken is keihard valsspelen — en de Federatie ziet alles.`);
+  }
+
+  /* ================= geheime rol ophalen + vasthouden ================= */
+  async function haalRol() {
+    const sleutel = identiteit.speler + '|' + spel.gestart;
+    if (mijnRol && mijnRolVoor === sleutel) return mijnRol;
+    const res = await fetch('/api/infantino/rol', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ speler: identiteit.speler })
+    });
+    if (!res.ok) throw new Error('rol ophalen mislukt');
+    mijnRol = await res.json();
+    mijnRolVoor = sleutel;
+    // de server heeft "gezien" nu geregistreerd — lokaal bijwerken zodat de
+    // eerstvolgende poll geen re-render veroorzaakt terwijl de kaart open is
+    if (spel && !spel.gezien[identiteit.speler]) {
+      spel.gezien[identiteit.speler] = Date.now();
+      vorigeSpelJson = JSON.stringify(spel);
+    }
+    return mijnRol;
+  }
+
+  function rolInhoud(rol) {
+    const info = ROL_INFO[rol.rol];
+    let uitleg = '';
+    if (rol.rol === 'liberaal') {
+      uitleg = 'Je hoort bij het goede voetbalvolk. Je weet <b>niets</b> en niemand weet iets van jou. Vind Infantino — voordat het te laat is.';
+    } else if (rol.rol === 'fascist') {
+      const maten = rol.medefascisten && rol.medefascisten.length
+        ? `Je medefascist${rol.medefascisten.length > 1 ? 'en' : ''}: <b>${rol.medefascisten.map(escapeHtml).join(', ')}</b>.`
+        : 'Jij bent de <b>enige</b> gewone fascist.';
+      uitleg = `Je dient de Federatie in het diepste geheim. ${maten}<br>Infantino is: <b>${escapeHtml(rol.infantino || '?')}</b>. Bescherm hem — en verraad hem nooit.`;
+    } else {
+      uitleg = rol.medefascisten
+        ? `Jij bent de baas van dit hele circus. Je fascist${rol.medefascisten.length > 1 ? 'en' : ''}: <b>${rol.medefascisten.map(escapeHtml).join(', ')}</b>.`
+        : 'Jij bent de baas van dit hele circus — maar je kent je fascisten <b>niet</b>. Zij kennen jou. Speel de perfecte liberaal en laat je niet betrappen.';
+    }
+    return `<div>
+      <div class="rol-titel ${rol.rol}">${info.emoji} ${info.naam}</div>
+      <div class="rol-uitleg">${uitleg}</div>
+    </div>`;
+  }
+
+  function bindRolKaart() {
+    const kaart = $('rol-kaart');
+    if (!kaart) return;
+    const dicht = $('rol-dicht');
+    const open = $('rol-open');
+
+    async function toon() {
+      if (vasthoudActief) return;
+      vasthoudActief = true;
+      kaart.classList.add('open');
+      dicht.style.display = 'none';
+      open.style.display = 'block';
+      open.innerHTML = '<div class="rol-uitleg">🔐 rol ophalen…</div>';
+      try {
+        const rol = await haalRol();
+        if (vasthoudActief) open.innerHTML = rolInhoud(rol);
+      } catch {
+        rolFout = true;
+        if (vasthoudActief) open.innerHTML = '<div class="rol-uitleg">✗ ophalen mislukt — laat los en probeer het opnieuw</div>';
+      }
+    }
+
+    function verberg() {
+      if (!vasthoudActief) return;
+      vasthoudActief = false;
+      kaart.classList.remove('open');
+      open.style.display = 'none';
+      open.innerHTML = '';
+      dicht.style.display = 'block';
+      if (renderNaHold) { renderNaHold = false; render(); }
+    }
+
+    kaart.addEventListener('pointerdown', e => { e.preventDefault(); toon(); });
+    kaart.addEventListener('pointerup', verberg);
+    kaart.addEventListener('pointercancel', verberg);
+    kaart.addEventListener('pointerleave', verberg);
+    kaart.addEventListener('contextmenu', e => e.preventDefault());
+  }
+
+  /* ================= schermen ================= */
+  function renderStart() {
+    const namen = allePersonen();
+    if (startVink === null) startVink = [...namen];
+    const vinkjes = namen.map(n => `
+      <label class="speler-vink${startVink.includes(n) ? ' aan' : ''}">
+        <input type="checkbox" value="${escapeHtml(n)}"${startVink.includes(n) ? ' checked' : ''}> ${escapeHtml(n)}
+      </label>`).join('');
+    $('inhoud').innerHTML = `
+      <div class="uitleg">
+        🤫 <b>Secret Infantino</b> — ons eigen Secret Hitler. Eén van ons is in het geheim
+        <b>Infantino</b>. Zijn <span class="rol-r">fascisten</span> kennen hem; de
+        <span class="rol-t">liberalen</span> weten helemaal niets.<br><br>
+        De Federatie schudt en deelt hier alleen de <b>geheime rollen</b> —
+        de rest van het spel speel je gewoon live aan tafel. Iedereen bekijkt
+        zijn rol stiekem op zijn eigen telefoon.
+      </div>
+      <div class="start-panel">
+        <div class="start-kop">👥 Wie doen er mee?</div>
+        ${namen.length ? `<div class="speler-grid">${vinkjes}</div>` : '<div class="wacht-tekst" style="padding:0">spelers laden…</div>'}
+        <div class="verdeling" id="inf-verdeling"></div>
+        <button class="btn-gold" id="inf-start-btn">🎲 Schud &amp; deel de rollen</button>
+      </div>`;
+
+    function updateVerdeling() {
+      const el = $('inf-verdeling');
+      const n = startVink.length;
+      if (n < 5 || n > 10) {
+        el.className = 'verdeling fout';
+        el.textContent = `${n} geselecteerd — Secret Infantino is voor 5 tot 10 spelers`;
+        $('inf-start-btn').disabled = true;
+      } else {
+        const v = verdeling(n);
+        el.className = 'verdeling';
+        el.innerHTML = `${n} spelers → ⚽ ${v.liberalen} liberalen · 🕴 ${v.fascisten} fascist${v.fascisten > 1 ? 'en' : ''} · 🤫 1 Infantino` +
+          (n <= 6 ? '<br>(bij 5-6 spelers kent Infantino zijn fascist)' : '<br>(bij 7+ spelers kent Infantino zijn fascisten niet)');
+        $('inf-start-btn').disabled = false;
+      }
+    }
+    updateVerdeling();
+
+    document.querySelectorAll('.speler-vink input').forEach(box => {
+      box.addEventListener('change', () => {
+        if (box.checked && !startVink.includes(box.value)) startVink.push(box.value);
+        if (!box.checked) startVink = startVink.filter(n => n !== box.value);
+        box.closest('.speler-vink').classList.toggle('aan', box.checked);
+        updateVerdeling();
+      });
+    });
+    $('inf-start-btn').addEventListener('click', () => {
+      const inGameVolgorde = namen.filter(n => startVink.includes(n));
+      startSpel(inGameVolgorde);
+    });
+  }
+
+  function renderPoort() {
+    const opties = spel.spelers.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+    $('inhoud').innerHTML = `
+      <div class="poort-panel">
+        <p>🤫 Wie ben jij?</p>
+        <select id="inf-wie"><option value="" selected disabled>— kies je naam —</option>${opties}</select>
+        <button class="btn-gold" id="inf-wie-btn" style="margin-top:4px">Dit ben ik</button>
+        <div class="poort-waarschuwing">⚠️ Kies alleen je éigen naam. Je krijgt zo je geheime rol te zien — andermans rol bekijken is valsspelen.</div>
+      </div>`;
+    $('inf-wie-btn').addEventListener('click', () => {
+      const naam = $('inf-wie').value;
+      if (naam) kiesSpeler(naam);
+    });
+  }
+
+  function renderOnthuld() {
+    const volgorde = { infantino: 0, fascist: 1, liberaal: 2 };
+    const rijen = [...spel.spelers]
+      .sort((a, b) => volgorde[spel.rollen[a]] - volgorde[spel.rollen[b]])
+      .map(n => {
+        const rol = spel.rollen[n];
+        const info = ROL_INFO[rol];
+        return `<div class="lobby-rij${identiteit && n === identiteit.speler ? ' jij' : ''}">
+          <span>${escapeHtml(n)}</span>
+          <span class="lobby-rol ${rol}">${info.emoji} ${info.naam}</span>
+        </div>`;
+      }).join('');
+    $('inhoud').innerHTML = `
+      <div class="klaar-banner">🃏 De rollen liggen op tafel</div>
+      <div class="lobby">${rijen}</div>
+      <button class="btn-gold" id="inf-nieuw-btn" style="margin-top:20px">🎲 Nieuw spel</button>`;
+    $('inf-nieuw-btn').addEventListener('click', async () => {
+      if (!confirm('Nieuw spel starten? De huidige (onthulde) ronde wordt weggegooid.')) return;
+      startVink = [...spel.spelers];
+      try { await fetch('/api/infantino/reset', { method: 'POST' }); } catch {}
+      await laadSpel();
+    });
+  }
+
+  function renderSpel() {
+    const ik = identiteit.speler;
+    const doeMee = spel.spelers.includes(ik);
+    const gezienAantal = spel.spelers.filter(n => spel.gezien[n]).length;
+    const v = verdeling(spel.spelers.length);
+
+    const wisselOpties = spel.spelers.map(n =>
+      `<option value="${escapeHtml(n)}"${n === ik ? ' selected' : ''}>${escapeHtml(n)}</option>`).join('') +
+      (doeMee ? '' : `<option value="${escapeHtml(ik)}" selected>${escapeHtml(ik)} (doet niet mee)</option>`);
+
+    const kaart = doeMee ? `
+      <div class="rol-kaart" id="rol-kaart">
+        <div id="rol-dicht">
+          <div class="rol-dicht-emoji">🃏</div>
+          <div class="rol-dicht-titel">Jouw geheime rol</div>
+          <div class="rol-dicht-hint">houd de kaart ingedrukt om hem te zien<br>— en laat niemand meekijken 🤫</div>
+        </div>
+        <div id="rol-open" style="display:none"></div>
+      </div>` : `
+      <div class="uitleg">👀 Jij (<b>${escapeHtml(ik)}</b>) doet deze ronde niet mee — je kijkt toe. Zit je hier per ongeluk onder de verkeerde naam? Wissel dan hierboven.</div>`;
+
+    const lobby = spel.spelers.map(n => `
+      <div class="lobby-rij${n === ik ? ' jij' : ''}">
+        <span>${escapeHtml(n)}${n === ik ? ' (jij)' : ''}</span>
+        <span class="lobby-status${spel.gezien[n] ? ' gezien' : ''}">${spel.gezien[n] ? '✓ rol bekeken' : 'nog niet bekeken'}</span>
+      </div>`).join('');
+
+    $('inhoud').innerHTML = `
+      <div class="speler-balk">
+        <span>jij bent</span>
+        <select id="inf-wissel">${wisselOpties}</select>
+      </div>
+      ${kaart}
+      <div class="lobby">
+        <div class="lobby-kop">👥 ${spel.spelers.length} spelers · ⚽ ${v.liberalen} liberalen · 🕴 ${v.fascisten} fascist${v.fascisten > 1 ? 'en' : ''} · 🤫 1 Infantino<br>${gezienAantal}/${spel.spelers.length} hebben hun rol bekeken</div>
+        ${lobby}
+      </div>
+      <button class="stille-knop" id="inf-onthul-btn">🃏 spel afgelopen — onthul alle rollen</button>
+      <br>
+      <button class="stille-knop rood" id="inf-reset-btn">🎲 opnieuw schudden (nieuwe rollen voor iedereen)</button>`;
+
+    bindRolKaart();
+    $('inf-onthul-btn').addEventListener('click', onthulRollen);
+    $('inf-reset-btn').addEventListener('click', opnieuwSchudden);
+    const wissel = $('inf-wissel');
+    wissel.addEventListener('change', () => {
+      const naar = wissel.value;
+      if (naar === identiteit.speler) return;
+      if (wisselWaarschuwing(naar)) kiesSpeler(naar);
+      else wissel.value = identiteit.speler;
+    });
+  }
+
+  function render() {
+    if (!spel) return;
+    // niet renderen zolang iemand zijn rolkaart open houdt — dat zou de kaart dichtklappen
+    if (vasthoudActief) { renderNaHold = true; return; }
+
+    if (!spel.actief) { renderStart(); return; }
+    if (spel.onthuld) { renderOnthuld(); return; }
+    if (!identiteit) { renderPoort(); return; }
+    renderSpel();
+  }
+
+  /* ================= start + live verversen ================= */
+  (async () => {
+    await laadHoofdstaat();
+    await laadSpel(true);
+  })();
+  setInterval(laadSpel, 3000);
+  setInterval(laadHoofdstaat, 15000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) laadSpel(); });
+</script>
+</body>
+</html>
