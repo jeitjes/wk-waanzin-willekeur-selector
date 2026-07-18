@@ -11,6 +11,23 @@ const WERELDLIED_HISTORY_KEY = "wereldlied:geschiedenis:v1";
 const WERELDLIED_HISTORY_MAX = 30;
 const WERELDLIED_MAX_TEKST = 140;
 
+// Het Wereldlied wordt gezongen op het refrein van ANOTR — "Talk To You".
+// Elke beurt overschrijft precies één regel; de teams rouleren tot alle
+// regels van het refrein een eigen versie hebben.
+const WERELDLIED_REFREIN = [
+  "Let me talk to you",
+  "Show you what love can do",
+  "I wanna see you move",
+  "I know you can feel it too",
+  "Let me talk to you",
+  "Show you what love can do",
+  "I wanna see you move",
+  "I know you can feel it too",
+  "Let me talk to you",
+  "Show you what love can do",
+  "I wanna see you move"
+];
+
 const DEFAULT_WERELDLIED = {
   actief: false,
   klaar: false,
@@ -18,7 +35,8 @@ const DEFAULT_WERELDLIED = {
   huidige: 0,
   duur: 20,
   beurtStart: null,
-  regels: []
+  regels: [],
+  refrein: []
 };
 
 // De vier vaste prijzen — moet gelijk lopen met catalog.js
@@ -134,7 +152,8 @@ async function archiveerWereldlied(env, w) {
     klaar: w.klaar,
     volgorde: w.volgorde,
     duur: w.duur,
-    regels: w.regels
+    regels: w.regels,
+    refrein: Array.isArray(w.refrein) ? w.refrein : []
   });
   if (geschiedenis.length > WERELDLIED_HISTORY_MAX) geschiedenis.length = WERELDLIED_HISTORY_MAX;
   await env.LEADERBOARD.put(WERELDLIED_HISTORY_KEY, JSON.stringify(geschiedenis));
@@ -219,15 +238,19 @@ export default {
       let body;
       try { body = await request.json(); } catch { body = {}; }
       const hoofdstaat = await leesHoofdstaat(env);
-      let volgorde = Array.isArray(body.volgorde) && body.volgorde.length
+      let teamVolgorde = Array.isArray(body.volgorde) && body.volgorde.length
         ? body.volgorde.filter(id => hoofdstaat.teams.some(t => t.id === id))
         : hoofdstaat.teams.map(t => t.id);
       if (body.shuffle) {
-        for (let i = volgorde.length - 1; i > 0; i--) {
+        for (let i = teamVolgorde.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
-          [volgorde[i], volgorde[j]] = [volgorde[j], volgorde[i]];
+          [teamVolgorde[i], teamVolgorde[j]] = [teamVolgorde[j], teamVolgorde[i]];
         }
       }
+      // één beurt per refreinregel; de teams rouleren tot het hele refrein overschreven is
+      const volgorde = teamVolgorde.length
+        ? WERELDLIED_REFREIN.map((_, i) => teamVolgorde[i % teamVolgorde.length])
+        : [];
       const duur = Number.isFinite(body.duur) && body.duur >= 5 && body.duur <= 300 ? Math.round(body.duur) : 20;
       await archiveerWereldlied(env, huidig);
       const w = {
@@ -237,7 +260,8 @@ export default {
         huidige: 0,
         duur,
         beurtStart: volgorde.length ? Date.now() : null,
-        regels: []
+        regels: [],
+        refrein: WERELDLIED_REFREIN
       };
       await schrijfWereldlied(env, w);
       return json({ ok: true, staat: w });

@@ -208,6 +208,27 @@
   }
   .regel-tekst { font-size: 15px; line-height: 1.4; }
   .regel-tekst.overgeslagen { color: rgba(244,242,236,0.4); font-style: italic; }
+  .regel-tekst.nu-bezig { color: var(--gold-bright); font-style: italic; }
+  .regel-origineel { font-size: 12px; color: rgba(244,242,236,0.45); font-style: italic; margin-bottom: 3px; }
+  .regel-origineel.doorgestreept { text-decoration: line-through; }
+  .regel-kaart.nu { border-color: var(--gold-bright); box-shadow: 0 0 16px rgba(212,175,55,0.35); }
+  .regel-kaart.straks { opacity: 0.55; }
+
+  /* ---------- overschrijf-prompt boven het invoerveld ---------- */
+  .overschrijf-prompt {
+    border: 1px dashed rgba(212,175,55,0.5);
+    border-radius: 8px;
+    background: rgba(212,175,55,0.07);
+    padding: 10px 14px;
+    margin-bottom: 10px;
+  }
+  .overschrijf-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: rgba(244,242,236,0.55); margin-bottom: 4px; }
+  .overschrijf-origineel {
+    font-size: 17px; font-style: italic;
+    background: linear-gradient(90deg, var(--teal), var(--magenta), var(--gold-bright));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .zing-hint { margin-top: 10px; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(244,242,236,0.5); }
 
   /* ---------- klaar ---------- */
   .klaar-banner {
@@ -253,7 +274,7 @@
 
 <div class="page">
   <h1>Het Wereldlied</h1>
-  <div class="subtitle"><b>Het volkslied van de hele wereld</b> — live gebouwd door alle teams</div>
+  <div class="subtitle"><b>Het volkslied van de hele wereld</b> — op het refrein van ANOTR: Talk To You</div>
   <hr class="divider">
 
   <div id="inhoud"></div>
@@ -408,14 +429,49 @@
   }
 
   /* ================= hoofdscherm ================= */
+  const refreinVan = () => (Array.isArray(wereld.refrein) && wereld.refrein.length) ? wereld.refrein : null;
+
+  // de definitieve tekst van regel i: de nieuwe zin, of de originele regel als de beurt verstreek
+  function definitieveRegel(i) {
+    const r = wereld.regels[i];
+    const refrein = refreinVan();
+    if (r && !r.overgeslagen) return r.tekst;
+    return refrein ? refrein[i] : null;
+  }
+
+  // volledige refrein-kaart: elke regel toont het origineel + status (klaar / nu / straks)
   function renderKetting() {
-    return wereld.regels.map((r, i) => {
-      const nieuw = i === wereld.regels.length - 1 && wereld.regels.length > vorigAantalRegels && vorigAantalRegels >= 0;
-      return `<div class="regel-kaart${nieuw ? ' nieuw' : ''}" style="animation-delay:${i === wereld.regels.length - 1 ? 0 : 0}s">
+    const refrein = refreinVan();
+    if (!refrein) {
+      // oude ronde zonder refrein in de staat — toon de klassieke ketting
+      return wereld.regels.map(r => `<div class="regel-kaart">
         <div class="regel-team">${teamVlag(r.teamId)} ${escapeHtml(teamNaam(r.teamId))}</div>
         ${r.overgeslagen
           ? `<div class="regel-tekst overgeslagen">⏭ tijd verstreken — geen regel</div>`
           : `<div class="regel-tekst">${escapeHtml(r.tekst)}</div>`}
+      </div>`).join('');
+    }
+    return refrein.map((origineel, i) => {
+      const r = wereld.regels[i];
+      const isNu = !wereld.klaar && i === wereld.huidige;
+      const teamId = wereld.volgorde[i];
+      const nieuw = r && i === wereld.regels.length - 1 && wereld.regels.length > vorigAantalRegels && vorigAantalRegels >= 0;
+      let inhoud;
+      if (r) {
+        inhoud = r.overgeslagen
+          ? `<div class="regel-origineel">♪ ${escapeHtml(origineel)}</div>
+             <div class="regel-tekst overgeslagen">⏭ tijd om — de originele regel blijft staan</div>`
+          : `<div class="regel-origineel doorgestreept">♪ ${escapeHtml(origineel)}</div>
+             <div class="regel-tekst">${escapeHtml(r.tekst)}</div>`;
+      } else if (isNu) {
+        inhoud = `<div class="regel-origineel">♪ ${escapeHtml(origineel)}</div>
+          <div class="regel-tekst nu-bezig">✏️ wordt nu overschreven…</div>`;
+      } else {
+        inhoud = `<div class="regel-origineel">♪ ${escapeHtml(origineel)}</div>`;
+      }
+      return `<div class="regel-kaart${isNu ? ' nu' : ''}${!r && !isNu ? ' straks' : ''}${nieuw ? ' nieuw' : ''}">
+        <div class="regel-team">${i + 1}/${refrein.length} · ${teamVlag(teamId)} ${escapeHtml(teamNaam(teamId))}${isNu ? ' — NU' : ''}</div>
+        ${inhoud}
       </div>`;
     }).join('');
   }
@@ -445,13 +501,16 @@
     const huidigeTeamId = !wereld.klaar ? wereld.volgorde[wereld.huidige] : null;
     const jijBent = huidigeTeamId === identiteit.teamId;
 
+    const refrein = refreinVan();
+    const huidigeOrigineel = refrein && !wereld.klaar ? refrein[wereld.huidige] : null;
+
     let boven = '';
     if (wereld.klaar) {
-      boven = `<div class="klaar-banner">🌍 Het Wereldlied is compleet!</div>`;
+      boven = `<div class="klaar-banner">🌍 Het Wereldlied is compleet — zingen maar!</div>`;
     } else {
       boven = `
         <div class="beurt-kop">
-          <div class="beurt-label">${jijBent ? 'Jullie zijn aan de beurt' : 'Aan de beurt'}</div>
+          <div class="beurt-label">${jijBent ? 'Jullie zijn aan de beurt' : 'Aan de beurt'}${refrein ? ` — regel ${wereld.huidige + 1} van ${refrein.length}` : ''}</div>
           <div class="beurt-team">${teamVlag(huidigeTeamId)} ${escapeHtml(teamNaam(huidigeTeamId))}</div>
         </div>
         <div class="ring-wrap" id="wl-ring-wrap">
@@ -464,12 +523,17 @@
       if (jijBent) {
         boven += `
           <div class="invoer-blok">
-            <textarea class="invoer-tekst" id="wl-tekst" maxlength="140" placeholder="Plak hier jullie zin aan het Wereldlied…" autofocus></textarea>
+            ${huidigeOrigineel ? `
+              <div class="overschrijf-prompt">
+                <div class="overschrijf-label">jullie overschrijven deze regel:</div>
+                <div class="overschrijf-origineel">♪ ${escapeHtml(huidigeOrigineel)}</div>
+              </div>` : ''}
+            <textarea class="invoer-tekst" id="wl-tekst" maxlength="140" placeholder="${huidigeOrigineel ? 'Jullie nieuwe versie van deze regel…' : 'Plak hier jullie zin aan het Wereldlied…'}" autofocus></textarea>
             <div class="invoer-teller" id="wl-teller">140 tekens over</div>
             <button class="btn-gold" id="wl-verzend">Zet vast in het Wereldlied</button>
           </div>`;
       } else {
-        boven += `<div class="wacht-op">wacht tot ${escapeHtml(teamNaam(huidigeTeamId))} hun zin intikt…</div>`;
+        boven += `<div class="wacht-op">wacht tot ${escapeHtml(teamNaam(huidigeTeamId))} ${huidigeOrigineel ? `regel ${wereld.huidige + 1} (&ldquo;${escapeHtml(huidigeOrigineel)}&rdquo;) overschrijft` : 'hun zin intikt'}…</div>`;
       }
     }
 
@@ -477,7 +541,10 @@
       ${boven}
       <div class="ketting">${renderKetting()}</div>
       ${wereld.klaar
-        ? `<div class="voorlezen">${wereld.regels.filter(r => !r.overgeslagen).map(r => escapeHtml(r.tekst)).join(' ')}</div>
+        ? `<div class="voorlezen">${refrein
+            ? refrein.map((_, i) => escapeHtml(definitieveRegel(i))).join('<br>')
+            : wereld.regels.filter(r => !r.overgeslagen).map(r => escapeHtml(r.tekst)).join(' ')}</div>
+           <div class="zing-hint">🎵 op de melodie van ANOTR — Talk To You (alleen het refrein, de rest blijven we stil)</div>
            <button class="btn-gold" id="wl-start-btn" style="margin-top:20px">▶ Nieuw Wereldlied starten</button>`
         : ''}
       <button class="uitloggen" id="wl-uitlog">niet jullie team? wissel van team</button>
