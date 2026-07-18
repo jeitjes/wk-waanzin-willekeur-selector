@@ -1,6 +1,6 @@
 {
   // Cloudflare Worker voor kwimhub.com — statische site + leaderboard-API (worker.js).
-  "name": "kwimhub",
+  "name": "wk-waanzin-willekeur-selector",
   "main": "worker.js",
   "compatibility_date": "2026-07-01",
   "routes": [
