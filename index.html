@@ -380,6 +380,7 @@
   @keyframes kastIn { from { transform: translateY(24px) scale(0.94); opacity: 0; } }
   .kast-sluit {
     position: absolute; top: 10px; right: 12px;
+    z-index: 2; /* boven de logo-wrap, die als blok de hele breedte beslaat */
     background: none; border: 1px solid rgba(212,175,55,0.4); border-radius: 4px;
     color: rgba(244,242,236,0.7);
     font-size: 14px; padding: 4px 10px; cursor: pointer;
@@ -392,6 +393,14 @@
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
   .kast-spelers { font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: rgba(244,242,236,0.55); margin-top: 3px; }
+  .kast-bio {
+    margin: 12px auto 0;
+    max-width: 400px;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: rgba(244,242,236,0.85);
+    overflow-wrap: break-word;
+  }
   .kast-kop {
     margin: 20px 0 12px;
     font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
@@ -419,6 +428,40 @@
     background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
   }
   .foto-knop input { display: none; }
+  .profiel-naam {
+    width: 100%;
+    max-width: 320px;
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: 17px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    text-align: center;
+    color: var(--white);
+    background: rgba(6,10,30,0.7);
+    border: 1px solid rgba(212,175,55,0.5);
+    border-radius: 4px;
+    padding: 9px 10px;
+    outline: none;
+  }
+  .profiel-bio {
+    width: 100%;
+    max-width: 400px;
+    margin-top: 8px;
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--white);
+    background: rgba(6,10,30,0.7);
+    border: 1px solid rgba(212,175,55,0.5);
+    border-radius: 4px;
+    padding: 9px 10px;
+    outline: none;
+    resize: vertical;
+    min-height: 64px;
+  }
+  .profiel-naam:focus, .profiel-bio:focus { border-color: var(--gold-bright); box-shadow: 0 0 10px rgba(212,175,55,0.25); }
+  .profiel-teller { margin-top: 4px; font-size: 10px; letter-spacing: 1px; color: rgba(244,242,236,0.4); }
+  .profiel-knoppen { margin-top: 12px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
   .foto-uitleg {
     margin-top: 8px;
     font-size: 9.5px;
@@ -667,18 +710,33 @@
       ${logoHtml(team)}
       <div class="kast-naam">${escapeHtml(team.naam)}</div>
       <div class="kast-spelers">${team.spelers.map(escapeHtml).join(' & ')}</div>
+      ${team.beschrijving ? `<div class="kast-bio">“${escapeHtml(team.beschrijving)}”</div>` : ''}
       <div class="kast-kop">★ <b>Prijzenkast</b> ★</div>
       ${prijzen ? `<div class="badge-lijst">${prijzen}</div>` : `<div class="kast-leeg">> de kast is leeg. triest.</div>`}
       <div class="kast-foto">
-        <label class="foto-knop" id="foto-knop">📷 Wijzig profielfoto<input type="file" accept="image/*" id="foto-input"></label>
-        <div class="foto-uitleg">Iedereen mag deze foto aanpassen — voor elk team. Dat is de bedoeling.</div>
+        <input class="profiel-naam" id="profiel-naam" maxlength="30" value="${escapeHtml(team.naam)}" placeholder="Teamnaam">
+        <textarea class="profiel-bio" id="profiel-bio" maxlength="280" placeholder="Schrijf hier jullie teambio (max 280 tekens)…">${escapeHtml(team.beschrijving || '')}</textarea>
+        <div class="profiel-teller" id="profiel-teller"></div>
+        <div class="profiel-knoppen">
+          <button class="foto-knop" id="profiel-opslaan">💾 Bewaar profiel</button>
+          <label class="foto-knop" id="foto-knop">📷 Wijzig foto<input type="file" accept="image/*" id="foto-input"></label>
+        </div>
+        <div class="foto-uitleg">Iedereen mag dit aanpassen — voor elk team. Dat is de bedoeling.</div>
         <div class="foto-status" id="foto-status"></div>
       </div>`;
     $('kast-sluit').addEventListener('click', sluitKast);
     $('foto-input').addEventListener('change', onFotoGekozen);
+    $('profiel-opslaan').addEventListener('click', bewaarProfiel);
+    const bioVeld = $('profiel-bio');
+    const teller = $('profiel-teller');
+    const bijwerkTeller = () => { teller.textContent = bioVeld.value.length + '/280'; };
+    bioVeld.addEventListener('input', bijwerkTeller);
+    bijwerkTeller();
     $('kast').scrollTop = 0;
-    modal.classList.add('open');
-    zetScrollSlot(true);
+    if (!modal.classList.contains('open')) {
+      modal.classList.add('open');
+      zetScrollSlot(true);
+    }
   }
 
   /* ================= profielfoto uploaden (publiek, geen sleutel nodig) ================= */
@@ -710,6 +768,31 @@
     if (!el) return;
     el.textContent = tekst;
     el.className = 'foto-status' + (klasse ? ' ' + klasse : '');
+  }
+
+  /* ================= profiel (naam + bio) opslaan — publiek, geen sleutel nodig ================= */
+  async function bewaarProfiel() {
+    if (!huidigeKastTeam) return;
+    const teamId = huidigeKastTeam;
+    const naam = $('profiel-naam').value.trim();
+    const beschrijving = $('profiel-bio').value.trim();
+    if (!naam) { zetFotoStatus('✗ vul een teamnaam in', 'fout'); return; }
+    zetFotoStatus('● bezig…', 'bezig');
+    try {
+      const res = await fetch('/api/profiel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamId, naam, beschrijving: beschrijving || null })
+      });
+      if (!res.ok) throw new Error(res.status);
+      const uitkomst = await res.json();
+      staat = uitkomst.staat;
+      renderBord();
+      if (modal.classList.contains('open') && huidigeKastTeam === teamId) openKast(teamId);
+      zetFotoStatus('✓ profiel opgeslagen', 'ok');
+    } catch (err) {
+      zetFotoStatus('✗ mislukt — probeer opnieuw', 'fout');
+    }
   }
 
   async function onFotoGekozen(e) {

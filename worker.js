@@ -42,14 +42,21 @@ const DEFAULT_WERELDLIED = {
 // De vier vaste prijzen — moet gelijk lopen met catalog.js
 const PRIJS_IDS = ["fairplay", "flairplay", "legacy", "kampioensring"];
 
+// Spellen die via /admin onthuld kunnen worden — moet gelijk lopen met catalog.js
+const SPEL_IDS = ["wereldlied", "infantino"];
+
+const NAAM_MAX = 30;
+const BESCHRIJVING_MAX = 280; // tweet-formaat
+
 const DEFAULT_STATE = {
   teams: [
-    { id: "t1", naam: "Team 1", spelers: ["Jelle", "Pepijn"], punten: 0, logo: null, land: null, prijzen: [] },
-    { id: "t2", naam: "Team 2", spelers: ["Daniel", "Sep"], punten: 0, logo: null, land: null, prijzen: [] },
-    { id: "t3", naam: "Team 3", spelers: ["Rob", "Lars"], punten: 0, logo: null, land: null, prijzen: [] },
-    { id: "t4", naam: "Team 4", spelers: ["Thomas", "Zowi"], punten: 0, logo: null, land: null, prijzen: [] },
-    { id: "t5", naam: "Team 5", spelers: ["Jaap", "Shayan"], punten: 0, logo: null, land: null, prijzen: [] }
-  ]
+    { id: "t1", naam: "Team 1", spelers: ["Jelle", "Pepijn"], punten: 0, logo: null, land: null, beschrijving: null, prijzen: [] },
+    { id: "t2", naam: "Team 2", spelers: ["Daniel", "Sep"], punten: 0, logo: null, land: null, beschrijving: null, prijzen: [] },
+    { id: "t3", naam: "Team 3", spelers: ["Rob", "Lars"], punten: 0, logo: null, land: null, beschrijving: null, prijzen: [] },
+    { id: "t4", naam: "Team 4", spelers: ["Thomas", "Zowi"], punten: 0, logo: null, land: null, beschrijving: null, prijzen: [] },
+    { id: "t5", naam: "Team 5", spelers: ["Jaap", "Shayan"], punten: 0, logo: null, land: null, beschrijving: null, prijzen: [] }
+  ],
+  onthuldeSpellen: []
 };
 
 // CORS staat open op /api zodat beheer-tools ook vanaf andere origins kunnen werken.
@@ -86,13 +93,17 @@ function checkAuth(request, env) {
 
 function valideerState(state) {
   if (!state || !Array.isArray(state.teams) || state.teams.length === 0 || state.teams.length > 20) return false;
+  if (state.onthuldeSpellen !== undefined) {
+    if (!Array.isArray(state.onthuldeSpellen) || !state.onthuldeSpellen.every(s => SPEL_IDS.includes(s))) return false;
+  }
   for (const t of state.teams) {
-    if (typeof t.id !== "string" || typeof t.naam !== "string") return false;
+    if (typeof t.id !== "string" || typeof t.naam !== "string" || t.naam.length > NAAM_MAX) return false;
     if (!Array.isArray(t.spelers) || !Array.isArray(t.prijzen)) return false;
     if (!t.prijzen.every(p => PRIJS_IDS.includes(p))) return false;
     if (typeof t.punten !== "number" || !Number.isFinite(t.punten)) return false;
     if (t.logo !== null && (typeof t.logo !== "string" || !t.logo.startsWith("data:image/"))) return false;
     if (t.land !== undefined && t.land !== null && (typeof t.land !== "string" || !/^[A-Za-z]{2}$/.test(t.land))) return false;
+    if (t.beschrijving !== undefined && t.beschrijving !== null && (typeof t.beschrijving !== "string" || t.beschrijving.length > BESCHRIJVING_MAX)) return false;
   }
   return true;
 }
@@ -118,7 +129,11 @@ function migreerStaat(state) {
     t.prijzen = [...new Set(oud.map(id => OUDE_PRIJS_IDS[id] || id))].filter(id => PRIJS_IDS.includes(id));
     delete t.badges;
     delete t.trofeeen;
+    if (typeof t.naam === "string" && t.naam.length > NAAM_MAX) t.naam = t.naam.slice(0, NAAM_MAX);
+    if (t.beschrijving === undefined) t.beschrijving = null;
   });
+  if (!Array.isArray(state.onthuldeSpellen)) state.onthuldeSpellen = [];
+  state.onthuldeSpellen = state.onthuldeSpellen.filter(id => SPEL_IDS.includes(id));
   return state;
 }
 
@@ -218,6 +233,37 @@ export default {
       const team = staat.teams.find(t => t.id === teamId);
       if (!team) return json({ fout: "Onbekend team" }, 404);
       team.logo = logo;
+      await env.LEADERBOARD.put(STATE_KEY, JSON.stringify(staat));
+      return json({ ok: true, staat });
+    }
+
+    // Publiek, net als /api/logo: teams beheren hun eigen profiel (naam + beschrijving)
+    // zonder sleutel. Alleen de meegestuurde velden worden aangeraakt.
+    if (url.pathname === "/api/profiel" && request.method === "POST") {
+      let body;
+      try {
+        body = await request.json();
+      } catch {
+        return json({ fout: "Ongeldige JSON" }, 400);
+      }
+      const { teamId, naam, beschrijving } = body || {};
+      if (typeof teamId !== "string") return json({ fout: "Ongeldig verzoek" }, 400);
+      let nieuweNaam;
+      if (naam !== undefined) {
+        if (typeof naam !== "string") return json({ fout: "Ongeldige naam" }, 400);
+        nieuweNaam = naam.trim().slice(0, NAAM_MAX);
+        if (!nieuweNaam) return json({ fout: "Ongeldige naam" }, 400);
+      }
+      let nieuweBeschrijving;
+      if (beschrijving !== undefined) {
+        if (beschrijving !== null && typeof beschrijving !== "string") return json({ fout: "Ongeldige beschrijving" }, 400);
+        nieuweBeschrijving = beschrijving === null ? null : (beschrijving.trim().slice(0, BESCHRIJVING_MAX) || null);
+      }
+      const staat = await leesHoofdstaat(env);
+      const team = staat.teams.find(t => t.id === teamId);
+      if (!team) return json({ fout: "Onbekend team" }, 404);
+      if (nieuweNaam !== undefined) team.naam = nieuweNaam;
+      if (nieuweBeschrijving !== undefined) team.beschrijving = nieuweBeschrijving;
       await env.LEADERBOARD.put(STATE_KEY, JSON.stringify(staat));
       return json({ ok: true, staat });
     }

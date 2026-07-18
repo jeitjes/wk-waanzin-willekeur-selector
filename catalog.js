@@ -1,5 +1,27 @@
-// Gedeelde catalogus voor prijzen — gebruikt door de homepage en /admin.
+// Gedeelde catalogus voor prijzen en spellen — gebruikt door de homepage, /games en /admin.
 window.KWIM_CATALOGUS = {
+  // Alle spellen. Een spel is pas zichtbaar op /games als zijn id in
+  // state.onthuldeSpellen staat (toggle in /admin) — tot die tijd toont /games
+  // een anonieme "nog te onthullen"-kaart, zodat de site gedeeld kan worden
+  // zonder de spellen te verklappen. speelbaar=false → wel tonen, nog niet klikbaar.
+  spellen: [
+    {
+      id: "wereldlied",
+      naam: "Het Wereldlied",
+      icoon: "🎤",
+      link: "/wereldlied",
+      speelbaar: true,
+      omschrijving: "Overschrijf om de beurt het refrein van ANOTR — Talk To You met jullie eigen regels, en zing daarna samen het volkslied van de hele wereld."
+    },
+    {
+      id: "infantino",
+      naam: "Secret Infantino",
+      icoon: "🕴️",
+      link: null,
+      speelbaar: false,
+      omschrijving: "Nog niet vrijgegeven door de Federatie. Kom later terug."
+    }
+  ],
   // De vier vaste prijzen: de drie patch-badges plus de Kampioensring.
   // Toekennen/afnemen per team gebeurt via /admin; nieuwe prijzen maken kan niet.
   prijzen: [

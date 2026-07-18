@@ -287,6 +287,32 @@
   .upload-knop input { display: none; }
   .logo-weg { background: none; border: 1px solid rgba(224,49,49,0.5); border-radius: 4px; color: var(--red); font-size: 11px; letter-spacing: 1px; padding: 9px 12px; text-transform: uppercase; }
 
+  .bio-input {
+    width: 100%;
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--white);
+    background: rgba(6,10,30,0.8);
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 4px;
+    padding: 8px;
+    outline: none;
+    resize: vertical;
+    min-height: 56px;
+  }
+  .bio-input:focus { border-color: var(--gold-bright); }
+  .bio-teller { margin-top: 4px; font-size: 10px; letter-spacing: 1px; color: rgba(244,242,236,0.4); }
+
+  /* ---------- spellen-beheer ---------- */
+  .spellen-kaart { border-color: rgba(31,212,192,0.4); }
+  .spellen-kaart .kaart-titel {
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: 17px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--teal); margin-bottom: 2px;
+  }
+  .spellen-kaart .kaart-uitleg { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(244,242,236,0.45); margin-bottom: 10px; }
+
   /* ---------- wereldlied-beheer ---------- */
   .wereldlied-kaart { border-color: rgba(255,61,240,0.4); }
   .wereldlied-kaart .kaart-titel {
@@ -328,6 +354,9 @@
 
   <!-- wereldlied-beheer (ververst apart, zodat het bewerken van teams niet steeds onderbroken wordt) -->
   <div id="wereldlied-houder" style="display:none"></div>
+
+  <!-- spellen-beheer: per spel een toggle die bepaalt of hij op /games onthuld is -->
+  <div id="spellen-houder" style="display:none"></div>
 
   <!-- teamkaarten -->
   <div id="teams"></div>
@@ -513,6 +542,34 @@
     }).join('');
   }
 
+  /* ================= spellen-beheer ================= */
+  function renderSpellenBeheer() {
+    const houder = $('spellen-houder');
+    houder.style.display = 'block';
+    houder.innerHTML = '';
+    staat.onthuldeSpellen = staat.onthuldeSpellen || [];
+    const kaart = document.createElement('div');
+    kaart.className = 'kaart spellen-kaart';
+    const chips = CAT.spellen.map(s => {
+      const aan = staat.onthuldeSpellen.includes(s.id);
+      return `<button class="chip ${aan ? 'aan' : ''}" data-spel="${s.id}">${s.icoon} ${escapeHtml(s.naam)} · ${aan ? 'onthuld ✓' : 'nog geheim'}</button>`;
+    }).join('');
+    kaart.innerHTML = `
+      <div class="kaart-titel">🎮 Spellen</div>
+      <div class="kaart-uitleg">Geheime spellen staan als "nog te onthullen" op <a href="/games" target="_blank" style="color:var(--teal)">/games</a> — tik om te onthullen of weer te verbergen.</div>
+      <div class="chips">${chips}</div>`;
+    kaart.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const id = chip.dataset.spel;
+        const idx = staat.onthuldeSpellen.indexOf(id);
+        if (idx >= 0) staat.onthuldeSpellen.splice(idx, 1); else staat.onthuldeSpellen.push(id);
+        renderSpellenBeheer();
+        planOpslaan();
+      });
+    });
+    houder.appendChild(kaart);
+  }
+
   function render() {
     const wrap = $('teams');
     wrap.innerHTML = '';
@@ -558,6 +615,12 @@
         </div>
 
         <div class="regel">
+          <div class="regel-label">Teambio (tweet-formaat)</div>
+          <textarea class="bio-input" maxlength="280" placeholder="— nog geen bio —">${escapeHtml(team.beschrijving || '')}</textarea>
+          <div class="bio-teller"></div>
+        </div>
+
+        <div class="regel">
           <div class="regel-label">Punten</div>
           <div class="punten-rij">
             <button class="punt-knop min">−</button>
@@ -587,6 +650,16 @@
       const naamInput = kaart.querySelector('.naam-input');
       naamInput.addEventListener('input', () => {
         team.naam = naamInput.value.trim() || 'Team ' + (i + 1);
+        planOpslaan();
+      });
+
+      const bioInput = kaart.querySelector('.bio-input');
+      const bioTeller = kaart.querySelector('.bio-teller');
+      const bijwerkBioTeller = () => { bioTeller.textContent = bioInput.value.length + '/280'; };
+      bijwerkBioTeller();
+      bioInput.addEventListener('input', () => {
+        team.beschrijving = bioInput.value.trim() || null;
+        bijwerkBioTeller();
         planOpslaan();
       });
 
@@ -687,6 +760,7 @@
     await laadWereldliedGeschiedenis();
     $('teams').style.display = 'flex';
     render();
+    renderSpellenBeheer();
     renderWereldliedBeheer();
     zetStatus('✓ verbonden met de Federatie', 'ok');
     setInterval(async () => { await laadWereldlied(); renderWereldliedBeheer(); }, 5000);

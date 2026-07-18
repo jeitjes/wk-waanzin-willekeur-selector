@@ -168,28 +168,65 @@
 
   <hr class="divider">
 
-  <div class="spellen">
-    <a class="spel-kaart" href="/wereldlied">
-      <div class="spel-icoon">🎤</div>
-      <div class="spel-mid">
-        <div class="spel-naam">Het Wereldlied</div>
-        <div class="spel-omschrijving">Overschrijf om de beurt het refrein van ANOTR — Talk To You met jullie eigen regels, en zing daarna samen het volkslied van de hele wereld.</div>
-      </div>
-      <div class="spel-pijl">→</div>
-    </a>
-
-    <div class="spel-kaart op-slot">
-      <span class="spel-badge">binnenkort</span>
-      <div class="spel-icoon">🔒</div>
-      <div class="spel-mid">
-        <div class="spel-naam">Secret Infantino</div>
-        <div class="spel-omschrijving">Nog niet vrijgegeven door de Federatie. Kom later terug.</div>
-      </div>
-    </div>
-  </div>
+  <div class="spellen" id="spellen"></div>
 
   <a class="terug" href="/">← terug naar het klassement</a>
 </div>
 
+<script src="/catalog.js"></script>
+<script>
+  // De spellen komen uit de gedeelde catalogus, maar naam en omschrijving blijven
+  // geheim tot een organisator het spel via /admin onthult (state.onthuldeSpellen).
+  const SPELLEN = window.KWIM_CATALOGUS.spellen;
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  function renderSpellen(onthuld) {
+    const houder = document.getElementById('spellen');
+    houder.innerHTML = SPELLEN.map((spel, i) => {
+      if (!onthuld.includes(spel.id)) {
+        return `<div class="spel-kaart op-slot">
+          <span class="spel-badge">nog te onthullen</span>
+          <div class="spel-icoon">❓</div>
+          <div class="spel-mid">
+            <div class="spel-naam">Geheim spel #${i + 1}</div>
+            <div class="spel-omschrijving">De Federatie onthult dit spel wanneer de tijd rijp is. Kom later terug.</div>
+          </div>
+        </div>`;
+      }
+      if (!spel.speelbaar || !spel.link) {
+        return `<div class="spel-kaart op-slot">
+          <span class="spel-badge">binnenkort</span>
+          <div class="spel-icoon">${spel.icoon}</div>
+          <div class="spel-mid">
+            <div class="spel-naam">${escapeHtml(spel.naam)}</div>
+            <div class="spel-omschrijving">${escapeHtml(spel.omschrijving)}</div>
+          </div>
+        </div>`;
+      }
+      return `<a class="spel-kaart" href="${spel.link}">
+        <div class="spel-icoon">${spel.icoon}</div>
+        <div class="spel-mid">
+          <div class="spel-naam">${escapeHtml(spel.naam)}</div>
+          <div class="spel-omschrijving">${escapeHtml(spel.omschrijving)}</div>
+        </div>
+        <div class="spel-pijl">→</div>
+      </a>`;
+    }).join('');
+  }
+
+  // Tot de staat binnen is (of als dat mislukt) blijft alles verhuld — veilige standaard.
+  renderSpellen([]);
+  (async () => {
+    try {
+      const res = await fetch('/api/state', { cache: 'no-store' });
+      if (!res.ok) return;
+      const staat = await res.json();
+      renderSpellen(Array.isArray(staat.onthuldeSpellen) ? staat.onthuldeSpellen : []);
+    } catch {}
+  })();
+</script>
 </body>
 </html>
