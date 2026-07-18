@@ -549,18 +549,6 @@
     box-shadow: 0 0 10px rgba(212,175,55,0.3);
   }
   .chip img { width: 15px; height: 15px; object-fit: contain; vertical-align: -3px; }
-  .volgorde-knoppen { display: flex; gap: 8px; }
-  .volgorde-knop {
-    flex: 1;
-    font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase;
-    color: var(--gold-bright);
-    background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
-    border: 1px solid rgba(212,175,55,0.5);
-    border-radius: 4px;
-    padding: 10px;
-    cursor: pointer;
-  }
-  .volgorde-knop:disabled { opacity: 0.3; cursor: default; }
   .logo-weg {
     width: 100%;
     background: none;
@@ -774,13 +762,12 @@
     location.reload();
   });
 
-  function verplaats(team, richting) {
-    const i = staat.teams.indexOf(team);
-    const j = i + richting;
-    if (i < 0 || j < 0 || j >= staat.teams.length) return;
-    [staat.teams[i], staat.teams[j]] = [staat.teams[j], staat.teams[i]];
-    renderBord();
-    planOpslaan();
+  // klassement loopt automatisch op punten (hoog naar laag); bij gelijke stand
+  // blijft de bestaande volgorde in staat.teams gehandhaafd (stabiele sort)
+  function gesorteerdeTeams() {
+    return staat.teams.map((team, i) => ({ team, i }))
+      .sort((a, b) => (b.team.punten || 0) - (a.team.punten || 0) || a.i - b.i)
+      .map(x => x.team);
   }
 
   function renderDoneerPop() {
@@ -795,7 +782,7 @@
     const bord = $('bord');
     $('laden').style.display = 'none';
     bord.innerHTML = '';
-    staat.teams.forEach((team, i) => {
+    gesorteerdeTeams().forEach((team, i) => {
       const plek = i + 1;
       // in adminmodus is de rij een div, zodat de punt-knoppen erin geen geneste buttons zijn
       const rij = document.createElement(adminmodus ? 'div' : 'button');
@@ -917,7 +904,6 @@
 
   /* ================= beheer in de kast (alleen adminmodus) ================= */
   function beheerHtml(team) {
-    const i = staat.teams.indexOf(team);
     const landOpties = CAT.landen
       .map(l => `<option value="${l.code}" ${team.land === l.code ? 'selected' : ''}>${window.KWIM_VLAG(l.code)} ${escapeHtml(l.naam)}</option>`)
       .join('');
@@ -942,13 +928,6 @@
         <div class="beheer-regel">
           <div class="beheer-label">Prijzen toekennen</div>
           <div class="chips">${prijsChips}</div>
-        </div>
-        <div class="beheer-regel">
-          <div class="beheer-label">Plek in het klassement</div>
-          <div class="volgorde-knoppen">
-            <button class="volgorde-knop" id="beheer-omhoog" ${i === 0 ? 'disabled' : ''}>▲ hoger</button>
-            <button class="volgorde-knop" id="beheer-omlaag" ${i === staat.teams.length - 1 ? 'disabled' : ''}>▼ lager</button>
-          </div>
         </div>
         ${team.logo ? `<div class="beheer-regel"><button class="logo-weg" id="beheer-logo-weg">✕ Verwijder profielfoto</button></div>` : ''}
       </div>`;
@@ -979,8 +958,6 @@
         openKast(team.id);
       });
     });
-    $('beheer-omhoog').addEventListener('click', () => { verplaats(team, -1); openKast(team.id); });
-    $('beheer-omlaag').addEventListener('click', () => { verplaats(team, 1); openKast(team.id); });
     const logoWeg = $('beheer-logo-weg');
     if (logoWeg) logoWeg.addEventListener('click', () => {
       team.logo = null;
