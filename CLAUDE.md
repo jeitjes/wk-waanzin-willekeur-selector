@@ -18,6 +18,14 @@ Static site (plain HTML, no build step) plus a small leaderboard-API, served by 
 - Deploy: `npx wrangler deploy` from the repo root (wrangler is not installed globally; use npx). This uploads the repo root as static assets and goes live immediately.
 - For Cloudflare API calls that wrangler doesn't cover, use `curl` with `Authorization: Bearer $CLOUDFLARE_API_TOKEN` against `https://api.cloudflare.com/client/v4/...`.
 
+### Static assets can serve stale after deploy — known gotcha
+
+`npx wrangler deploy` diffs local files against what's already uploaded and **skips re-uploading files whose content hash is unchanged** ("No updated asset files to upload"). If a previous deploy's assets never got properly invalidated at Cloudflare's edge (e.g. because the API token lacked cache-purge permission at the time), redeploying identical content does **not** fix it — there's nothing new to push.
+
+The zone-level `POST /client/v4/zones/<id>/purge_cache` API (`purge_everything` or by `files`) does **not** reliably invalidate the Workers Static Assets caching layer — confirmed by testing: purge returned `success: true` but `curl -sD -` kept showing `cf-cache-status: HIT` on old content afterwards, from fresh `cf-ray` IDs (i.e. genuinely reaching Cloudflare each time, not a local artifact).
+
+**What actually works**: force a real content change (e.g. a throwaway HTML comment) so wrangler re-uploads the file with a new hash — that's what actually busts the edge cache. Verify with `curl -s <url> | grep -c <marker-string-only-in-new-version>` before declaring a deploy live; `wrangler deploy`'s own success output is not sufficient proof the *served* content changed.
+
 ## Asset hygiene
 
 `.assetsignore` controls what gets published. Everything in the repo root that is not listed there **becomes publicly downloadable** — when adding internal files or directories (dotdirs, configs, notes), add them to `.assetsignore` before deploying. `.claude` and `.wrangler` are already excluded.
