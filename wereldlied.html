@@ -230,6 +230,25 @@
   }
   .zing-hint { margin-top: 10px; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(244,242,236,0.5); }
 
+  /* ---------- eerdere versies ---------- */
+  .versie-lijst { width: 100%; margin-top: 30px; display: flex; flex-direction: column; gap: 8px; text-align: left; }
+  .versie-kop { font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: rgba(244,242,236,0.55); text-align: center; margin-bottom: 4px; }
+  .versie-knop {
+    display: flex; flex-direction: column; gap: 3px;
+    text-align: left;
+    border: 1px solid rgba(212,175,55,0.35);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.04);
+    padding: 10px 14px;
+    color: var(--white);
+    font-size: 14px;
+    width: 100%;
+  }
+  .versie-knop:active { transform: scale(0.98); }
+  .versie-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold-bright); }
+  .versie-preview { font-style: italic; color: rgba(244,242,236,0.75); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .versie-datum { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: rgba(244,242,236,0.55); margin-bottom: 12px; }
+
   /* ---------- klaar ---------- */
   .klaar-banner {
     font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
@@ -252,6 +271,26 @@
   .voorlezen b { color: var(--gold-bright); }
 
   .uitloggen { margin-top: 22px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(244,242,236,0.35); background: none; border: none; text-decoration: underline; }
+
+  /* ---------- teamwissel bovenin ---------- */
+  .team-balk {
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-bottom: 16px;
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: rgba(244,242,236,0.55);
+  }
+  .team-balk select {
+    background: rgba(6,10,30,0.8);
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 4px;
+    color: var(--gold-bright);
+    padding: 7px 10px;
+    font-size: 13px;
+    text-align: center;
+    outline: none;
+  }
+  .team-balk select:focus { border-color: var(--gold-bright); }
 </style>
 </head>
 <body>
@@ -308,6 +347,8 @@
   }
 
   let vorigeWereldJson = null;
+  let geschiedenis = [];
+  let bekekenVersie = null; // geopende eerdere versie (zingmodus)
 
   async function laadWereld(eerste = false) {
     try {
@@ -319,11 +360,24 @@
       // poll-tick de tekst die een team net aan het intikken is
       if (json !== vorigeWereldJson) {
         vorigeWereldJson = json;
+        laadGeschiedenis(); // na elke staatwissel kan er een versie bijgekomen zijn
         render();
       }
     } catch {
       if (eerste) $('inhoud').innerHTML = '<div class="wacht-tekst">✗ verbinding mislukt — herlaad de pagina</div>';
     }
+  }
+
+  async function laadGeschiedenis() {
+    try {
+      const res = await fetch('/api/wereldlied/geschiedenis', { cache: 'no-store' });
+      const vers = await res.json();
+      if (JSON.stringify(vers) !== JSON.stringify(geschiedenis)) {
+        geschiedenis = vers;
+        // ververs de lijst alleen als hij in beeld kan zijn (geen invoerveld actief)
+        if (wereld && (!wereld.actief || wereld.klaar)) render();
+      }
+    } catch {}
   }
 
   /* ================= spel starten / afbreken ================= */
@@ -428,6 +482,54 @@
     }
   }
 
+  /* ================= eerdere versies (zingmodus) ================= */
+  // de zingbare regels van een bewaarde versie: altijd het vólledige refrein —
+  // eigen zin waar die bestaat, en het origineel bij een gemiste beurt of
+  // een afgebroken ronde (net zoals het eindscherm dat doet)
+  function versieRegels(v) {
+    const refrein = Array.isArray(v.refrein) && v.refrein.length ? v.refrein : null;
+    if (refrein) {
+      return refrein.map((origineel, i) => {
+        const r = v.regels && v.regels[i];
+        return r && !r.overgeslagen ? r.tekst : origineel;
+      });
+    }
+    // oude versies zonder refrein in de data: alleen de echte inzendingen
+    return (v.regels || []).filter(r => !r.overgeslagen).map(r => r.tekst);
+  }
+
+  function renderGeschiedenisLijst() {
+    if (!geschiedenis.length) return '';
+    const items = geschiedenis.map((v, i) => {
+      const d = new Date(v.geeindigd).toLocaleString('nl-NL', { dateStyle: 'medium', timeStyle: 'short' });
+      const regels = versieRegels(v);
+      return `<button class="versie-knop" data-versie="${i}">
+        <span class="versie-label">🎤 ${escapeHtml(d)}${v.klaar ? '' : ' · afgebroken'}</span>
+        <span class="versie-preview">${escapeHtml(regels[0] || '')}${regels.length > 1 ? ' …' : ''}</span>
+      </button>`;
+    }).join('');
+    return `<div class="versie-lijst"><div class="versie-kop">📜 Eerdere Wereldliederen — tik om te zingen</div>${items}</div>`;
+  }
+
+  function bindVersieKnoppen() {
+    document.querySelectorAll('.versie-knop').forEach(b => b.addEventListener('click', () => {
+      bekekenVersie = geschiedenis[Number(b.dataset.versie)];
+      render();
+    }));
+  }
+
+  function renderVersie() {
+    const v = bekekenVersie;
+    const datum = new Date(v.geeindigd).toLocaleString('nl-NL', { dateStyle: 'long', timeStyle: 'short' });
+    $('inhoud').innerHTML = `
+      <div class="klaar-banner">🎤 Zingmodus</div>
+      <div class="versie-datum">${escapeHtml(datum)}${v.klaar ? '' : ' · afgebroken'}</div>
+      <div class="voorlezen">${versieRegels(v).map(escapeHtml).join('<br>')}</div>
+      <div class="zing-hint">🎵 op de melodie van ANOTR — Talk To You (alleen het refrein, de rest blijven we stil)</div>
+      <button class="btn-gold" id="wl-terug" style="margin-top:20px">← Terug</button>`;
+    $('wl-terug').addEventListener('click', () => { bekekenVersie = null; render(); });
+  }
+
   /* ================= hoofdscherm ================= */
   const refreinVan = () => (Array.isArray(wereld.refrein) && wereld.refrein.length) ? wereld.refrein : null;
 
@@ -479,6 +581,9 @@
   function render() {
     if (!wereld) return;
 
+    // een geopende eerdere versie gaat vóór alles — zingmodus
+    if (bekekenVersie) { renderVersie(); return; }
+
     // bewaar wat er al in het invoerveld staat, zodat een tussentijdse render
     // (bv. na terugkeren naar het tabblad) de getikte zin niet weggooit
     const bestaandVeld = $('wl-tekst');
@@ -490,9 +595,11 @@
         <div class="wacht">
           <div class="wacht-tekst"><span class="stip"></span>Wacht tot het Wereldlied start…</div>
           <button class="btn-gold" id="wl-start-btn" style="margin-top:24px;max-width:280px">▶ Start het Wereldlied</button>
+          ${renderGeschiedenisLijst()}
         </div>`;
       vorigAantalRegels = -1;
       $('wl-start-btn').addEventListener('click', startWereldlied);
+      bindVersieKnoppen();
       return;
     }
 
@@ -537,7 +644,17 @@
       }
     }
 
+    // teamwissel bovenin: altijd zichtbaar zolang de ronde live is
+    const alleTeams = hoofdstaat ? hoofdstaat.teams : [];
+    const teamBalk = alleTeams.length ? `
+      <div class="team-balk">
+        <span>jij bent</span>
+        <select id="wl-team-switch">${alleTeams.map(t =>
+          `<option value="${t.id}"${t.id === identiteit.teamId ? ' selected' : ''}>${teamVlag(t.id)} ${escapeHtml(t.naam)}</option>`).join('')}</select>
+      </div>` : '';
+
     $('inhoud').innerHTML = `
+      ${teamBalk}
       ${boven}
       <div class="ketting">${renderKetting()}</div>
       ${wereld.klaar
@@ -545,9 +662,9 @@
             ? refrein.map((_, i) => escapeHtml(definitieveRegel(i))).join('<br>')
             : wereld.regels.filter(r => !r.overgeslagen).map(r => escapeHtml(r.tekst)).join(' ')}</div>
            <div class="zing-hint">🎵 op de melodie van ANOTR — Talk To You (alleen het refrein, de rest blijven we stil)</div>
-           <button class="btn-gold" id="wl-start-btn" style="margin-top:20px">▶ Nieuw Wereldlied starten</button>`
+           <button class="btn-gold" id="wl-start-btn" style="margin-top:20px">▶ Nieuw Wereldlied starten</button>
+           ${renderGeschiedenisLijst()}`
         : ''}
-      <button class="uitloggen" id="wl-uitlog">niet jullie team? wissel van team</button>
       ${!wereld.klaar ? `<button class="uitloggen" id="wl-stop-btn">⛔ stop het Wereldlied voor iedereen</button>` : ''}
     `;
     vorigAantalRegels = wereld.regels.length;
@@ -566,20 +683,23 @@
     }
     const verzendBtn = $('wl-verzend');
     if (verzendBtn) verzendBtn.addEventListener('click', verzendRegel);
-    $('wl-uitlog').addEventListener('click', () => {
-      localStorage.removeItem(IDENT_KEY);
-      identiteit = null;
+    const teamSwitch = $('wl-team-switch');
+    if (teamSwitch) teamSwitch.addEventListener('change', () => {
+      identiteit = { teamId: teamSwitch.value };
+      localStorage.setItem(IDENT_KEY, JSON.stringify(identiteit));
       render();
     });
     const startBtn = $('wl-start-btn');
     if (startBtn) startBtn.addEventListener('click', startWereldlied);
     const stopBtn = $('wl-stop-btn');
     if (stopBtn) stopBtn.addEventListener('click', stopWereldlied);
+    bindVersieKnoppen();
   }
 
   /* ================= start + live verversen ================= */
   (async () => {
     await laadHoofdstaat();
+    await laadGeschiedenis();
     await laadWereld(true);
   })();
   setInterval(laadWereld, 2500);
