@@ -153,21 +153,6 @@
     animation: hueSpin 6s linear infinite;
   }
 
-  .ring-wrap { position: relative; width: 96px; height: 96px; margin: 6px auto 16px; }
-  .ring-timer { width: 100%; height: 100%; transform: rotate(-90deg); }
-  .ring-bg { fill: none; stroke: rgba(212,175,55,0.2); stroke-width: 8; }
-  .ring-fg {
-    fill: none; stroke: url(#ringGrad); stroke-width: 8; stroke-linecap: round;
-    transition: stroke-dashoffset 0.25s linear;
-  }
-  .ring-getal {
-    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
-    font-size: 30px; color: var(--gold-bright);
-  }
-  .ring-wrap.dringend .ring-getal { color: var(--red); animation: pulse 0.6s ease-in-out infinite; }
-  @keyframes pulse { 50% { transform: scale(1.12); } }
-
   .invoer-blok { width: 100%; }
   .invoer-tekst {
     width: 100%;
@@ -335,14 +320,6 @@
 </div>
 <div class="waas" aria-hidden="true"></div>
 
-<svg width="0" height="0" style="position:absolute">
-  <defs>
-    <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#1fd4c0"/><stop offset="0.5" stop-color="#ff3df0"/><stop offset="1" stop-color="#ffd75e"/>
-    </linearGradient>
-  </defs>
-</svg>
-
 <div class="page">
   <h1>Het Wereldlied</h1>
   <div class="subtitle"><b>Het volkslied van de hele wereld</b> — op het refrein van ANOTR: Talk To You</div>
@@ -373,8 +350,6 @@
   let adminmodus = false;
   let identiteit = JSON.parse(localStorage.getItem(IDENT_KEY) || 'null');
   let vorigAantalRegels = -1;
-  let overslaanBezig = false;
-  let ringTimer = null;
 
   const teamVan = id => (hoofdstaat && hoofdstaat.teams.find(t => t.id === id)) || null;
   const teamNaam = id => (teamVan(id) || {}).naam || id;
@@ -532,32 +507,6 @@
       b.addEventListener('click', () => verwijderRegel(Number(b.dataset.index))));
   }
 
-  /* ================= countdown-ring ================= */
-  function tekenRing(percentage, dringend) {
-    const omtrek = 2 * Math.PI * 44;
-    const fg = $('wl-ring-fg');
-    if (!fg) return;
-    fg.style.strokeDasharray = omtrek;
-    fg.style.strokeDashoffset = omtrek * (1 - percentage);
-    $('wl-ring-wrap').classList.toggle('dringend', dringend);
-  }
-
-  function updateRing() {
-    if (!wereld || !wereld.actief || wereld.klaar || wereld.beurtStart === null) return;
-    const resterend = wereld.beurtStart + wereld.duur * 1000 - Date.now();
-    const getal = Math.max(0, Math.ceil(resterend / 1000));
-    const el = $('wl-ring-getal');
-    if (el) el.textContent = getal;
-    tekenRing(Math.max(0, resterend) / (wereld.duur * 1000), getal <= 5);
-    if (resterend <= 0 && !overslaanBezig) {
-      overslaanBezig = true;
-      fetch('/api/wereldlied/overslaan', { method: 'POST' })
-        .then(res => res.json())
-        .then(data => { wereld = data; vorigeWereldJson = JSON.stringify(wereld); overslaanBezig = false; render(); })
-        .catch(() => { overslaanBezig = false; });
-    }
-  }
-
   /* ================= eerdere versies (zingmodus) ================= */
   // de zingbare regels van een bewaarde versie: altijd het vólledige refrein —
   // eigen zin waar die bestaat, en het origineel bij een gemiste beurt of
@@ -697,13 +646,6 @@
         <div class="beurt-kop">
           <div class="beurt-label">${jijBent ? 'Jullie zijn aan de beurt' : 'Aan de beurt'}${refrein ? ` — regel ${wereld.huidige + 1} van ${refrein.length}` : ''}</div>
           <div class="beurt-team">${teamVlag(huidigeTeamId)} ${escapeHtml(teamNaam(huidigeTeamId))}</div>
-        </div>
-        <div class="ring-wrap" id="wl-ring-wrap">
-          <svg class="ring-timer" viewBox="0 0 96 96">
-            <circle class="ring-bg" cx="48" cy="48" r="44"></circle>
-            <circle class="ring-fg" id="wl-ring-fg" cx="48" cy="48" r="44"></circle>
-          </svg>
-          <div class="ring-getal" id="wl-ring-getal">${wereld.duur}</div>
         </div>`;
       if (jijBent) {
         boven += `
@@ -746,8 +688,6 @@
       ${!wereld.klaar ? `<button class="uitloggen" id="wl-stop-btn">⛔ stop het Wereldlied voor iedereen</button>` : ''}
     `;
     vorigAantalRegels = wereld.regels.length;
-
-    if (!wereld.klaar) { tekenRing(1, false); updateRing(); }
 
     const veld = $('wl-tekst');
     if (veld) {
@@ -807,8 +747,6 @@
   })();
   setInterval(laadWereld, 2500);
   setInterval(laadHoofdstaat, 10000);
-  clearInterval(ringTimer);
-  ringTimer = setInterval(updateRing, 250);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) laadWereld(); });
 </script>
 </body>

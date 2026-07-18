@@ -34,8 +34,6 @@ const DEFAULT_WERELDLIED = {
   klaar: false,
   volgorde: [],
   huidige: 0,
-  duur: 20,
-  beurtStart: null,
   regels: [],
   refrein: []
 };
@@ -198,7 +196,6 @@ async function archiveerWereldlied(env, w) {
     geeindigd: Date.now(),
     klaar: w.klaar,
     volgorde: w.volgorde,
-    duur: w.duur,
     regels: w.regels,
     refrein: Array.isArray(w.refrein) ? w.refrein : []
   });
@@ -232,9 +229,6 @@ function volgendeBeurt(w) {
   w.huidige += 1;
   if (w.huidige >= w.volgorde.length) {
     w.klaar = true;
-    w.beurtStart = null;
-  } else {
-    w.beurtStart = Date.now();
   }
 }
 
@@ -450,15 +444,12 @@ export default {
       const volgorde = teamVolgorde.length
         ? WERELDLIED_REFREIN.map((_, i) => teamVolgorde[i % teamVolgorde.length])
         : [];
-      const duur = Number.isFinite(body.duur) && body.duur >= 5 && body.duur <= 300 ? Math.round(body.duur) : 20;
       await archiveerWereldlied(env, huidig);
       const w = {
         actief: true,
         klaar: volgorde.length === 0,
         volgorde,
         huidige: 0,
-        duur,
-        beurtStart: volgorde.length ? Date.now() : null,
         regels: [],
         refrein: WERELDLIED_REFREIN
       };
@@ -519,22 +510,6 @@ export default {
       w.regels[index] = { teamId: r.teamId, teamNaam: r.teamNaam, tekst: null, tijd: Date.now(), overgeslagen: true, verwijderd: true };
       await schrijfWereldlied(env, w);
       return json({ ok: true, staat: w });
-    }
-
-    // ieder scherm dat een afgelopen countdown ziet mag dit aanroepen — de server
-    // controleert zelf of de tijd echt om is, dus dubbele of te vroege aanroepen zijn onschadelijk
-    if (url.pathname === "/api/wereldlied/overslaan" && request.method === "POST") {
-      const w = await leesWereldlied(env);
-      if (!w.actief || w.klaar || w.beurtStart === null || Date.now() - w.beurtStart < w.duur * 1000) {
-        return json(w);
-      }
-      const teamId = w.volgorde[w.huidige];
-      const hoofdstaat = await leesHoofdstaat(env);
-      const team = hoofdstaat.teams.find(t => t.id === teamId);
-      w.regels.push({ teamId, teamNaam: team ? team.naam : teamId, tekst: null, tijd: Date.now(), overgeslagen: true });
-      volgendeBeurt(w);
-      await schrijfWereldlied(env, w);
-      return json(w);
     }
 
     /* ================= Secret Infantino ================= */
