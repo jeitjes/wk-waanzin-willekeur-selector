@@ -2,11 +2,11 @@
 
 De site van de WK Waanzin-avond. Live op **https://kwimhub.com**.
 
-- **`/`** — live klassement in psychedelische trip-stijl: teams, punten, prijzen onder de namen, en per team een prijzenkast-popup met alle gewonnen prijzen. Ververst zichzelf elke 12 s.
-- **`/admin`** — Federatie Controlekamer (sleutel vereist): teams omhoog/omlaag, punten, de vier vaste prijzen per team aan- en uitzetten, teamlogo's uploaden.
+- **`/`** — live klassement in psychedelische trip-stijl: teams, punten, prijzen onder de namen, en per team een prijzenkast-popup met alle gewonnen prijzen. Ververst zichzelf elke 12 s. Wie de adminlink (`/?k=<sleutel>`) opent, ziet rechtsonder een 🔑 admin-badge en beheert alles gewoon in deze UI: punten met +/− op elke rij, en in de prijzenkast-popup teamnaam, vlag, prijzen, klassementsplek en profielfoto. Oude `/admin?k=...`-links worden automatisch doorgestuurd.
+- **`/games`** — spellenoverzicht; welke spellen onthuld zijn schakelt een admin hier ter plekke aan of uit.
 - **`/selector`** — de originele "willekeurige" teamselector (eenmalig gebruikt, gearchiveerd).
 
-De leaderboard-state staat in Cloudflare KV (binding `LEADERBOARD` in `worker.js`); de admin-sleutel is een Worker-secret (`ADMIN_KEY`), nooit in de repo. De prijzencatalogus is vast en staat in `catalog.js`: de drie patch-badges (Fair Play, Flair Play, Legacy — afbeeldingen `prijs-*.webp` in de repo-root) plus de Kampioensring (`kampioensring.svg`). Nieuwe prijzen maken kan niet via `/admin`; daar ken je ze alleen per team toe.
+De leaderboard-state staat in Cloudflare KV (binding `LEADERBOARD` in `worker.js`); de admin-sleutel is een Worker-secret (`ADMIN_KEY`), nooit in de repo. De prijzencatalogus is vast en staat in `catalog.js`: de drie patch-badges (Fair Play, Flair Play, Legacy — afbeeldingen `prijs-*.webp` in de repo-root) plus de Kampioensring (`kampioensring.svg`). Nieuwe prijzen maken kan niet; in adminmodus ken je ze alleen per team toe.
 
 ## Hosting & workflow
 

@@ -4,11 +4,11 @@ Static site (plain HTML, no build step) plus a small leaderboard-API, served by 
 
 ## Architecture
 
-- `index.html` — live leaderboard (homepage); polls `GET /api/state` every 12 s.
-- `admin.html` (→ `/admin`) — admin panel; mutations go through `PUT /api/state` with `Authorization: Bearer <ADMIN_KEY>`. There's no password field — access is via a shareable link `https://kwimhub.com/admin?k=<ADMIN_KEY>`: the page reads the `k` query param, verifies it against `POST /api/login`, stores it in `localStorage`, and strips it from the URL. Anyone with the link has full admin access; there's no per-user distinction.
+- `index.html` — live leaderboard (homepage); polls `GET /api/state` every 12 s. Also contains the admin UI (there is no separate admin page anymore): with a valid key the page shows a 🔑 badge bottom-right, +/− point buttons on each row, and a "Federatie-beheer" section in the team modal (name, flag, prizes, ranking position, photo removal). Mutations go through `PUT /api/state` with `Authorization: Bearer <ADMIN_KEY>`. There's no password field — access is via a shareable link `https://kwimhub.com/?k=<ADMIN_KEY>`: the page reads the `k` query param, verifies it against `POST /api/login`, stores it in `localStorage` (`kwimAdminSleutel`), and strips it from the URL. Old `/admin?k=...` links are 302-redirected to `/` by the Worker with the query intact. Anyone with the link has full admin access; there's no per-user distinction.
+- `games.html` (→ `/games`) — game overview; which games are revealed lives in the `spellen` map in the leaderboard state, and admins (same key mechanism) toggle reveal/hide per game right on this page.
 - `selector.html` (→ `/selector`) — the original one-time team selector, archived.
 - `catalog.js` — shared badge/trophy catalog for both pages.
-- Leaderboard state lives in KV (binding `LEADERBOARD`, namespace id in `wrangler.jsonc`); team logos are stored inside the state as small data-URLs. The admin key is the Worker secret `ADMIN_KEY` (production: `wrangler secret put ADMIN_KEY`; local dev: `.dev.vars`, which is git- and assets-ignored). To rotate it, set a new secret and reshare the `/admin?k=...` link — the old link stops working immediately.
+- Leaderboard state lives in KV (binding `LEADERBOARD`, namespace id in `wrangler.jsonc`); team logos are stored inside the state as small data-URLs. The admin key is the Worker secret `ADMIN_KEY` (production: `wrangler secret put ADMIN_KEY`; local dev: `.dev.vars`, which is git- and assets-ignored). To rotate it, set a new secret and reshare the `/?k=...` link — the old link stops working immediately.
 - Local dev: `npx wrangler dev` (local KV simulation, independent of production state).
 
 ## Hosting & deploy (Cloudflare)

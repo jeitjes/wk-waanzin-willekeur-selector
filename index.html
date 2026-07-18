@@ -380,6 +380,7 @@
   @keyframes kastIn { from { transform: translateY(24px) scale(0.94); opacity: 0; } }
   .kast-sluit {
     position: absolute; top: 10px; right: 12px;
+    z-index: 1; /* boven de logo-wrap, die als volle-breedte-div anders tikken onderschept */
     background: none; border: 1px solid rgba(212,175,55,0.4); border-radius: 4px;
     color: rgba(244,242,236,0.7);
     font-size: 14px; padding: 4px 10px; cursor: pointer;
@@ -440,6 +441,106 @@
   .badge-regel .b-emoji { font-size: 20px; }
   .badge-regel .b-emoji img { width: 52px; height: 52px; object-fit: contain; display: block; filter: drop-shadow(0 3px 8px rgba(0,0,0,0.5)); }
   .badge-regel .b-naam { font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
+
+  /* ---------- adminmodus (via /?k=<sleutel>) ---------- */
+  .admin-badge {
+    position: fixed;
+    right: 10px;
+    bottom: calc(48px + env(safe-area-inset-bottom));
+    z-index: 30;
+    display: none;
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--gold-bright);
+    background: rgba(6,10,30,0.88);
+    border: 1px solid rgba(212,175,55,0.6);
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+  .admin-badge .ok { color: var(--green); }
+  .admin-badge .bezig { color: var(--gold-bright); }
+  .admin-badge .fout { color: var(--red); }
+
+  .punten-knoppen { display: flex; flex-direction: column; gap: 5px; flex-shrink: 0; }
+  .punt-knop {
+    width: 34px; height: 30px;
+    font-size: 16px; font-weight: 700; line-height: 1;
+    background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 4px;
+    color: var(--gold-bright);
+    cursor: pointer;
+  }
+  .punt-knop:active { transform: scale(0.94); }
+
+  /* beheer-sectie in de prijzenkast */
+  .beheer { margin-top: 18px; padding-top: 4px; border-top: 1px solid rgba(212,175,55,0.25); text-align: left; }
+  .beheer-kop { margin-top: 12px; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); text-align: center; }
+  .beheer-regel { margin-top: 14px; }
+  .beheer-label { font-size: 9.5px; letter-spacing: 2.5px; text-transform: uppercase; color: rgba(244,242,236,0.45); margin-bottom: 7px; }
+  .naam-input {
+    width: 100%;
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: 18px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--white);
+    background: rgba(6,10,30,0.6);
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 4px;
+    padding: 8px 10px;
+    outline: none;
+  }
+  .naam-input:focus { border-color: var(--gold-bright); }
+  .land-select {
+    width: 100%;
+    font-size: 13px;
+    color: var(--white);
+    background: rgba(6,10,30,0.8);
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 4px;
+    padding: 9px;
+    outline: none;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font-size: 12px; letter-spacing: 0.5px;
+    padding: 6px 9px;
+    border: 1px solid rgba(212,175,55,0.35);
+    border-radius: 20px;
+    background: rgba(6,10,30,0.55);
+    color: rgba(244,242,236,0.7);
+    cursor: pointer;
+  }
+  .chip.aan {
+    border-color: var(--gold-bright);
+    background: linear-gradient(180deg, rgba(212,175,55,0.3), rgba(212,175,55,0.12));
+    color: var(--gold-bright);
+    box-shadow: 0 0 10px rgba(212,175,55,0.3);
+  }
+  .chip img { width: 15px; height: 15px; object-fit: contain; vertical-align: -3px; }
+  .volgorde-knoppen { display: flex; gap: 8px; }
+  .volgorde-knop {
+    flex: 1;
+    font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--gold-bright);
+    background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
+    border: 1px solid rgba(212,175,55,0.5);
+    border-radius: 4px;
+    padding: 10px;
+    cursor: pointer;
+  }
+  .volgorde-knop:disabled { opacity: 0.3; cursor: default; }
+  .logo-weg {
+    width: 100%;
+    background: none;
+    border: 1px solid rgba(224,49,49,0.5);
+    border-radius: 4px;
+    color: var(--red);
+    font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 10px;
+    cursor: pointer;
+  }
 
   /* ---------- CCTV ticker ---------- */
   .ticker-wrap {
@@ -539,6 +640,9 @@
   <div class="kast" id="kast" role="dialog" aria-modal="true"></div>
 </div>
 
+<!-- adminbadge: alleen zichtbaar in adminmodus -->
+<button class="admin-badge" id="admin-badge" title="Adminmodus — tik om uit te loggen">🔑 <span id="admin-status">admin</span></button>
+
 <!-- CCTV ticker -->
 <div class="ticker-wrap">
   <div class="ticker-label"><span class="rec-dot"></span>CCTV</div>
@@ -587,13 +691,67 @@
   /* ================= klassement ================= */
   let staat = null;
 
+  /* ================= adminmodus ================= */
+  // Er is geen apart adminpaneel meer: wie de adminlink (/?k=<sleutel>) opent,
+  // krijgt het gewone klassement met beheer erin gevouwen. De sleutel wordt
+  // geverifieerd via /api/login en onthouden in localStorage.
+  const SLEUTEL_OPSLAG = 'kwimAdminSleutel';
+  let sleutel = '';
+  let adminmodus = false;
+  let opslaanTimer = null;
+  let opslaanBezig = false;
+
+  function zetStatus(tekst, klasse) {
+    $('admin-status').innerHTML = `<span class="${klasse}">${tekst}</span>`;
+  }
+
+  function planOpslaan() {
+    zetStatus('● wijzigingen…', 'bezig');
+    clearTimeout(opslaanTimer);
+    opslaanTimer = setTimeout(slaOp, 800);
+  }
+
+  async function slaOp() {
+    opslaanTimer = null;
+    opslaanBezig = true;
+    zetStatus('● opslaan…', 'bezig');
+    try {
+      const res = await fetch('/api/state', {
+        method: 'PUT',
+        headers: { 'Authorization': 'Bearer ' + sleutel, 'Content-Type': 'application/json' },
+        body: JSON.stringify(staat)
+      });
+      if (!res.ok) throw new Error(res.status);
+      zetStatus('✓ opgeslagen', 'ok');
+    } catch (e) {
+      zetStatus('✗ opslaan mislukt', 'fout');
+    }
+    opslaanBezig = false;
+  }
+
+  $('admin-badge').addEventListener('click', () => {
+    if (!confirm('Adminmodus verlaten? Je hebt de adminlink nodig om weer in te loggen.')) return;
+    localStorage.removeItem(SLEUTEL_OPSLAG);
+    location.reload();
+  });
+
+  function verplaats(team, richting) {
+    const i = staat.teams.indexOf(team);
+    const j = i + richting;
+    if (i < 0 || j < 0 || j >= staat.teams.length) return;
+    [staat.teams[i], staat.teams[j]] = [staat.teams[j], staat.teams[i]];
+    renderBord();
+    planOpslaan();
+  }
+
   function renderBord() {
     const bord = $('bord');
     $('laden').style.display = 'none';
     bord.innerHTML = '';
     staat.teams.forEach((team, i) => {
       const plek = i + 1;
-      const rij = document.createElement('button');
+      // in adminmodus is de rij een div, zodat de punt-knoppen erin geen geneste buttons zijn
+      const rij = document.createElement(adminmodus ? 'div' : 'button');
       rij.className = 'rij plek-' + plek;
       rij.style.animationDelay = (i * 0.07) + 's';
       const badges = (team.prijzen || [])
@@ -611,13 +769,31 @@
         <div class="punten-blok">
           <div class="punten">${team.punten}</div>
           <div class="punten-label">ptn</div>
-        </div>`;
+        </div>
+        ${adminmodus ? `<div class="punten-knoppen">
+          <button class="punt-knop plus">+</button>
+          <button class="punt-knop min">−</button>
+        </div>` : ''}`;
       rij.addEventListener('click', () => openKast(team.id));
+      if (adminmodus) {
+        const puntenEl = rij.querySelector('.punten');
+        const pasAan = (delta, e) => {
+          e.stopPropagation();
+          team.punten = (team.punten || 0) + delta;
+          puntenEl.textContent = team.punten;
+          planOpslaan();
+        };
+        rij.querySelector('.plus').addEventListener('click', e => pasAan(1, e));
+        rij.querySelector('.min').addEventListener('click', e => pasAan(-1, e));
+      }
       bord.appendChild(rij);
     });
   }
 
   async function laadStaat(eerste = false) {
+    // in adminmodus niet verversen zolang er onopgeslagen wijzigingen zijn of de kast open is,
+    // anders overschrijft de poll wat de admin net aan het bewerken is
+    if (adminmodus && (opslaanTimer !== null || opslaanBezig || modal.classList.contains('open'))) return;
     try {
       const res = await fetch('/api/state', { cache: 'no-store' });
       if (!res.ok) throw new Error(res.status);
@@ -656,6 +832,8 @@
   function openKast(teamId) {
     const team = staat.teams.find(t => t.id === teamId);
     if (!team) return;
+    const alOpen = modal.classList.contains('open');
+    const oudeScroll = alOpen ? $('kast').scrollTop : 0;
     huidigeKastTeam = teamId;
     const prijzen = (team.prijzen || []).map(prijsVan).filter(Boolean).map(p => `
       <div class="badge-regel">
@@ -673,12 +851,89 @@
         <label class="foto-knop" id="foto-knop">📷 Wijzig profielfoto<input type="file" accept="image/*" id="foto-input"></label>
         <div class="foto-uitleg">Iedereen mag deze foto aanpassen — voor elk team. Dat is de bedoeling.</div>
         <div class="foto-status" id="foto-status"></div>
-      </div>`;
+      </div>
+      ${adminmodus ? beheerHtml(team) : ''}`;
     $('kast-sluit').addEventListener('click', sluitKast);
     $('foto-input').addEventListener('change', onFotoGekozen);
-    $('kast').scrollTop = 0;
+    if (adminmodus) koppelBeheer(team);
+    $('kast').scrollTop = oudeScroll;
     modal.classList.add('open');
-    zetScrollSlot(true);
+    if (!alOpen) zetScrollSlot(true);
+  }
+
+  /* ================= beheer in de kast (alleen adminmodus) ================= */
+  function beheerHtml(team) {
+    const i = staat.teams.indexOf(team);
+    const landOpties = CAT.landen
+      .map(l => `<option value="${l.code}" ${team.land === l.code ? 'selected' : ''}>${window.KWIM_VLAG(l.code)} ${escapeHtml(l.naam)}</option>`)
+      .join('');
+    const prijsChips = CAT.prijzen.map(p => {
+      const aan = (team.prijzen || []).includes(p.id);
+      return `<button class="chip ${aan ? 'aan' : ''}" data-prijs="${p.id}"><img src="${p.afbeelding}" alt=""> ${escapeHtml(p.naam)}</button>`;
+    }).join('');
+    return `
+      <div class="beheer">
+        <div class="beheer-kop">🔑 Federatie-beheer</div>
+        <div class="beheer-regel">
+          <div class="beheer-label">Teamnaam</div>
+          <input class="naam-input" id="beheer-naam" value="${escapeHtml(team.naam)}" maxlength="30">
+        </div>
+        <div class="beheer-regel">
+          <div class="beheer-label">Land</div>
+          <select class="land-select" id="beheer-land">
+            <option value="">— geen vlag —</option>
+            ${landOpties}
+          </select>
+        </div>
+        <div class="beheer-regel">
+          <div class="beheer-label">Prijzen toekennen</div>
+          <div class="chips">${prijsChips}</div>
+        </div>
+        <div class="beheer-regel">
+          <div class="beheer-label">Plek in het klassement</div>
+          <div class="volgorde-knoppen">
+            <button class="volgorde-knop" id="beheer-omhoog" ${i === 0 ? 'disabled' : ''}>▲ hoger</button>
+            <button class="volgorde-knop" id="beheer-omlaag" ${i === staat.teams.length - 1 ? 'disabled' : ''}>▼ lager</button>
+          </div>
+        </div>
+        ${team.logo ? `<div class="beheer-regel"><button class="logo-weg" id="beheer-logo-weg">✕ Verwijder profielfoto</button></div>` : ''}
+      </div>`;
+  }
+
+  function koppelBeheer(team) {
+    const naamInput = $('beheer-naam');
+    naamInput.addEventListener('input', () => {
+      team.naam = naamInput.value.trim() || 'Team ' + (staat.teams.indexOf(team) + 1);
+      $('kast').querySelector('.kast-naam').textContent = team.naam;
+      renderBord();
+      planOpslaan();
+    });
+    $('beheer-land').addEventListener('change', e => {
+      team.land = e.target.value || null;
+      renderBord();
+      planOpslaan();
+      openKast(team.id);
+    });
+    $('kast').querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const id = chip.dataset.prijs;
+        team.prijzen = team.prijzen || [];
+        const idx = team.prijzen.indexOf(id);
+        if (idx >= 0) team.prijzen.splice(idx, 1); else team.prijzen.push(id);
+        renderBord();
+        planOpslaan();
+        openKast(team.id);
+      });
+    });
+    $('beheer-omhoog').addEventListener('click', () => { verplaats(team, -1); openKast(team.id); });
+    $('beheer-omlaag').addEventListener('click', () => { verplaats(team, 1); openKast(team.id); });
+    const logoWeg = $('beheer-logo-weg');
+    if (logoWeg) logoWeg.addEventListener('click', () => {
+      team.logo = null;
+      renderBord();
+      planOpslaan();
+      openKast(team.id);
+    });
   }
 
   /* ================= profielfoto uploaden (publiek, geen sleutel nodig) ================= */
@@ -743,8 +998,31 @@
   document.addEventListener('keydown', e => { if (e.key === 'Escape') sluitKast(); });
 
   /* ================= start + live verversen ================= */
-  laadStaat(true);
-  setInterval(laadStaat, 12000);
+  (async () => {
+    // adminlink (/?k=<sleutel>) of eerder onthouden sleutel? Verifieer en onthoud hem,
+    // en haal de sleutel meteen uit de adresbalk.
+    const urlSleutel = new URL(location.href).searchParams.get('k');
+    const kandidaat = urlSleutel || localStorage.getItem(SLEUTEL_OPSLAG) || '';
+    if (kandidaat) {
+      try {
+        const res = await fetch('/api/login', { method: 'POST', headers: { 'Authorization': 'Bearer ' + kandidaat } });
+        if (res.ok) {
+          sleutel = kandidaat;
+          adminmodus = true;
+          localStorage.setItem(SLEUTEL_OPSLAG, sleutel);
+        } else {
+          localStorage.removeItem(SLEUTEL_OPSLAG);
+        }
+      } catch {}
+      if (urlSleutel) history.replaceState(null, '', location.pathname);
+    }
+    if (adminmodus) {
+      $('admin-badge').style.display = 'block';
+      zetStatus('admin', 'ok');
+    }
+    laadStaat(true);
+    setInterval(laadStaat, 12000);
+  })();
   document.addEventListener('visibilitychange', () => { if (!document.hidden) laadStaat(); });
 </script>
 </body>

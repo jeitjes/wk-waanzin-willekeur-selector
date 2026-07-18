@@ -149,6 +149,35 @@
     font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
     color: rgba(212,175,55,0.7); text-decoration: none;
   }
+
+  /* ---------- adminmodus: spellen onthullen/verbergen ---------- */
+  .spel-toggle {
+    position: absolute; top: -11px; left: 14px;
+    font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+    font-weight: 700;
+    font-family: inherit;
+    background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+    color: var(--navy-deep);
+    border: none; border-radius: 10px;
+    padding: 4px 9px;
+    cursor: pointer;
+  }
+  .admin-badge {
+    position: fixed;
+    right: 10px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    z-index: 30;
+    display: none;
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--green);
+    background: rgba(6,10,30,0.88);
+    border: 1px solid rgba(212,175,55,0.6);
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
 </style>
 </head>
 <body>
@@ -168,28 +197,137 @@
 
   <hr class="divider">
 
-  <div class="spellen">
-    <a class="spel-kaart" href="/wereldlied">
-      <div class="spel-icoon">🎤</div>
-      <div class="spel-mid">
-        <div class="spel-naam">Het Wereldlied</div>
-        <div class="spel-omschrijving">Overschrijf om de beurt het refrein van ANOTR — Talk To You met jullie eigen regels, en zing daarna samen het volkslied van de hele wereld.</div>
-      </div>
-      <div class="spel-pijl">→</div>
-    </a>
-
-    <div class="spel-kaart op-slot">
-      <span class="spel-badge">binnenkort</span>
-      <div class="spel-icoon">🔒</div>
-      <div class="spel-mid">
-        <div class="spel-naam">Secret Infantino</div>
-        <div class="spel-omschrijving">Nog niet vrijgegeven door de Federatie. Kom later terug.</div>
-      </div>
-    </div>
-  </div>
+  <div class="spellen" id="spellen"></div>
 
   <a class="terug" href="/">← terug naar het klassement</a>
 </div>
+
+<!-- adminbadge: alleen zichtbaar in adminmodus -->
+<button class="admin-badge" id="admin-badge" title="Adminmodus — tik om uit te loggen">🔑 admin</button>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const SLEUTEL_OPSLAG = 'kwimAdminSleutel';
+
+  // De spellen zelf staan hier; wélke onthuld zijn bepaalt de Federatie via het
+  // spellen-veld in de leaderboard-state (aan/uit te zetten met de adminlink).
+  const SPELLEN = [
+    {
+      id: 'wereldlied', icoon: '🎤', naam: 'Het Wereldlied', href: '/wereldlied',
+      omschrijving: 'Overschrijf om de beurt het refrein van ANOTR — Talk To You met jullie eigen regels, en zing daarna samen het volkslied van de hele wereld.'
+    },
+    {
+      id: 'infantino', icoon: '🤫', naam: 'Secret Infantino', href: null,
+      omschrijving: 'Het geheime spel van de Federatie.'
+    }
+  ];
+  const STANDAARD_ONTHULD = { wereldlied: true, infantino: false };
+
+  let staat = null;
+  let sleutel = '';
+  let adminmodus = false;
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  function onthuld(id) {
+    const spellen = (staat && staat.spellen) || {};
+    return typeof spellen[id] === 'boolean' ? spellen[id] : !!STANDAARD_ONTHULD[id];
+  }
+
+  function render() {
+    const wrap = $('spellen');
+    wrap.innerHTML = '';
+    SPELLEN.forEach(spel => {
+      const open = onthuld(spel.id);
+      const speelbaar = open && spel.href;
+      const el = document.createElement(speelbaar ? 'a' : 'div');
+      el.className = 'spel-kaart' + (open ? '' : ' op-slot');
+      if (speelbaar) el.href = spel.href;
+      el.innerHTML = `
+        ${open ? '' : '<span class="spel-badge">binnenkort</span>'}
+        <div class="spel-icoon">${open ? spel.icoon : '🔒'}</div>
+        <div class="spel-mid">
+          <div class="spel-naam">${escapeHtml(spel.naam)}</div>
+          <div class="spel-omschrijving">${open ? escapeHtml(spel.omschrijving) : 'Nog niet vrijgegeven door de Federatie. Kom later terug.'}</div>
+        </div>
+        ${speelbaar ? '<div class="spel-pijl">→</div>' : ''}
+        ${adminmodus ? `<button class="spel-toggle">${open ? '🙈 verberg' : '👁 onthul'}</button>` : ''}`;
+      if (adminmodus) {
+        el.querySelector('.spel-toggle').addEventListener('click', e => {
+          e.preventDefault();
+          e.stopPropagation();
+          wisselSpel(spel.id);
+        });
+      }
+      wrap.appendChild(el);
+    });
+  }
+
+  // vers van de server lezen, één spel omschakelen en terugschrijven — zo blijven
+  // gelijktijdige teamwijzigingen vanaf de homepage behouden
+  async function wisselSpel(id) {
+    try {
+      const res = await fetch('/api/state', { cache: 'no-store' });
+      if (!res.ok) throw new Error(res.status);
+      const vers = await res.json();
+      vers.spellen = Object.assign({}, STANDAARD_ONTHULD, vers.spellen);
+      vers.spellen[id] = !vers.spellen[id];
+      const put = await fetch('/api/state', {
+        method: 'PUT',
+        headers: { 'Authorization': 'Bearer ' + sleutel, 'Content-Type': 'application/json' },
+        body: JSON.stringify(vers)
+      });
+      if (!put.ok) throw new Error(put.status);
+      staat = vers;
+      render();
+    } catch {
+      alert('Opslaan is niet gelukt — probeer het opnieuw.');
+    }
+  }
+
+  async function laadStaat() {
+    try {
+      const res = await fetch('/api/state', { cache: 'no-store' });
+      if (!res.ok) throw new Error(res.status);
+      const vers = await res.json();
+      if (JSON.stringify(vers) !== JSON.stringify(staat)) {
+        staat = vers;
+        render();
+      }
+    } catch {}
+  }
+
+  $('admin-badge').addEventListener('click', () => {
+    if (!confirm('Adminmodus verlaten? Je hebt de adminlink nodig om weer in te loggen.')) return;
+    localStorage.removeItem(SLEUTEL_OPSLAG);
+    location.reload();
+  });
+
+  (async () => {
+    render(); // meteen iets tonen, ook zonder verbinding
+    const urlSleutel = new URL(location.href).searchParams.get('k');
+    const kandidaat = urlSleutel || localStorage.getItem(SLEUTEL_OPSLAG) || '';
+    if (kandidaat) {
+      try {
+        const res = await fetch('/api/login', { method: 'POST', headers: { 'Authorization': 'Bearer ' + kandidaat } });
+        if (res.ok) {
+          sleutel = kandidaat;
+          adminmodus = true;
+          localStorage.setItem(SLEUTEL_OPSLAG, sleutel);
+        } else {
+          localStorage.removeItem(SLEUTEL_OPSLAG);
+        }
+      } catch {}
+      if (urlSleutel) history.replaceState(null, '', location.pathname);
+    }
+    if (adminmodus) $('admin-badge').style.display = 'block';
+    await laadStaat();
+    render();
+    setInterval(laadStaat, 12000);
+  })();
+</script>
 
 </body>
 </html>

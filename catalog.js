@@ -1,7 +1,8 @@
-// Gedeelde catalogus voor prijzen — gebruikt door de homepage en /admin.
+// Gedeelde catalogus voor prijzen — gebruikt door de homepage.
 window.KWIM_CATALOGUS = {
   // De vier vaste prijzen: de drie patch-badges plus de Kampioensring.
-  // Toekennen/afnemen per team gebeurt via /admin; nieuwe prijzen maken kan niet.
+  // Toekennen/afnemen per team gebeurt op de homepage in adminmodus (/?k=<sleutel>);
+  // nieuwe prijzen maken kan niet.
   prijzen: [
     { id: "fairplay",      naam: "Fair Play",        afbeelding: "/prijs-fairplay.webp" },
     { id: "flairplay",     naam: "Flair Play",       afbeelding: "/prijs-flairplay.webp" },

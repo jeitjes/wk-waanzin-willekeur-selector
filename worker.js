@@ -1,6 +1,7 @@
 // Cloudflare Worker voor kwimhub.com — serveert statische assets + leaderboard-API.
-// State staat in KV (binding LEADERBOARD). /admin-toegang loopt via een lange,
-// willekeurige link-token (secret ADMIN_KEY) — geen wachtwoordveld, gewoon delen.
+// State staat in KV (binding LEADERBOARD). Admin-toegang loopt via een lange,
+// willekeurige link-token (secret ADMIN_KEY) in de ?k=-parameter van de homepage —
+// geen apart adminpaneel meer; oude /admin?k=...-links worden doorgestuurd naar /.
 
 const STATE_KEY = "state:v1";
 const MAX_BODY = 4 * 1024 * 1024; // 4 MB — ruim genoeg voor 5 logo's als data-URL
@@ -42,7 +43,12 @@ const DEFAULT_WERELDLIED = {
 // De vier vaste prijzen — moet gelijk lopen met catalog.js
 const PRIJS_IDS = ["fairplay", "flairplay", "legacy", "kampioensring"];
 
+// Welke spellen op /games onthuld zijn — admins schakelen dit op /games zelf,
+// de spel-definities staan in games.html
+const DEFAULT_SPELLEN = { wereldlied: true, infantino: false };
+
 const DEFAULT_STATE = {
+  spellen: { ...DEFAULT_SPELLEN },
   teams: [
     { id: "t1", naam: "Team 1", spelers: ["Jelle", "Pepijn"], punten: 0, logo: null, land: null, prijzen: [] },
     { id: "t2", naam: "Team 2", spelers: ["Daniel", "Sep"], punten: 0, logo: null, land: null, prijzen: [] },
@@ -94,6 +100,14 @@ function valideerState(state) {
     if (t.logo !== null && (typeof t.logo !== "string" || !t.logo.startsWith("data:image/"))) return false;
     if (t.land !== undefined && t.land !== null && (typeof t.land !== "string" || !/^[A-Za-z]{2}$/.test(t.land))) return false;
   }
+  if (state.spellen !== undefined) {
+    if (!state.spellen || typeof state.spellen !== "object" || Array.isArray(state.spellen)) return false;
+    const spellen = Object.entries(state.spellen);
+    if (spellen.length > 20) return false;
+    for (const [naam, aan] of spellen) {
+      if (naam.length > 40 || typeof aan !== "boolean") return false;
+    }
+  }
   return true;
 }
 
@@ -119,6 +133,8 @@ function migreerStaat(state) {
     delete t.badges;
     delete t.trofeeen;
   });
+  const spellen = state.spellen && typeof state.spellen === "object" && !Array.isArray(state.spellen) ? state.spellen : {};
+  state.spellen = { ...DEFAULT_SPELLEN, ...spellen };
   return state;
 }
 
@@ -176,6 +192,11 @@ export default {
 
     if (url.pathname.startsWith("/api/") && request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: CORS });
+    }
+
+    // De controlekamer is opgegaan in de homepage — oude /admin?k=...-links blijven werken
+    if (url.pathname === "/admin" || url.pathname === "/admin.html") {
+      return Response.redirect(url.origin + "/" + url.search, 302);
     }
 
     if (url.pathname === "/api/state") {
