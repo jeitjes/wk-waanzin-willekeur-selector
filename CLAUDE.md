@@ -35,3 +35,7 @@ The zone-level `POST /client/v4/zones/<id>/purge_cache` API (`purge_everything` 
 - Site content and commit messages are in Dutch.
 - Page variants live in `variants/`; `index.html` is the main page; `og.html`/`og.png` are for social previews.
 - House style: navy/gold Federatie-look with the teal/magenta/gold psychedelic "trip" accents (see the ring/hueSpin CSS in `index.html`).
+
+## Known regressions to watch for
+
+- **Infinite scroll on mobile (`index.html`)**: the page must stop scrolling exactly where the content ends — no rubber-band bounce past the footer on mobile browsers. This is guarded by `overscroll-behavior-y: none` on the `html, body` rule near the top of `index.html`'s `<style>`. This has regressed before (silently dropped during a refactor); if it reappears, check that rule is still present before investigating further, and manually verify by hand on a phone (scroll to bottom, keep dragging up — it should not bounce or reveal empty space) before each deploy that touches `index.html`'s layout/CSS.

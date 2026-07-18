@@ -33,7 +33,7 @@
     --brons: #d08a4e;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { height: 100%; }
+  html, body { height: 100%; overscroll-behavior-y: none; }
   html { -webkit-text-size-adjust: 100%; background: var(--navy-deep); }
   body {
     font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
@@ -307,6 +307,43 @@
   }
   .voetnoot a { color: rgba(212,175,55,0.7); text-decoration: none; }
 
+  /* ---------- speluitnodiging ---------- */
+  .spel-uitnodiging {
+    display: block;
+    margin-top: 30px;
+    padding-top: 24px;
+    width: 100%;
+    border-top: 1px solid rgba(212,175,55,0.25);
+    text-decoration: none;
+    color: inherit;
+  }
+  .spel-pop {
+    width: 108px; height: 108px;
+    margin: 0 auto 12px;
+    border-radius: 50%;
+    border: 2px solid var(--red);
+    background: radial-gradient(circle at 50% 38%, rgba(224,49,49,0.3), rgba(6,10,30,0.92) 72%);
+    display: grid; place-items: center;
+    box-shadow: 0 0 22px rgba(224,49,49,0.35);
+    animation: popPulse 3.2s ease-in-out infinite;
+  }
+  .spel-pop img { width: 76%; height: 76%; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.65)); }
+  @keyframes popPulse {
+    0%, 100% { box-shadow: 0 0 22px rgba(224,49,49,0.35); transform: scale(1); }
+    50% { box-shadow: 0 0 36px rgba(224,49,49,0.65); transform: scale(1.03); }
+  }
+  .spel-tekst {
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: 21px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--red);
+    text-shadow: 0 0 14px rgba(224,49,49,0.5);
+  }
+  .spel-sub {
+    margin-top: 5px;
+    font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase;
+    color: rgba(244,242,236,0.5);
+  }
+
   /* ---------- prijzenkast modal ---------- */
   .modal-achter {
     position: fixed; inset: 0; z-index: 20;
@@ -489,6 +526,12 @@
     De stand is eerlijk en volledig willekeurig bepaald door de organisatie.<br>
     <a href="/selector">→ archief: de originele willekeur selector</a>
   </div>
+
+  <a class="spel-uitnodiging" href="/games">
+    <div class="spel-pop"><img src="/billy.svg" alt=""></div>
+    <div class="spel-tekst">I want to play a game</div>
+    <div class="spel-sub">→ speel mee</div>
+  </a>
 </div>
 
 <!-- prijzenkast -->
@@ -506,10 +549,8 @@
 <script>
   const $ = id => document.getElementById(id);
   const CAT = window.KWIM_CATALOGUS;
-  // een prijs komt uit de vaste catalogus (kampioensring) of is een geüploade prijs (afbeelding)
-  const prijsVan = id =>
-    CAT.prijzen.find(p => p.id === id) ||
-    ((staat && staat.prijsDefs) || []).find(p => p.id === id);
+  // de vier vaste prijzen komen uit de gedeelde catalogus
+  const prijsVan = id => CAT.prijzen.find(p => p.id === id);
   const prijsIcoon = p => `<img src="${p.afbeelding}" alt="">`;
 
   function escapeHtml(s) {

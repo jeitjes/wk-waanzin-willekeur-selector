@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>WK WAANZIN™ — Federatie Controlekamer</title>
+<title>WK WAANZIN™ — Geen Controlekamer</title>
 <meta name="theme-color" content="#060a1e">
 <meta name="robots" content="noindex, nofollow">
 <style>
@@ -251,39 +251,6 @@
     box-shadow: 0 0 10px rgba(212,175,55,0.3);
   }
   .chip img { width: 15px; height: 15px; object-fit: contain; vertical-align: -3px; }
-  .def-img { width: 26px; height: 26px; object-fit: contain; flex-shrink: 0; }
-  .badge-kaart { border-color: rgba(31,212,192,0.45); }
-  .badge-kaart .kaart-titel {
-    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
-    font-size: 17px; letter-spacing: 1.5px; text-transform: uppercase;
-    color: var(--teal);
-    margin-bottom: 2px;
-  }
-  .badge-kaart .kaart-uitleg { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(244,242,236,0.45); margin-bottom: 10px; }
-
-  .trofee-lijst { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
-  .trofee-item {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 13px;
-    border: 1px solid rgba(212,175,55,0.25);
-    border-radius: 5px;
-    padding: 6px 8px;
-    background: rgba(6,10,30,0.5);
-  }
-  .trofee-item .t-naam { flex: 1; letter-spacing: 1px; text-transform: uppercase; font-weight: 700; font-size: 11.5px; }
-  .t-weg { background: none; border: 1px solid rgba(224,49,49,0.5); border-radius: 4px; color: var(--red); font-size: 11px; padding: 3px 8px; }
-  .toevoeg-rij { display: flex; gap: 6px; }
-  .toevoeg-rij select, .toevoeg-rij input[type="text"] {
-    flex: 1;
-    min-width: 0;
-    font-size: 13px;
-    color: var(--white);
-    background: rgba(6,10,30,0.8);
-    border: 1px solid rgba(212,175,55,0.4);
-    border-radius: 4px;
-    padding: 8px;
-    outline: none;
-  }
   .t-plus {
     background: linear-gradient(180deg, var(--gold-bright), var(--gold));
     border: none; border-radius: 4px;
@@ -347,7 +314,7 @@
 <body>
 
 <div class="page">
-  <h1>Federatie <b>Controlekamer</b></h1>
+  <h1>Geen <b>Controlekamer</b></h1>
   <div class="sub">Alleen voor organisatoren · Kwim-protocol v4.5.12</div>
 
   <!-- login -->
@@ -447,61 +414,6 @@
     } catch (e) {
       zetStatus('✗ opslaan mislukt — probeer opnieuw', 'fout');
     }
-  }
-
-  /* ================= renderen ================= */
-  let badgeUploadData = null; // verkleinde afbeelding die klaarstaat om toegevoegd te worden
-
-  function renderPrijzenBeheer(wrap) {
-    const kaart = document.createElement('div');
-    kaart.className = 'kaart badge-kaart';
-    const defs = (staat.prijsDefs || []).map((b, bi) => `
-      <div class="trofee-item">
-        <img class="def-img" src="${b.afbeelding}" alt="">
-        <span class="t-naam">${escapeHtml(b.naam)}</span>
-        <button class="t-weg def-weg" data-def="${bi}">✕</button>
-      </div>`).join('');
-    kaart.innerHTML = `
-      <div class="kaart-titel">🎖️ Prijzenbeheer</div>
-      <div class="kaart-uitleg">Upload jullie eigen prijs-afbeeldingen — daarna per team toe te kennen</div>
-      <div class="trofee-lijst">${defs}</div>
-      <div class="toevoeg-rij">
-        <label class="upload-knop"><span class="badge-kies-tekst">🖼️ Kies…</span><input type="file" accept="image/*" class="badge-file"></label>
-        <input type="text" class="badge-naam" placeholder="Naam van de prijs…" maxlength="30">
-        <button class="t-plus badge-plus">+</button>
-      </div>`;
-
-    kaart.querySelector('.badge-file').addEventListener('change', async e => {
-      const bestand = e.target.files[0];
-      if (!bestand) return;
-      try {
-        badgeUploadData = await verkleinBadge(bestand);
-        kaart.querySelector('.badge-kies-tekst').innerHTML = `<img class="chip-preview" src="${badgeUploadData}" style="width:16px;height:16px;object-fit:contain;vertical-align:-3px"> gekozen`;
-      } catch {
-        zetStatus('✗ afbeelding kon niet worden gelezen', 'fout');
-      }
-    });
-    kaart.querySelector('.badge-plus').addEventListener('click', () => {
-      const naam = kaart.querySelector('.badge-naam').value.trim();
-      if (!badgeUploadData) { zetStatus('✗ kies eerst een afbeelding', 'fout'); return; }
-      if (!naam) { zetStatus('✗ geef de prijs een naam', 'fout'); return; }
-      staat.prijsDefs = staat.prijsDefs || [];
-      staat.prijsDefs.push({ id: 'bdef-' + Date.now(), naam, afbeelding: badgeUploadData });
-      badgeUploadData = null;
-      render();
-      planOpslaan();
-    });
-    kaart.querySelectorAll('.def-weg').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const def = staat.prijsDefs[Number(btn.dataset.def)];
-        staat.prijsDefs.splice(Number(btn.dataset.def), 1);
-        // haal de prijs ook weg bij teams die hem verdiend hadden
-        staat.teams.forEach(t => { t.prijzen = (t.prijzen || []).filter(id => id !== def.id); });
-        render();
-        planOpslaan();
-      });
-    });
-    wrap.appendChild(kaart);
   }
 
   /* ================= wereldlied-beheer ================= */
@@ -615,19 +527,14 @@
   function render() {
     const wrap = $('teams');
     wrap.innerHTML = '';
-    renderPrijzenBeheer(wrap);
     staat.teams.forEach((team, i) => {
       const kaart = document.createElement('div');
       kaart.className = 'kaart';
 
-      const eigenChips = (staat.prijsDefs || []).map(b => {
+      const prijsChips = CAT.prijzen.map(b => {
         const aan = (team.prijzen || []).includes(b.id);
         return `<button class="chip ${aan ? 'aan' : ''}" data-prijs="${b.id}"><img src="${b.afbeelding}" alt=""> ${escapeHtml(b.naam)}</button>`;
-      });
-      const prijsChips = eigenChips.concat(CAT.prijzen.map(b => {
-        const aan = (team.prijzen || []).includes(b.id);
-        return `<button class="chip ${aan ? 'aan' : ''}" data-prijs="${b.id}"><img src="${b.afbeelding}" alt=""> ${escapeHtml(b.naam)}</button>`;
-      })).join('');
+      }).join('');
 
       const landOpties = CAT.landen
         .map(l => `<option value="${l.code}" ${team.land === l.code ? 'selected' : ''}>${window.KWIM_VLAG(l.code)} ${escapeHtml(l.naam)}</option>`)
@@ -782,37 +689,12 @@
     });
   }
 
-  /* ================= badge verkleinen (canvas, 128px, transparantie blijft) ================= */
-  function verkleinBadge(bestand) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const url = URL.createObjectURL(bestand);
-      img.onload = () => {
-        URL.revokeObjectURL(url);
-        const MAAT = 128;
-        const canvas = document.createElement('canvas');
-        canvas.width = MAAT; canvas.height = MAAT;
-        const ctx = canvas.getContext('2d');
-        // contain — geen crop, badge past in zijn geheel
-        const schaal = Math.min(MAAT / img.width, MAAT / img.height);
-        const w = img.width * schaal, h = img.height * schaal;
-        ctx.drawImage(img, (MAAT - w) / 2, (MAAT - h) / 2, w, h);
-        let data = canvas.toDataURL('image/webp', 0.9);
-        if (!data.startsWith('data:image/webp')) data = canvas.toDataURL('image/png');
-        resolve(data);
-      };
-      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('ongeldig beeld')); };
-      img.src = url;
-    });
-  }
-
   /* ================= start ================= */
   async function start() {
     $('poort').style.display = 'none';
     $('statusbalk').style.display = 'flex';
     const res = await fetch('/api/state', { cache: 'no-store' });
     staat = await res.json();
-    staat.prijsDefs = staat.prijsDefs || [];
     await laadWereldlied();
     await laadWereldliedGeschiedenis();
     $('teams').style.display = 'flex';
