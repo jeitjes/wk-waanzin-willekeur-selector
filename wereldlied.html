@@ -271,6 +271,26 @@
   .voorlezen b { color: var(--gold-bright); }
 
   .uitloggen { margin-top: 22px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(244,242,236,0.35); background: none; border: none; text-decoration: underline; }
+
+  /* ---------- teamwissel bovenin ---------- */
+  .team-balk {
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-bottom: 16px;
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: rgba(244,242,236,0.55);
+  }
+  .team-balk select {
+    background: rgba(6,10,30,0.8);
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 4px;
+    color: var(--gold-bright);
+    padding: 7px 10px;
+    font-size: 13px;
+    text-align: center;
+    outline: none;
+  }
+  .team-balk select:focus { border-color: var(--gold-bright); }
 </style>
 </head>
 <body>
@@ -620,7 +640,17 @@
       }
     }
 
+    // teamwissel bovenin: altijd zichtbaar zolang de ronde live is
+    const alleTeams = hoofdstaat ? hoofdstaat.teams : [];
+    const teamBalk = alleTeams.length ? `
+      <div class="team-balk">
+        <span>jij bent</span>
+        <select id="wl-team-switch">${alleTeams.map(t =>
+          `<option value="${t.id}"${t.id === identiteit.teamId ? ' selected' : ''}>${teamVlag(t.id)} ${escapeHtml(t.naam)}</option>`).join('')}</select>
+      </div>` : '';
+
     $('inhoud').innerHTML = `
+      ${teamBalk}
       ${boven}
       <div class="ketting">${renderKetting()}</div>
       ${wereld.klaar
@@ -631,7 +661,6 @@
            <button class="btn-gold" id="wl-start-btn" style="margin-top:20px">▶ Nieuw Wereldlied starten</button>
            ${renderGeschiedenisLijst()}`
         : ''}
-      <button class="uitloggen" id="wl-uitlog">niet jullie team? wissel van team</button>
       ${!wereld.klaar ? `<button class="uitloggen" id="wl-stop-btn">⛔ stop het Wereldlied voor iedereen</button>` : ''}
     `;
     vorigAantalRegels = wereld.regels.length;
@@ -650,9 +679,10 @@
     }
     const verzendBtn = $('wl-verzend');
     if (verzendBtn) verzendBtn.addEventListener('click', verzendRegel);
-    $('wl-uitlog').addEventListener('click', () => {
-      localStorage.removeItem(IDENT_KEY);
-      identiteit = null;
+    const teamSwitch = $('wl-team-switch');
+    if (teamSwitch) teamSwitch.addEventListener('change', () => {
+      identiteit = { teamId: teamSwitch.value };
+      localStorage.setItem(IDENT_KEY, JSON.stringify(identiteit));
       render();
     });
     const startBtn = $('wl-start-btn');
