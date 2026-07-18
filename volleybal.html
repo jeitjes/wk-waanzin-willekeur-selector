@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>WK WAANZIN™ — Volleybal</title>
+<meta name="theme-color" content="#060a1e">
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root {
+    --navy: #0a1030;
+    --navy-deep: #060a1e;
+    --gold: #d4af37;
+    --gold-bright: #ffd75e;
+    --white: #f4f2ec;
+    --red: #e03131;
+    --teal: #1fd4c0;
+    --magenta: #ff3df0;
+    --green: #3ddc84;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  html { -webkit-text-size-adjust: 100%; background: var(--navy-deep); }
+  body {
+    font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background: var(--navy-deep);
+    color: var(--white);
+    min-height: 100%;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  button, input { font-family: inherit; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  button { user-select: none; -webkit-user-select: none; cursor: pointer; }
+
+  /* ---------- de permanente trip (zelfde als de homepage) ---------- */
+  .trip {
+    position: fixed; inset: 0;
+    display: grid; place-items: center;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    --spd: 30s;
+    animation: hueSpin 22s linear infinite;
+  }
+  .ring { position: absolute; width: 130vmax; height: 130vmax; border-radius: 50%; opacity: 0.14; will-change: transform; }
+  .r1 { background: repeating-conic-gradient(from 0deg, var(--gold-bright) 0 8deg, transparent 8deg 24deg); animation: spin var(--spd) linear infinite; }
+  .r2 { background: repeating-radial-gradient(circle, rgba(255,61,240,0.7) 0 3vmax, transparent 3vmax 7vmax); animation: spinRev calc(var(--spd) * 0.7) linear infinite, breathe 7s ease-in-out infinite; }
+  .r3 { background: conic-gradient(var(--teal), var(--magenta), var(--gold-bright), var(--teal)); filter: blur(32px); animation: spin calc(var(--spd) * 0.5) linear infinite; mix-blend-mode: screen; }
+  .r4 { background: repeating-conic-gradient(from 10deg, rgba(31,212,192,0.8) 0 4deg, transparent 4deg 18deg); animation: spinRev calc(var(--spd) * 0.35) linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes spinRev { to { transform: rotate(-360deg); } }
+  @keyframes breathe { 0%,100% { scale: 1; } 50% { scale: 1.25; } }
+  @keyframes hueSpin { to { filter: hue-rotate(360deg); } }
+  .waas {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(ellipse 110% 80% at 50% 40%, rgba(6,10,30,0.25) 0%, rgba(6,10,30,0.78) 100%);
+  }
+
+  .page {
+    width: 100%;
+    max-width: 620px;
+    padding: 22px 18px calc(30px + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+  }
+
+  h1 {
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: clamp(34px, 10vw, 48px);
+    line-height: 0.95;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background: linear-gradient(175deg, var(--gold-bright) 20%, var(--gold) 55%, #8a6d1f 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .subtitle {
+    margin-top: 8px;
+    font-size: 11.5px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(244,242,236,0.7);
+  }
+  .divider {
+    width: 70%; margin: 18px 0; border: none; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  .sectie { width: 100%; margin-top: 8px; }
+  .sectie-kop {
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: 19px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--gold-bright);
+    text-align: left;
+    margin-bottom: 10px;
+  }
+  .sectie-toelichting {
+    font-size: 11.5px; line-height: 1.5; color: rgba(244,242,236,0.55);
+    text-align: left; margin: -4px 0 12px;
+  }
+
+  /* ---------- klassement ---------- */
+  .stand-tabel { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+  .stand-tabel th {
+    font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: rgba(244,242,236,0.5); font-weight: 400; padding: 0 6px 8px;
+  }
+  .stand-tabel td { padding: 8px 6px; border-top: 1px solid rgba(212,175,55,0.18); }
+  .stand-tabel tr.top4 td:first-child { color: var(--green); }
+  .stand-tabel tr.uitgeschakeld { opacity: 0.5; }
+  .stand-team { display: flex; align-items: center; gap: 6px; }
+  .stand-tabel th.num, .stand-tabel td.num { text-align: center; }
+
+  /* ---------- wedstrijdkaarten ---------- */
+  .wedstrijden { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
+  .wed-kaart {
+    border: 1px solid rgba(212,175,55,0.3);
+    border-radius: 8px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+    padding: 12px 14px;
+    text-align: left;
+  }
+  .wed-kaart.onbekend { opacity: 0.5; }
+  .wed-label {
+    font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: rgba(244,242,236,0.5); margin-bottom: 6px;
+  }
+  .wed-rij { display: flex; align-items: center; gap: 8px; }
+  .wed-team { flex: 1; min-width: 0; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .wed-team:last-child { text-align: right; }
+  .wed-team.gewonnen { color: var(--gold-bright); font-weight: 700; }
+  .wed-score { display: flex; align-items: center; gap: 6px; flex-shrink: 0; font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; font-size: 20px; }
+  .wed-koppel { color: rgba(244,242,236,0.4); font-size: 14px; }
+  .wed-nog { color: rgba(244,242,236,0.35); font-size: 14px; font-family: inherit; }
+  .score-in {
+    width: 34px; text-align: center;
+    background: rgba(6,10,30,0.8);
+    border: 1px solid rgba(212,175,55,0.5);
+    border-radius: 4px;
+    color: var(--gold-bright);
+    font-size: 15px;
+    padding: 4px 2px;
+    outline: none;
+  }
+  .score-in:focus { border-color: var(--gold-bright); }
+  .score-in::-webkit-inner-spin-button { opacity: 0.6; }
+  .score-getal { min-width: 16px; text-align: center; }
+  .wed-acties { margin-top: 9px; display: flex; gap: 8px; }
+  .wed-knop {
+    font-size: 10.5px; letter-spacing: 1px; text-transform: uppercase;
+    border-radius: 4px; padding: 6px 10px; border: 1px solid rgba(212,175,55,0.5);
+    background: rgba(255,255,255,0.04); color: var(--white);
+  }
+  .wed-knop.bewerk { color: var(--gold-bright); }
+  .wed-knop.opslaan { background: linear-gradient(180deg, var(--gold-bright), var(--gold)); color: var(--navy-deep); border: none; font-weight: 700; }
+  .wed-knop.annuleer { color: rgba(244,242,236,0.55); }
+  .wed-knop:active { transform: scale(0.96); }
+
+  .melding { font-size: 11.5px; color: rgba(244,242,236,0.55); text-align: left; margin: -8px 0 16px; line-height: 1.5; }
+
+  .reset-knop {
+    margin-top: 26px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: rgba(224,49,49,0.75); background: none; border: none; text-decoration: underline;
+  }
+  .terug { margin-top: 18px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(212,175,55,0.7); text-decoration: none; }
+  .laden { padding: 14vh 10px 0; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(244,242,236,0.6); text-align: center; }
+
+  .admin-badge {
+    position: fixed;
+    right: 10px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    z-index: 30;
+    display: none;
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--green);
+    background: rgba(6,10,30,0.88);
+    border: 1px solid rgba(212,175,55,0.6);
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div class="trip" aria-hidden="true">
+  <div class="ring r3"></div>
+  <div class="ring r1"></div>
+  <div class="ring r2"></div>
+  <div class="ring r4"></div>
+</div>
+<div class="waas" aria-hidden="true"></div>
+
+<div class="page">
+  <h1>Volleybal</h1>
+  <div class="subtitle">Poule → halve finales → verliezersfinale &amp; finale</div>
+  <hr class="divider">
+
+  <div id="inhoud" style="width:100%"><div class="laden">laden…</div></div>
+
+  <a class="terug" href="/games">← terug naar de spellen</a>
+</div>
+
+<!-- adminbadge: alleen zichtbaar in adminmodus -->
+<button class="admin-badge" id="admin-badge" title="Adminmodus — tik om uit te loggen">🔑 admin</button>
+
+<script src="/catalog.js"></script>
+<script>
+  const $ = id => document.getElementById(id);
+  const SLEUTEL_OPSLAG = 'kwimAdminSleutel';
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  let hoofdstaat = null;   // /api/state — voor teamnamen, vlaggen
+  let volleybal = null;    // /api/volleybal — het toernooi
+  let sleutel = '';
+  let adminmodus = false;
+  let bewerkActief = null;  // mkey van de wedstrijd die nu bewerkt wordt (adminmodus), of null
+  let vorigeVolleybalJson = null;
+
+  const teamVan = id => (hoofdstaat && hoofdstaat.teams.find(t => t.id === id)) || null;
+  const teamNaam = id => (teamVan(id) || {}).naam || id;
+  const teamVlag = id => { const t = teamVan(id); return t && t.land ? window.KWIM_VLAG(t.land) : ''; };
+
+  async function laadHoofdstaat() {
+    try {
+      const res = await fetch('/api/state', { cache: 'no-store' });
+      hoofdstaat = await res.json();
+    } catch {}
+  }
+
+  async function laadVolleybal(eerste = false) {
+    if (bewerkActief) return; // niet verversen terwijl een score wordt ingevoerd
+    try {
+      const res = await fetch('/api/volleybal', { cache: 'no-store' });
+      const vers = await res.json();
+      const json = JSON.stringify(vers);
+      if (json !== vorigeVolleybalJson) {
+        vorigeVolleybalJson = json;
+        volleybal = vers;
+        render();
+      }
+    } catch {
+      if (eerste) $('inhoud').innerHTML = '<div class="laden">✗ verbinding mislukt — herlaad de pagina</div>';
+    }
+  }
+
+  /* ================= wedstrijdkaarten ================= */
+  function matchKaart(mkey, thuisId, uitId, scoreA, scoreB, label) {
+    const bekend = !!(thuisId && uitId);
+    const gespeeld = scoreA !== null && scoreB !== null;
+    const bewerken = adminmodus && bekend && bewerkActief === mkey;
+    const winThuis = gespeeld && scoreA > scoreB;
+    const winUit = gespeeld && scoreB > scoreA;
+    const naamThuis = bekend ? `${teamVlag(thuisId)} ${escapeHtml(teamNaam(thuisId))}` : 'nog te bepalen';
+    const naamUit = bekend ? `${teamVlag(uitId)} ${escapeHtml(teamNaam(uitId))}` : 'nog te bepalen';
+    return `
+      <div class="wed-kaart${!bekend ? ' onbekend' : ''}">
+        ${label ? `<div class="wed-label">${label}</div>` : ''}
+        <div class="wed-rij">
+          <div class="wed-team${winThuis ? ' gewonnen' : ''}">${naamThuis}</div>
+          <div class="wed-score">
+            ${bewerken
+              ? `<input type="number" class="score-in" id="in-a-${mkey}" inputmode="numeric" min="0" max="99" value="${scoreA !== null ? scoreA : ''}">
+                 <span class="wed-koppel">–</span>
+                 <input type="number" class="score-in" id="in-b-${mkey}" inputmode="numeric" min="0" max="99" value="${scoreB !== null ? scoreB : ''}">`
+              : gespeeld
+                ? `<span class="score-getal">${scoreA}</span><span class="wed-koppel">–</span><span class="score-getal">${scoreB}</span>`
+                : `<span class="wed-nog">${bekend ? 'nog niet gespeeld' : '–'}</span>`}
+          </div>
+          <div class="wed-team${winUit ? ' gewonnen' : ''}">${naamUit}</div>
+        </div>
+        ${adminmodus && bekend ? `
+          <div class="wed-acties">
+            ${bewerken
+              ? `<button class="wed-knop opslaan" data-mkey="${mkey}">✓ Opslaan</button>
+                 <button class="wed-knop annuleer" data-mkey="${mkey}">✕ Annuleer</button>`
+              : `<button class="wed-knop bewerk" data-mkey="${mkey}">✎ ${gespeeld ? 'Wijzig score' : 'Score invoeren'}</button>`}
+          </div>` : ''}
+      </div>`;
+  }
+
+  function bindMatchKnoppen() {
+    document.querySelectorAll('.wed-knop.bewerk').forEach(b => b.addEventListener('click', () => {
+      bewerkActief = b.dataset.mkey;
+      render();
+    }));
+    document.querySelectorAll('.wed-knop.annuleer').forEach(b => b.addEventListener('click', () => {
+      bewerkActief = null;
+      render();
+    }));
+    document.querySelectorAll('.wed-knop.opslaan').forEach(b => b.addEventListener('click', () => opslaanScore(b.dataset.mkey)));
+  }
+
+  async function opslaanScore(mkey) {
+    const inA = $('in-a-' + mkey), inB = $('in-b-' + mkey);
+    const scoreA = inA.value.trim() === '' ? null : Number(inA.value);
+    const scoreB = inB.value.trim() === '' ? null : Number(inB.value);
+    if ((scoreA === null) !== (scoreB === null)) {
+      alert('Vul beide scores in, of maak ze beide leeg.');
+      return;
+    }
+    if (scoreA !== null && (!Number.isInteger(scoreA) || !Number.isInteger(scoreB) || scoreA === scoreB)) {
+      alert('Volleybal kent geen gelijkspel — vul twee verschillende getallen in.');
+      return;
+    }
+    const body = mkey.startsWith('poule-')
+      ? { fase: 'poule', index: Number(mkey.slice(6)), scoreA, scoreB }
+      : { fase: mkey, scoreA, scoreB };
+    try {
+      const res = await fetch('/api/volleybal/score', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + sleutel, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        volleybal = data.staat;
+        vorigeVolleybalJson = JSON.stringify(volleybal);
+        bewerkActief = null;
+        render();
+      } else {
+        alert(data.fout || 'Opslaan is niet gelukt — probeer het opnieuw.');
+      }
+    } catch {
+      alert('Opslaan is niet gelukt — probeer het opnieuw.');
+    }
+  }
+
+  async function resetToernooi() {
+    if (!confirm('Het hele volleybaltoernooi terugzetten naar 0-0? Alle ingevoerde scores gaan verloren.')) return;
+    try {
+      const res = await fetch('/api/volleybal/reset', {
+        method: 'POST', headers: { 'Authorization': 'Bearer ' + sleutel }
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        volleybal = data.staat;
+        vorigeVolleybalJson = JSON.stringify(volleybal);
+        bewerkActief = null;
+        render();
+      } else {
+        alert(data.fout || 'Resetten is niet gelukt — probeer het opnieuw.');
+      }
+    } catch {
+      alert('Resetten is niet gelukt — probeer het opnieuw.');
+    }
+  }
+
+  /* ================= klassement ================= */
+  function renderStanden() {
+    const rijen = volleybal.standen.map(r => `
+      <tr class="${r.rang <= 4 ? 'top4' : 'uitgeschakeld'}">
+        <td class="num">${r.rang}</td>
+        <td><div class="stand-team">${teamVlag(r.teamId)} ${escapeHtml(teamNaam(r.teamId))}</div></td>
+        <td class="num">${r.gespeeld}</td>
+        <td class="num">${r.gewonnen}-${r.verloren}</td>
+        <td class="num">${r.voor - r.tegen > 0 ? '+' : ''}${r.voor - r.tegen}</td>
+        <td class="num">${r.voor}</td>
+      </tr>`).join('');
+    return `
+      <div class="sectie">
+        <div class="sectie-kop">🏐 Klassement</div>
+        <table class="stand-tabel">
+          <thead><tr>
+            <th></th><th>Team</th><th class="num">Gesp.</th><th class="num">W-V</th><th class="num">Saldo</th><th class="num">Voor</th>
+          </tr></thead>
+          <tbody>${rijen}</tbody>
+        </table>
+        <div class="melding">De bovenste 4 (groen) gaan door naar de halve finales — nr. 1 tegen nr. 4, nr. 2 tegen nr. 3. Bij gelijke stand tellen op volgorde: gewonnen wedstrijden, puntensaldo, punten voor.</div>
+      </div>`;
+  }
+
+  function renderPoule() {
+    const kaarten = volleybal.poule.map((m, i) => matchKaart(`poule-${i}`, m.a, m.b, m.scoreA, m.scoreB)).join('');
+    return `
+      <div class="sectie">
+        <div class="sectie-kop">Poule — iedereen tegen iedereen</div>
+        <div class="wedstrijden">${kaarten}</div>
+      </div>`;
+  }
+
+  function renderKnockout() {
+    const hfA = volleybal.halveFinaleA, hfB = volleybal.halveFinaleB;
+    const vf = volleybal.verliezersFinale, f = volleybal.finale;
+    if (!volleybal.pouleCompleet) {
+      return `
+        <div class="sectie">
+          <div class="sectie-kop">Halve finales &amp; finale</div>
+          <div class="melding">Zodra alle poulewedstrijden zijn gespeeld, verschijnen hier automatisch de halve finales, de verliezersfinale en de finale.</div>
+        </div>`;
+    }
+    return `
+      <div class="sectie">
+        <div class="sectie-kop">Halve finales</div>
+        <div class="wedstrijden">
+          ${matchKaart('halveFinaleA', hfA.thuis, hfA.uit, hfA.scoreA, hfA.scoreB, 'Halve finale 1 — nr. 1 vs nr. 4')}
+          ${matchKaart('halveFinaleB', hfB.thuis, hfB.uit, hfB.scoreA, hfB.scoreB, 'Halve finale 2 — nr. 2 vs nr. 3')}
+        </div>
+      </div>
+      <div class="sectie">
+        <div class="sectie-kop">Verliezersfinale</div>
+        <div class="sectie-toelichting">Om de 3e plaats — alleen spelen als er nog tijd over is.</div>
+        <div class="wedstrijden">
+          ${matchKaart('verliezersFinale', vf.thuis, vf.uit, vf.scoreA, vf.scoreB)}
+        </div>
+      </div>
+      <div class="sectie">
+        <div class="sectie-kop">🏆 Finale</div>
+        <div class="wedstrijden">
+          ${matchKaart('finale', f.thuis, f.uit, f.scoreA, f.scoreB)}
+        </div>
+      </div>`;
+  }
+
+  function render() {
+    if (!volleybal || !hoofdstaat) return;
+    $('inhoud').innerHTML = `
+      ${renderStanden()}
+      ${renderPoule()}
+      ${renderKnockout()}
+      ${adminmodus ? `<button class="reset-knop" id="reset-btn">🔄 Toernooi terugzetten naar 0-0</button>` : ''}
+    `;
+    bindMatchKnoppen();
+    const resetBtn = $('reset-btn');
+    if (resetBtn) resetBtn.addEventListener('click', resetToernooi);
+  }
+
+  /* ================= start + live verversen ================= */
+  $('admin-badge').addEventListener('click', () => {
+    if (!confirm('Adminmodus verlaten? Je hebt de adminlink nodig om weer in te loggen.')) return;
+    localStorage.removeItem(SLEUTEL_OPSLAG);
+    location.reload();
+  });
+
+  (async () => {
+    const urlSleutel = new URL(location.href).searchParams.get('k');
+    const kandidaat = urlSleutel || localStorage.getItem(SLEUTEL_OPSLAG) || '';
+    if (kandidaat) {
+      try {
+        const res = await fetch('/api/login', { method: 'POST', headers: { 'Authorization': 'Bearer ' + kandidaat } });
+        if (res.ok) {
+          sleutel = kandidaat;
+          adminmodus = true;
+          localStorage.setItem(SLEUTEL_OPSLAG, sleutel);
+        } else {
+          localStorage.removeItem(SLEUTEL_OPSLAG);
+        }
+      } catch {}
+      if (urlSleutel) history.replaceState(null, '', location.pathname);
+    }
+    if (adminmodus) $('admin-badge').style.display = 'block';
+    await laadHoofdstaat();
+    await laadVolleybal(true);
+  })();
+  setInterval(laadVolleybal, 5000);
+  setInterval(laadHoofdstaat, 15000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) laadVolleybal(); });
+</script>
+</body>
+</html>

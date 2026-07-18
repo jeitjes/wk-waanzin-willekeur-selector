@@ -213,6 +213,10 @@
   // spellen-veld in de leaderboard-state (aan/uit te zetten met de adminlink).
   const SPELLEN = [
     {
+      id: 'volleybal', icoon: '🏐', naam: 'Volleybal', href: '/volleybal',
+      omschrijving: 'Poule — iedereen tegen iedereen — daarna halve finales, een verliezersfinale en de finale. Het klassement en de volgende ronde volgen automatisch uit de ingevoerde scores.'
+    },
+    {
       id: 'wereldlied', icoon: '🎤', naam: 'Het Wereldlied', href: '/wereldlied',
       omschrijving: 'Overschrijf om de beurt het refrein van ANOTR — Talk To You met jullie eigen regels, en zing daarna samen het volkslied van de hele wereld.'
     },
@@ -221,7 +225,7 @@
       omschrijving: 'Iemand van ons is in het geheim Gianni Infantino. De Federatie schudt en deelt de geheime rollen — de rest speel je live aan tafel.'
     }
   ];
-  const STANDAARD_ONTHULD = { wereldlied: true, infantino: false };
+  const STANDAARD_ONTHULD = { volleybal: true, wereldlied: true, infantino: false };
 
   let staat = null;
   let sleutel = '';

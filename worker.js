@@ -66,7 +66,12 @@ const PRIJS_IDS = ["fairplay", "flairplay", "legacy", "kampioensring"];
 
 // Welke spellen op /games onthuld zijn — admins schakelen dit op /games zelf,
 // de spel-definities staan in games.html
-const DEFAULT_SPELLEN = { wereldlied: true, infantino: false };
+const DEFAULT_SPELLEN = { volleybal: true, wereldlied: true, infantino: false };
+
+// Volleybaltoernooi: poule (iedereen tegen iedereen) → halve finales (1-4, 2-3)
+// → verliezersfinale + finale. Eén doorlopende versie, terug te zetten naar 0-0.
+const VOLLEYBAL_KEY = "volleybal:v1";
+const VOLLEYBAL_SCORE_MAX = 99;
 
 const DEFAULT_STATE = {
   spellen: { ...DEFAULT_SPELLEN },
@@ -231,6 +236,117 @@ function volgendeBeurt(w) {
   } else {
     w.beurtStart = Date.now();
   }
+}
+
+/* ================= Volleybal ================= */
+
+function volleybalPoule(teamIds) {
+  const paren = [];
+  for (let i = 0; i < teamIds.length; i++) {
+    for (let j = i + 1; j < teamIds.length; j++) {
+      paren.push({ a: teamIds[i], b: teamIds[j], scoreA: null, scoreB: null });
+    }
+  }
+  return paren;
+}
+
+function defaultVolleybal(teamIds) {
+  return {
+    teams: [...teamIds],
+    poule: volleybalPoule(teamIds),
+    halveFinaleA: { thuis: null, uit: null, scoreA: null, scoreB: null },
+    halveFinaleB: { thuis: null, uit: null, scoreA: null, scoreB: null },
+    verliezersFinale: { thuis: null, uit: null, scoreA: null, scoreB: null },
+    finale: { thuis: null, uit: null, scoreA: null, scoreB: null }
+  };
+}
+
+// bij een gewijzigde teamlijst (nooit verwacht bij deze 5 vaste teams, maar defensief)
+// begint het toernooi gewoon opnieuw met de huidige teams
+async function leesVolleybal(env, teamIds) {
+  const raw = await env.LEADERBOARD.get(VOLLEYBAL_KEY);
+  if (!raw) return defaultVolleybal(teamIds);
+  const v = JSON.parse(raw);
+  if (!Array.isArray(v.teams) || v.teams.length !== teamIds.length || v.teams.some(id => !teamIds.includes(id))) {
+    return defaultVolleybal(teamIds);
+  }
+  return v;
+}
+
+async function schrijfVolleybal(env, v) {
+  await env.LEADERBOARD.put(VOLLEYBAL_KEY, JSON.stringify(v));
+}
+
+// de poulestand: gewonnen wedstrijden, puntensaldo, punten voor — bij een gelijke
+// stand beslist de vaste teamvolgorde (zelden nodig, maar altijd deterministisch)
+function volleybalStanden(v) {
+  const tabel = {};
+  v.teams.forEach(id => { tabel[id] = { teamId: id, gespeeld: 0, gewonnen: 0, verloren: 0, voor: 0, tegen: 0 }; });
+  v.poule.forEach(m => {
+    if (m.scoreA === null || m.scoreB === null) return;
+    const ta = tabel[m.a], tb = tabel[m.b];
+    ta.gespeeld++; tb.gespeeld++;
+    ta.voor += m.scoreA; ta.tegen += m.scoreB;
+    tb.voor += m.scoreB; tb.tegen += m.scoreA;
+    if (m.scoreA > m.scoreB) { ta.gewonnen++; tb.verloren++; } else { tb.gewonnen++; ta.verloren++; }
+  });
+  const volgorde = v.teams;
+  const rijen = Object.values(tabel).sort((x, y) =>
+    y.gewonnen - x.gewonnen ||
+    (y.voor - y.tegen) - (x.voor - x.tegen) ||
+    y.voor - x.voor ||
+    volgorde.indexOf(x.teamId) - volgorde.indexOf(y.teamId)
+  );
+  rijen.forEach((r, i) => { r.rang = i + 1; });
+  return rijen;
+}
+
+function volleybalPouleCompleet(v) {
+  return v.poule.every(m => m.scoreA !== null && m.scoreB !== null);
+}
+
+function volleybalWinnaar(slot) {
+  if (slot.scoreA === null || slot.scoreB === null || !slot.thuis || !slot.uit) return null;
+  return slot.scoreA > slot.scoreB ? slot.thuis : slot.uit;
+}
+
+function volleybalVerliezer(slot) {
+  const w = volleybalWinnaar(slot);
+  if (!w) return null;
+  return w === slot.thuis ? slot.uit : slot.thuis;
+}
+
+// zolang een knock-outwedstrijd nog geen score heeft, volgt de koppeling automatisch
+// de actuele stand; zodra er een score is ingevoerd ligt de koppeling vast, ook als
+// latere correcties in de poule de stand nog laten schuiven
+function volleybalBepaalSlot(slot, thuis, uit) {
+  if (slot.scoreA !== null || slot.scoreB !== null) return slot;
+  return { ...slot, thuis: thuis || null, uit: uit || null };
+}
+
+function volleybalMetKnockout(v) {
+  const standen = volleybalStanden(v);
+  const compleet = volleybalPouleCompleet(v);
+  const top4 = compleet ? standen.slice(0, 4) : [];
+  const halveFinaleA = volleybalBepaalSlot(v.halveFinaleA, top4[0]?.teamId, top4[3]?.teamId);
+  const halveFinaleB = volleybalBepaalSlot(v.halveFinaleB, top4[1]?.teamId, top4[2]?.teamId);
+  const verliezersFinale = volleybalBepaalSlot(v.verliezersFinale, volleybalVerliezer(halveFinaleA), volleybalVerliezer(halveFinaleB));
+  const finale = volleybalBepaalSlot(v.finale, volleybalWinnaar(halveFinaleA), volleybalWinnaar(halveFinaleB));
+  return { standen, pouleCompleet: compleet, halveFinaleA, halveFinaleB, verliezersFinale, finale };
+}
+
+function volleybalPubliek(v) {
+  const k = volleybalMetKnockout(v);
+  return {
+    teams: v.teams,
+    poule: v.poule,
+    standen: k.standen,
+    pouleCompleet: k.pouleCompleet,
+    halveFinaleA: k.halveFinaleA,
+    halveFinaleB: k.halveFinaleB,
+    verliezersFinale: k.verliezersFinale,
+    finale: k.finale
+  };
 }
 
 export default {
@@ -501,6 +617,61 @@ export default {
       s.onthuld = true;
       await schrijfInfantino(env, s);
       return json({ ok: true, staat: publiekInfantino(s) });
+    }
+
+    /* ================= Volleybal ================= */
+
+    if (url.pathname === "/api/volleybal" && request.method === "GET") {
+      const hoofdstaat = await leesHoofdstaat(env);
+      const teamIds = hoofdstaat.teams.map(t => t.id);
+      const v = await leesVolleybal(env, teamIds);
+      return json(volleybalPubliek(v));
+    }
+
+    // alleen admins: scores invoeren of corrigeren. Voor de poule via {fase:"poule", index}
+    // met de positie in de poule-array; voor de knock-outfase via {fase:"halveFinaleA" |
+    // "halveFinaleB" | "verliezersFinale" | "finale"}. Beide scores samen, of beide leeg
+    // om een resultaat te wissen; volleybal kent geen gelijkspel.
+    if (url.pathname === "/api/volleybal/score" && request.method === "POST") {
+      if (!checkAuth(request, env)) return json({ fout: "Geen toegang" }, 401);
+      let body;
+      try { body = await request.json(); } catch { return json({ fout: "Ongeldige JSON" }, 400); }
+      const { fase, index, scoreA, scoreB } = body || {};
+      const geldigeScore = w => w === null || (Number.isInteger(w) && w >= 0 && w <= VOLLEYBAL_SCORE_MAX);
+      if (!geldigeScore(scoreA) || !geldigeScore(scoreB)) return json({ fout: "Ongeldige score" }, 400);
+      if ((scoreA === null) !== (scoreB === null)) return json({ fout: "Vul beide scores in, of maak ze beide leeg" }, 400);
+      if (scoreA !== null && scoreA === scoreB) return json({ fout: "Volleybal kent geen gelijkspel" }, 400);
+
+      const hoofdstaat = await leesHoofdstaat(env);
+      const teamIds = hoofdstaat.teams.map(t => t.id);
+      const v = await leesVolleybal(env, teamIds);
+
+      if (fase === "poule") {
+        if (!Number.isInteger(index) || index < 0 || index >= v.poule.length) {
+          return json({ fout: "Onbekende wedstrijd" }, 400);
+        }
+        v.poule[index].scoreA = scoreA;
+        v.poule[index].scoreB = scoreB;
+      } else if (["halveFinaleA", "halveFinaleB", "verliezersFinale", "finale"].includes(fase)) {
+        const slot = volleybalMetKnockout(v)[fase];
+        if (!slot.thuis || !slot.uit) return json({ fout: "Deze wedstrijd is nog niet bekend" }, 409);
+        v[fase] = { thuis: slot.thuis, uit: slot.uit, scoreA, scoreB };
+      } else {
+        return json({ fout: "Onbekende fase" }, 400);
+      }
+
+      await schrijfVolleybal(env, v);
+      return json({ ok: true, staat: volleybalPubliek(v) });
+    }
+
+    // alleen admins: het hele toernooi terug naar 0-0 — er is maar één versie
+    if (url.pathname === "/api/volleybal/reset" && request.method === "POST") {
+      if (!checkAuth(request, env)) return json({ fout: "Geen toegang" }, 401);
+      const hoofdstaat = await leesHoofdstaat(env);
+      const teamIds = hoofdstaat.teams.map(t => t.id);
+      const v = defaultVolleybal(teamIds);
+      await schrijfVolleybal(env, v);
+      return json({ ok: true, staat: volleybalPubliek(v) });
     }
 
     return env.ASSETS.fetch(request);
