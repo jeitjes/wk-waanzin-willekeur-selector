@@ -483,15 +483,19 @@
   }
 
   /* ================= eerdere versies (zingmodus) ================= */
-  // de zingbare regels van een bewaarde versie: eigen zin, of het origineel bij een gemiste beurt
+  // de zingbare regels van een bewaarde versie: altijd het vólledige refrein —
+  // eigen zin waar die bestaat, en het origineel bij een gemiste beurt of
+  // een afgebroken ronde (net zoals het eindscherm dat doet)
   function versieRegels(v) {
     const refrein = Array.isArray(v.refrein) && v.refrein.length ? v.refrein : null;
-    const uit = [];
-    (v.regels || []).forEach((r, i) => {
-      if (!r.overgeslagen) uit.push(r.tekst);
-      else if (refrein && refrein[i] !== undefined) uit.push(refrein[i]);
-    });
-    return uit;
+    if (refrein) {
+      return refrein.map((origineel, i) => {
+        const r = v.regels && v.regels[i];
+        return r && !r.overgeslagen ? r.tekst : origineel;
+      });
+    }
+    // oude versies zonder refrein in de data: alleen de echte inzendingen
+    return (v.regels || []).filter(r => !r.overgeslagen).map(r => r.tekst);
   }
 
   function renderGeschiedenisLijst() {
