@@ -408,6 +408,21 @@
     padding-top: 16px;
     border-top: 1px solid rgba(212,175,55,0.25);
   }
+  .foto-bewerk-knop {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 10.5px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: rgba(244,242,236,0.5);
+    border: 1px solid rgba(212,175,55,0.3);
+    border-radius: 4px;
+    padding: 6px 12px;
+    cursor: pointer;
+    background: none;
+    font-family: inherit;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .foto-bewerk-knop:hover, .foto-bewerk-knop.open { color: var(--gold-bright); border-color: rgba(212,175,55,0.5); }
+  .foto-edit { display: none; margin-top: 12px; }
+  .foto-edit.open { display: block; }
   .foto-knop {
     display: inline-block;
     font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
@@ -670,11 +685,18 @@
       <div class="kast-kop">★ <b>Prijzenkast</b> ★</div>
       ${prijzen ? `<div class="badge-lijst">${prijzen}</div>` : `<div class="kast-leeg">> de kast is leeg. triest.</div>`}
       <div class="kast-foto">
-        <label class="foto-knop" id="foto-knop">📷 Wijzig profielfoto<input type="file" accept="image/*" id="foto-input"></label>
-        <div class="foto-uitleg">Iedereen mag deze foto aanpassen — voor elk team. Dat is de bedoeling.</div>
-        <div class="foto-status" id="foto-status"></div>
+        <button type="button" class="foto-bewerk-knop" id="foto-bewerk-knop">✏️ Profielfoto wijzigen</button>
+        <div class="foto-edit" id="foto-edit">
+          <label class="foto-knop" id="foto-knop">📷 Kies foto<input type="file" accept="image/*" id="foto-input"></label>
+          <div class="foto-uitleg">Iedereen mag deze foto aanpassen — voor elk team. Dat is de bedoeling.</div>
+          <div class="foto-status" id="foto-status"></div>
+        </div>
       </div>`;
     $('kast-sluit').addEventListener('click', sluitKast);
+    $('foto-bewerk-knop').addEventListener('click', () => {
+      $('foto-edit').classList.toggle('open');
+      $('foto-bewerk-knop').classList.toggle('open');
+    });
     $('foto-input').addEventListener('change', onFotoGekozen);
     $('kast').scrollTop = 0;
     modal.classList.add('open');
