@@ -286,11 +286,20 @@
     } catch {}
   }
 
+  let vorigeWereldJson = null;
+
   async function laadWereld(eerste = false) {
     try {
       const res = await fetch('/api/wereldlied', { cache: 'no-store' });
-      wereld = await res.json();
-      render();
+      const vers = await res.json();
+      const json = JSON.stringify(vers);
+      wereld = vers;
+      // alleen opnieuw renderen als er echt iets veranderd is — anders wist elke
+      // poll-tick de tekst die een team net aan het intikken is
+      if (json !== vorigeWereldJson) {
+        vorigeWereldJson = json;
+        render();
+      }
     } catch {
       if (eerste) $('inhoud').innerHTML = '<div class="wacht-tekst">✗ verbinding mislukt — herlaad de pagina</div>';
     }
@@ -308,6 +317,7 @@
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
         wereld = data.staat;
+        vorigeWereldJson = JSON.stringify(wereld);
         render();
       } else {
         alert(data.fout || 'Starten is niet gelukt — probeer het opnieuw');
@@ -359,6 +369,7 @@
       const data = await res.json();
       if (res.ok) {
         wereld = data.staat;
+        vorigeWereldJson = JSON.stringify(wereld);
         render();
       } else {
         veld.disabled = false;
@@ -391,7 +402,7 @@
       overslaanBezig = true;
       fetch('/api/wereldlied/overslaan', { method: 'POST' })
         .then(res => res.json())
-        .then(data => { wereld = data; overslaanBezig = false; render(); })
+        .then(data => { wereld = data; vorigeWereldJson = JSON.stringify(wereld); overslaanBezig = false; render(); })
         .catch(() => { overslaanBezig = false; });
     }
   }
@@ -411,6 +422,12 @@
 
   function render() {
     if (!wereld) return;
+
+    // bewaar wat er al in het invoerveld staat, zodat een tussentijdse render
+    // (bv. na terugkeren naar het tabblad) de getikte zin niet weggooit
+    const bestaandVeld = $('wl-tekst');
+    const bewaardeTekst = bestaandVeld ? bestaandVeld.value : '';
+    const hadFocus = bestaandVeld && document.activeElement === bestaandVeld;
 
     if (!wereld.actief) {
       $('inhoud').innerHTML = `
@@ -472,8 +489,13 @@
 
     const veld = $('wl-tekst');
     if (veld) {
+      if (bewaardeTekst) {
+        veld.value = bewaardeTekst;
+        $('wl-teller').textContent = (140 - veld.value.length) + ' tekens over';
+      }
       veld.addEventListener('input', () => { $('wl-teller').textContent = (140 - veld.value.length) + ' tekens over'; });
-      veld.focus();
+      if (hadFocus || !bewaardeTekst) veld.focus();
+      if (bewaardeTekst) veld.setSelectionRange(veld.value.length, veld.value.length);
     }
     const verzendBtn = $('wl-verzend');
     if (verzendBtn) verzendBtn.addEventListener('click', verzendRegel);
