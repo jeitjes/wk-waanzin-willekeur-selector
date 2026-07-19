@@ -359,6 +359,82 @@
   .doneer-pop .doneer-emoji { font-size: 46px; }
   .doneer-tekst { color: var(--green); text-shadow: 0 0 14px rgba(61,220,132,0.5); }
 
+  /* ---------- reels ---------- */
+  .reels-sectie {
+    margin-top: 30px;
+    padding-top: 24px;
+    width: 100%;
+    border-top: 1px solid rgba(212,175,55,0.25);
+  }
+  .reels-kop { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: rgba(244,242,236,0.6); margin-bottom: 14px; }
+  .reels-kop b { color: var(--gold); }
+  .reels-rij {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -20px;
+    padding: 0 20px 4px;
+    scrollbar-width: none;
+  }
+  .reels-rij::-webkit-scrollbar { display: none; }
+  .reel-kaart, .reel-toevoegen {
+    flex-shrink: 0;
+    width: 128px;
+    aspect-ratio: 9 / 16;
+    border-radius: 10px;
+    scroll-snap-align: start;
+    position: relative;
+    overflow: hidden;
+    background: #0d1436;
+  }
+  .reel-kaart { border: 1px solid rgba(212,175,55,0.4); }
+  .reel-video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .reel-geluid {
+    position: absolute; top: 6px; right: 6px;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: rgba(6,10,30,0.7);
+    border: 1px solid rgba(212,175,55,0.5);
+    color: var(--white);
+    font-size: 11px;
+    display: grid; place-items: center;
+    cursor: pointer;
+  }
+  .reel-overlay {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 20px 8px 8px;
+    background: linear-gradient(180deg, transparent, rgba(6,10,30,0.92));
+    pointer-events: none;
+  }
+  .reel-wie { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--gold-bright); }
+  .reel-bijschrift { font-size: 10px; color: rgba(244,242,236,0.8); margin-top: 2px; line-height: 1.3; }
+  .reel-toevoegen {
+    border: 1.5px dashed rgba(212,175,55,0.5);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    color: var(--gold-bright);
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .reel-toevoegen-plus { font-size: 26px; line-height: 1; }
+  .reel-toevoegen-tekst { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; text-align: center; line-height: 1.4; }
+  .reels-leeg { font-family: "Courier New", monospace; font-size: 11px; color: rgba(244,242,236,0.4); margin-top: 10px; }
+  .reel-tekst-input {
+    font-family: "Arial Narrow", Arial, sans-serif !important;
+    text-transform: none !important;
+    letter-spacing: 0.3px !important;
+    font-size: 13px !important;
+  }
+  .reel-plaats-knop {
+    margin-top: 16px;
+    width: 100%;
+    text-align: center;
+    border: none;
+    background: linear-gradient(180deg, rgba(212,175,55,0.35), rgba(212,175,55,0.15));
+  }
+  .reel-plaats-knop:disabled { opacity: 0.5; cursor: default; }
+
   /* ---------- prijzenkast modal ---------- */
   .modal-achter {
     position: fixed; inset: 0; z-index: 20;
@@ -660,11 +736,47 @@
     <div class="spel-tekst doneer-tekst">Doneer aan de Federatie</div>
     <div class="spel-sub">→ steun (of saboteer) je favoriete team</div>
   </a>
+
+  <div class="reels-sectie">
+    <div class="reels-kop">📹 <b>Reels</b> — momentjes van vanavond</div>
+    <div class="reels-rij" id="reels-rij"></div>
+    <div class="reels-leeg" id="reels-leeg" style="display:none">Nog geen reels — wees de eerste.</div>
+  </div>
 </div>
 
 <!-- prijzenkast -->
 <div class="modal-achter" id="modal">
   <div class="kast" id="kast" role="dialog" aria-modal="true"></div>
+</div>
+
+<!-- reel plaatsen -->
+<div class="modal-achter" id="reel-modal">
+  <div class="kast" id="reel-kast" role="dialog" aria-modal="true">
+    <button class="kast-sluit" id="reel-modal-sluit" type="button">✕ sluiten</button>
+    <div class="kast-kop"><b>Nieuwe reel</b></div>
+    <form id="reel-form">
+      <label class="foto-knop" id="reel-kies-knop">🎬 Kies video<input type="file" accept="video/mp4,video/webm,video/quicktime" id="reel-bestand"></label>
+      <div class="foto-uitleg">Max 10 MB, max 30 seconden. Iedereen mag reels plaatsen.</div>
+      <div class="beheer">
+        <div class="beheer-regel">
+          <div class="beheer-label">Team (optioneel)</div>
+          <select class="land-select" id="reel-team">
+            <option value="">— geen team —</option>
+          </select>
+        </div>
+        <div class="beheer-regel">
+          <div class="beheer-label">Je naam (optioneel)</div>
+          <input class="naam-input reel-tekst-input" id="reel-naam" maxlength="40" placeholder="Wie ben jij?">
+        </div>
+        <div class="beheer-regel">
+          <div class="beheer-label">Bijschrift (optioneel)</div>
+          <input class="naam-input reel-tekst-input" id="reel-bijschrift" maxlength="140" placeholder="Waar gaat dit over?">
+        </div>
+      </div>
+      <button class="foto-knop reel-plaats-knop" id="reel-plaats-knop" type="submit">📤 Plaatsen</button>
+      <div class="foto-status" id="reel-status"></div>
+    </form>
+  </div>
 </div>
 
 <!-- adminbadge: alleen zichtbaar in adminmodus -->
@@ -839,6 +951,139 @@
       if (eerste) $('laden').textContent = '✗ Verbinding met de Federatie mislukt. Herlaad de pagina.';
     }
   }
+
+  /* ================= reels ================= */
+  // volledig publiek: iedereen mag reels bekijken en plaatsen, net als het Wereldlied.
+  // De lijst bevat alleen metadata — elke video wordt apart en lazy opgehaald via
+  // /api/reels/<id>/video zodra het kaartje in beeld komt.
+  let reels = [];
+
+  const reelObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      const video = entry.target;
+      if (entry.isIntersecting) video.play().catch(() => {});
+      else video.pause();
+    });
+  }, { threshold: 0.6 });
+
+  function reelKaartHtml(r) {
+    const wie = escapeHtml(r.teamNaam || r.naam || '');
+    const heeftOverlay = wie || r.bijschrift;
+    return `<div class="reel-kaart" data-id="${r.id}">
+      <video class="reel-video" muted loop playsinline preload="metadata" src="/api/reels/${encodeURIComponent(r.id)}/video"></video>
+      <button class="reel-geluid" type="button" aria-label="Geluid aan/uit">🔇</button>
+      ${heeftOverlay ? `<div class="reel-overlay">
+        ${wie ? `<div class="reel-wie">${wie}</div>` : ''}
+        ${r.bijschrift ? `<div class="reel-bijschrift">${escapeHtml(r.bijschrift)}</div>` : ''}
+      </div>` : ''}
+    </div>`;
+  }
+
+  function renderReels() {
+    const rij = $('reels-rij');
+    rij.innerHTML = `<button class="reel-toevoegen" id="reel-open-upload" type="button">
+        <span class="reel-toevoegen-plus">+</span>
+        <span class="reel-toevoegen-tekst">Reel<br>toevoegen</span>
+      </button>` + reels.map(reelKaartHtml).join('');
+    $('reel-open-upload').addEventListener('click', openReelModal);
+    $('reels-leeg').style.display = reels.length ? 'none' : 'block';
+    rij.querySelectorAll('.reel-kaart').forEach(kaart => {
+      const video = kaart.querySelector('.reel-video');
+      const geluidKnop = kaart.querySelector('.reel-geluid');
+      geluidKnop.addEventListener('click', () => {
+        const wordtLuid = video.muted;
+        rij.querySelectorAll('.reel-video').forEach(v => { v.muted = true; });
+        rij.querySelectorAll('.reel-geluid').forEach(k => { k.textContent = '🔇'; });
+        if (wordtLuid) { video.muted = false; geluidKnop.textContent = '🔊'; }
+      });
+      reelObserver.observe(video);
+    });
+  }
+
+  async function laadReels() {
+    try {
+      const res = await fetch('/api/reels', { cache: 'no-store' });
+      if (!res.ok) throw new Error(res.status);
+      const nieuw = await res.json();
+      if (JSON.stringify(nieuw) !== JSON.stringify(reels)) {
+        reels = nieuw;
+        renderReels();
+      }
+    } catch (e) {}
+  }
+
+  /* ---- reel plaatsen (upload-modal) ---- */
+  const reelModal = $('reel-modal');
+
+  function vulReelTeamSelect() {
+    const select = $('reel-team');
+    select.innerHTML = '<option value="">— geen team —</option>' +
+      (staat ? staat.teams.map(t => `<option value="${t.id}">${escapeHtml(t.naam)}</option>`).join('') : '');
+  }
+
+  function zetReelStatus(tekst, klasse) {
+    const el = $('reel-status');
+    el.textContent = tekst;
+    el.className = 'foto-status' + (klasse ? ' ' + klasse : '');
+  }
+
+  function openReelModal() {
+    vulReelTeamSelect();
+    $('reel-form').reset();
+    zetReelStatus('', '');
+    reelModal.classList.add('open');
+  }
+
+  function sluitReelModal() {
+    reelModal.classList.remove('open');
+  }
+
+  $('reel-modal-sluit').addEventListener('click', sluitReelModal);
+  reelModal.addEventListener('click', e => { if (e.target === reelModal) sluitReelModal(); });
+
+  // best-effort duurcheck vooraf, zodat iemand niet voor niets een lange video probeert
+  // te uploaden — de server zelf toetst alleen bestandsgrootte en type
+  function leesVideoDuur(bestand) {
+    return new Promise(resolve => {
+      try {
+        const v = document.createElement('video');
+        v.preload = 'metadata';
+        v.onloadedmetadata = () => { URL.revokeObjectURL(v.src); resolve(v.duration); };
+        v.onerror = () => resolve(null);
+        v.src = URL.createObjectURL(bestand);
+      } catch { resolve(null); }
+    });
+  }
+
+  $('reel-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const bestand = $('reel-bestand').files[0];
+    if (!bestand) { zetReelStatus('✗ kies eerst een video', 'fout'); return; }
+    if (bestand.size > 10 * 1024 * 1024) { zetReelStatus('✗ video is groter dan 10 MB', 'fout'); return; }
+    const duur = await leesVideoDuur(bestand);
+    if (duur && duur > 30) { zetReelStatus('✗ video is langer dan 30 seconden', 'fout'); return; }
+
+    const fd = new FormData();
+    fd.append('video', bestand);
+    if ($('reel-team').value) fd.append('teamId', $('reel-team').value);
+    if ($('reel-naam').value.trim()) fd.append('naam', $('reel-naam').value.trim());
+    if ($('reel-bijschrift').value.trim()) fd.append('bijschrift', $('reel-bijschrift').value.trim());
+
+    const knop = $('reel-plaats-knop');
+    knop.disabled = true;
+    zetReelStatus('● uploaden…', 'bezig');
+    try {
+      const res = await fetch('/api/reels', { method: 'POST', body: fd });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.fout || String(res.status));
+      zetReelStatus('✓ geplaatst', 'ok');
+      await laadReels();
+      setTimeout(sluitReelModal, 500);
+    } catch (err) {
+      zetReelStatus('✗ ' + (err.message || 'uploaden mislukt'), 'fout');
+    }
+    knop.disabled = false;
+  });
 
   /* ================= prijzenkast ================= */
   const modal = $('modal');
@@ -1053,8 +1298,10 @@
     }
     laadStaat(true);
     setInterval(laadStaat, 12000);
+    laadReels();
+    setInterval(laadReels, 20000);
   })();
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) laadStaat(); });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { laadStaat(); laadReels(); } });
 </script>
 </body>
 </html>

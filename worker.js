@@ -261,6 +261,25 @@ function defaultVolleybal(teamIds) {
   };
 }
 
+/* ================= Reels ================= */
+
+const REELS_INDEX_KEY = "reels:index:v1";
+const REELS_MAX = 20; // FIFO — oudste reel (en video-blob) vervalt bij een nieuwe upload voorbij deze grens
+const REEL_MAX_BODY = 10 * 1024 * 1024; // 10 MB — ruim voor een kort clipje, ruim onder de KV-waardelimiet van 25 MB
+const REEL_UPLOAD_OVERHEAD = 200 * 1024; // marge voor multipart-headers in de Content-Length-check
+const REEL_NAAM_MAX = 40;
+const REEL_BIJSCHRIFT_MAX = 140;
+const REEL_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
+
+async function leesReelsIndex(env) {
+  const raw = await env.LEADERBOARD.get(REELS_INDEX_KEY);
+  return raw ? JSON.parse(raw) : [];
+}
+
+async function schrijfReelsIndex(env, lijst) {
+  await env.LEADERBOARD.put(REELS_INDEX_KEY, JSON.stringify(lijst));
+}
+
 // bij een gewijzigde teamlijst (nooit verwacht bij deze 5 vaste teams, maar defensief)
 // begint het toernooi gewoon opnieuw met de huidige teams
 async function leesVolleybal(env, teamIds) {
@@ -672,6 +691,71 @@ export default {
       const v = defaultVolleybal(teamIds);
       await schrijfVolleybal(env, v);
       return json({ ok: true, staat: volleybalPubliek(v) });
+    }
+
+    /* ================= Reels ================= */
+
+    // volledig publiek, net als het Wereldlied en de doneerflow — iedereen mag een
+    // reel plaatsen. De lijst is een FIFO van vaste lengte: bij een nieuwe upload
+    // vervalt de oudste reel (en zijn video-blob) zodra de grens overschreden wordt,
+    // want er is geen adminbeheer om oude reels handmatig op te ruimen.
+    if (url.pathname === "/api/reels" && request.method === "POST") {
+      const len = Number(request.headers.get("Content-Length") || 0);
+      if (len > REEL_MAX_BODY + REEL_UPLOAD_OVERHEAD) return json({ fout: "Video te groot (max 10 MB)" }, 413);
+      let form;
+      try {
+        form = await request.formData();
+      } catch {
+        return json({ fout: "Ongeldig verzoek" }, 400);
+      }
+      const video = form.get("video");
+      if (!video || typeof video === "string" || typeof video.arrayBuffer !== "function") {
+        return json({ fout: "Geen video meegestuurd" }, 400);
+      }
+      const type = (video.type || "").split(";")[0].trim();
+      if (!REEL_VIDEO_TYPES.includes(type)) return json({ fout: "Alleen mp4-, webm- of mov-video's" }, 400);
+      if (video.size > REEL_MAX_BODY) return json({ fout: "Video te groot (max 10 MB)" }, 413);
+
+      const teamIdRaw = form.get("teamId");
+      const teamId = typeof teamIdRaw === "string" && teamIdRaw ? teamIdRaw : null;
+      let teamNaam = null;
+      if (teamId) {
+        const hoofdstaat = await leesHoofdstaat(env);
+        const team = hoofdstaat.teams.find(t => t.id === teamId);
+        if (!team) return json({ fout: "Onbekend team" }, 404);
+        teamNaam = team.naam;
+      }
+      const naamRaw = form.get("naam");
+      const naam = typeof naamRaw === "string" ? naamRaw.trim().slice(0, REEL_NAAM_MAX) : "";
+      const bijschriftRaw = form.get("bijschrift");
+      const bijschrift = typeof bijschriftRaw === "string" ? bijschriftRaw.trim().slice(0, REEL_BIJSCHRIFT_MAX) : "";
+
+      const id = `reel-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const buffer = await video.arrayBuffer();
+      await env.LEADERBOARD.put(`reel:video:${id}`, buffer, { metadata: { type } });
+
+      const lijst = await leesReelsIndex(env);
+      lijst.unshift({ id, teamId, teamNaam, naam, bijschrift, type, tijd: Date.now() });
+      const verwijderd = lijst.splice(REELS_MAX);
+      await Promise.all(verwijderd.map(r => env.LEADERBOARD.delete(`reel:video:${r.id}`)));
+      await schrijfReelsIndex(env, lijst);
+
+      return json({ ok: true, reel: lijst[0] });
+    }
+
+    // lichte metadata-lijst, zonder video-bytes — de client haalt elke video apart op
+    if (url.pathname === "/api/reels" && request.method === "GET") {
+      return json(await leesReelsIndex(env));
+    }
+
+    const reelVideoMatch = url.pathname.match(/^\/api\/reels\/([A-Za-z0-9_-]+)\/video$/);
+    if (reelVideoMatch && request.method === "GET") {
+      const res = await env.LEADERBOARD.getWithMetadata(`reel:video:${reelVideoMatch[1]}`, "arrayBuffer");
+      if (!res || !res.value) return new Response(null, { status: 404, headers: CORS });
+      const type = (res.metadata && res.metadata.type) || "video/mp4";
+      return new Response(res.value, {
+        headers: { "Content-Type": type, "Cache-Control": "public, max-age=31536000, immutable", ...CORS }
+      });
     }
 
     return env.ASSETS.fetch(request);
