@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>WK WAANZIN™ — Gedeelde agenda</title>
+<meta name="theme-color" content="#060a1e">
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root {
+    --navy: #0a1030;
+    --navy-deep: #060a1e;
+    --gold: #d4af37;
+    --gold-bright: #ffd75e;
+    --white: #f4f2ec;
+    --red: #e03131;
+    --teal: #1fd4c0;
+    --magenta: #ff3df0;
+    --green: #3ddc84;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  html { -webkit-text-size-adjust: 100%; background: var(--navy-deep); overscroll-behavior-y: none; }
+  body {
+    font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background: var(--navy-deep);
+    color: var(--white);
+    min-height: 100%;
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  a, button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+
+  /* ---------- de permanente trip (zelfde als de homepage) ---------- */
+  .trip {
+    position: fixed; inset: 0;
+    display: grid; place-items: center;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    --spd: 30s;
+    animation: hueSpin 22s linear infinite;
+  }
+  .ring { position: absolute; width: 130vmax; height: 130vmax; border-radius: 50%; opacity: 0.14; will-change: transform; }
+  .r1 { background: repeating-conic-gradient(from 0deg, var(--gold-bright) 0 8deg, transparent 8deg 24deg); animation: spin var(--spd) linear infinite; }
+  .r2 { background: repeating-radial-gradient(circle, rgba(255,61,240,0.7) 0 3vmax, transparent 3vmax 7vmax); animation: spinRev calc(var(--spd) * 0.7) linear infinite, breathe 7s ease-in-out infinite; }
+  .r3 { background: conic-gradient(var(--teal), var(--magenta), var(--gold-bright), var(--teal)); filter: blur(32px); animation: spin calc(var(--spd) * 0.5) linear infinite; mix-blend-mode: screen; }
+  .r4 { background: repeating-conic-gradient(from 10deg, rgba(31,212,192,0.8) 0 4deg, transparent 4deg 18deg); animation: spinRev calc(var(--spd) * 0.35) linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes spinRev { to { transform: rotate(-360deg); } }
+  @keyframes breathe { 0%,100% { scale: 1; } 50% { scale: 1.25; } }
+  @keyframes hueSpin { to { filter: hue-rotate(360deg); } }
+  .waas {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(ellipse 110% 80% at 50% 40%, rgba(6,10,30,0.25) 0%, rgba(6,10,30,0.78) 100%);
+  }
+
+  .page {
+    width: 100%;
+    max-width: 520px;
+    padding: 26px 20px calc(40px + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+  }
+
+  .pop {
+    width: 108px; height: 108px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    border: 2px solid var(--teal);
+    background: radial-gradient(circle at 50% 38%, rgba(31,212,192,0.3), rgba(6,10,30,0.92) 72%);
+    display: grid; place-items: center;
+    font-size: 46px;
+    box-shadow: 0 0 26px rgba(31,212,192,0.4);
+    animation: popPulse 3.2s ease-in-out infinite;
+  }
+  @keyframes popPulse {
+    0%, 100% { box-shadow: 0 0 26px rgba(31,212,192,0.4); transform: scale(1); }
+    50% { box-shadow: 0 0 40px rgba(31,212,192,0.7); transform: scale(1.03); }
+  }
+
+  h1 {
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: clamp(28px, 8vw, 38px);
+    line-height: 1.05;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--teal);
+    text-shadow: 0 0 18px rgba(31,212,192,0.5);
+  }
+  .subtitle {
+    margin-top: 10px;
+    font-size: 11.5px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(244,242,236,0.6);
+  }
+  .divider {
+    width: 70%; margin: 22px 0; border: none; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  /* ---------- abonneren ---------- */
+  .abo {
+    width: 100%;
+    border: 1px solid rgba(31,212,192,0.35);
+    background: linear-gradient(180deg, rgba(31,212,192,0.08), rgba(255,255,255,0.02));
+    border-radius: 10px;
+    padding: 18px;
+  }
+  .abo-uitleg { font-size: 12px; line-height: 1.5; color: rgba(244,242,236,0.75); margin-bottom: 14px; }
+  .abo-uitleg b { color: var(--white); }
+  .abo-knop {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: 16px; letter-spacing: 1.5px; text-transform: uppercase;
+    background: linear-gradient(180deg, var(--teal), #12a394);
+    color: var(--navy-deep);
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .abo-alt { margin-top: 10px; font-size: 11px; }
+  .abo-alt a { color: rgba(212,175,55,0.8); text-decoration: none; }
+
+  /* ---------- lijst ---------- */
+  .lijst { width: 100%; display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
+  .moment {
+    text-align: left;
+    padding: 14px 16px;
+    border-radius: 10px;
+    border: 1px solid rgba(212,175,55,0.3);
+    background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+    position: relative;
+  }
+  .moment-datum {
+    font-size: 10.5px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--teal); margin-bottom: 4px;
+  }
+  .moment-titel {
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-size: 18px; letter-spacing: 1px; text-transform: uppercase; color: var(--white);
+  }
+  .moment-locatie { margin-top: 3px; font-size: 11.5px; color: rgba(244,242,236,0.6); }
+  .moment-beschrijving { margin-top: 6px; font-size: 12px; line-height: 1.4; color: rgba(244,242,236,0.7); }
+  .leeg { margin-top: 24px; font-size: 12px; color: rgba(244,242,236,0.5); }
+
+  .terug {
+    margin-top: 28px;
+    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: rgba(212,175,55,0.7); text-decoration: none;
+  }
+
+  /* ---------- adminmodus: agenda beheren ---------- */
+  .beheer {
+    width: 100%; margin-top: 30px; padding-top: 22px;
+    border-top: 1px solid rgba(212,175,55,0.25);
+  }
+  .beheer-titel {
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 12px; text-align: left;
+  }
+  .veld { text-align: left; margin-bottom: 10px; }
+  .veld label { display: block; font-size: 10.5px; letter-spacing: 1px; text-transform: uppercase; color: rgba(244,242,236,0.55); margin-bottom: 4px; }
+  .veld input, .veld textarea {
+    width: 100%; padding: 9px 10px; border-radius: 6px;
+    border: 1px solid rgba(212,175,55,0.35);
+    background: rgba(6,10,30,0.6); color: var(--white);
+    font-family: inherit; font-size: 13px;
+  }
+  .veld textarea { resize: vertical; min-height: 50px; }
+  .rij-twee { display: flex; gap: 10px; }
+  .rij-twee .veld { flex: 1; }
+  .toevoeg-knop {
+    width: 100%; padding: 11px; margin-top: 4px;
+    border: none; border-radius: 8px;
+    font-family: inherit; font-weight: 700; font-size: 12px;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+    color: var(--navy-deep); cursor: pointer;
+  }
+  .beheer-lijst { margin-top: 18px; display: flex; flex-direction: column; gap: 8px; }
+  .beheer-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 8px;
+    background: rgba(255,255,255,0.04); text-align: left;
+  }
+  .beheer-item-tekst { flex: 1; min-width: 0; }
+  .beheer-item-titel { font-size: 12.5px; color: var(--white); }
+  .beheer-item-datum { font-size: 10.5px; color: rgba(244,242,236,0.5); }
+  .verwijder-knop {
+    flex-shrink: 0; border: none; background: none; color: var(--red);
+    font-size: 15px; cursor: pointer; padding: 4px 6px;
+  }
+  .admin-badge {
+    position: fixed;
+    right: 10px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    z-index: 30;
+    display: none;
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--green);
+    background: rgba(6,10,30,0.88);
+    border: 1px solid rgba(212,175,55,0.6);
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div class="trip" aria-hidden="true">
+  <div class="ring r3"></div>
+  <div class="ring r1"></div>
+  <div class="ring r2"></div>
+  <div class="ring r4"></div>
+</div>
+<div class="waas" aria-hidden="true"></div>
+
+<div class="page">
+  <div class="pop">📅</div>
+  <h1>Gedeelde<br>Agenda</h1>
+  <div class="subtitle">Van de Federatie, voor iedereen</div>
+
+  <hr class="divider">
+
+  <div class="abo">
+    <div class="abo-uitleg">
+      Abonneer je <b>één keer</b> — nieuwe of gewijzigde momenten verschijnen daarna
+      vanzelf in je eigen agenda-app (Google, Apple, Outlook). Er wordt nooit iets uit
+      jouw persoonlijke agenda gelezen: het verkeer loopt maar één kant op.
+    </div>
+    <a class="abo-knop" id="abo-knop" href="#">📅 Abonneren op de agenda</a>
+    <div class="abo-alt"><a id="ics-link" href="/api/agenda.ics">of open/download het .ics-bestand direct</a></div>
+  </div>
+
+  <div class="lijst" id="lijst"></div>
+  <div class="leeg" id="leeg" style="display:none">Nog geen momenten gepland door de Federatie.</div>
+
+  <div class="beheer" id="beheer" style="display:none">
+    <div class="beheer-titel">Federatie-beheer — moment toevoegen</div>
+    <div class="veld">
+      <label for="f-titel">Titel</label>
+      <input id="f-titel" type="text" maxlength="80" placeholder="Bijv. Halve finale kijken">
+    </div>
+    <div class="rij-twee">
+      <div class="veld">
+        <label for="f-start">Begin</label>
+        <input id="f-start" type="datetime-local">
+      </div>
+      <div class="veld">
+        <label for="f-eind">Eind (optioneel)</label>
+        <input id="f-eind" type="datetime-local">
+      </div>
+    </div>
+    <div class="veld">
+      <label for="f-locatie">Locatie (optioneel)</label>
+      <input id="f-locatie" type="text" maxlength="80" placeholder="Bijv. bij Jelle">
+    </div>
+    <div class="veld">
+      <label for="f-beschrijving">Omschrijving (optioneel)</label>
+      <textarea id="f-beschrijving" maxlength="300"></textarea>
+    </div>
+    <button class="toevoeg-knop" id="toevoeg-knop">Toevoegen</button>
+
+    <div class="beheer-lijst" id="beheer-lijst"></div>
+  </div>
+
+  <a class="terug" href="/">← terug naar het klassement</a>
+</div>
+
+<!-- adminbadge: alleen zichtbaar in adminmodus -->
+<button class="admin-badge" id="admin-badge" title="Adminmodus — tik om uit te loggen">🔑 admin</button>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const SLEUTEL_OPSLAG = 'kwimAdminSleutel';
+
+  let items = [];
+  let sleutel = '';
+  let adminmodus = false;
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  function formatMoment(iso) {
+    const d = new Date(iso);
+    return d.toLocaleString('nl-NL', {
+      weekday: 'short', day: 'numeric', month: 'short',
+      hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Amsterdam'
+    }).replace('.', '');
+  }
+
+  function render() {
+    const wrap = $('lijst');
+    wrap.innerHTML = '';
+    $('leeg').style.display = items.length ? 'none' : 'block';
+    items.forEach(i => {
+      const el = document.createElement('div');
+      el.className = 'moment';
+      el.innerHTML = `
+        <div class="moment-datum">${formatMoment(i.start)}</div>
+        <div class="moment-titel">${escapeHtml(i.titel)}</div>
+        ${i.locatie ? `<div class="moment-locatie">📍 ${escapeHtml(i.locatie)}</div>` : ''}
+        ${i.beschrijving ? `<div class="moment-beschrijving">${escapeHtml(i.beschrijving)}</div>` : ''}`;
+      wrap.appendChild(el);
+    });
+    renderBeheer();
+  }
+
+  function renderBeheer() {
+    if (!adminmodus) return;
+    const wrap = $('beheer-lijst');
+    wrap.innerHTML = '';
+    items.forEach(i => {
+      const el = document.createElement('div');
+      el.className = 'beheer-item';
+      el.innerHTML = `
+        <div class="beheer-item-tekst">
+          <div class="beheer-item-titel">${escapeHtml(i.titel)}</div>
+          <div class="beheer-item-datum">${formatMoment(i.start)}</div>
+        </div>
+        <button class="verwijder-knop" title="Verwijderen">🗑</button>`;
+      el.querySelector('.verwijder-knop').addEventListener('click', () => verwijder(i.id));
+      wrap.appendChild(el);
+    });
+  }
+
+  async function laadAgenda() {
+    try {
+      const res = await fetch('/api/agenda', { cache: 'no-store' });
+      if (!res.ok) throw new Error(res.status);
+      const data = await res.json();
+      items = Array.isArray(data.items) ? data.items : [];
+      render();
+    } catch {}
+  }
+
+  async function opslaan(nieuweItems) {
+    try {
+      const res = await fetch('/api/agenda', {
+        method: 'PUT',
+        headers: { 'Authorization': 'Bearer ' + sleutel, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: nieuweItems })
+      });
+      if (!res.ok) throw new Error(res.status);
+      const data = await res.json();
+      items = data.items;
+      render();
+    } catch {
+      alert('Opslaan is niet gelukt — probeer het opnieuw.');
+    }
+  }
+
+  function voegToe() {
+    const titel = $('f-titel').value.trim();
+    const startRaw = $('f-start').value;
+    const eindRaw = $('f-eind').value;
+    const locatie = $('f-locatie').value.trim();
+    const beschrijving = $('f-beschrijving').value.trim();
+    if (!titel || !startRaw) { alert('Titel en begintijd zijn verplicht.'); return; }
+    const start = new Date(startRaw);
+    if (isNaN(start.getTime())) { alert('Ongeldige begintijd.'); return; }
+    let eind = null;
+    if (eindRaw) {
+      const eindDatum = new Date(eindRaw);
+      if (isNaN(eindDatum.getTime())) { alert('Ongeldige eindtijd.'); return; }
+      eind = eindDatum.toISOString();
+    }
+    const nieuw = {
+      id: 'ag-' + Math.random().toString(36).slice(2, 10),
+      titel,
+      start: start.toISOString(),
+      eind,
+      locatie: locatie || null,
+      beschrijving: beschrijving || null
+    };
+    opslaan([...items, nieuw]);
+    $('f-titel').value = '';
+    $('f-start').value = '';
+    $('f-eind').value = '';
+    $('f-locatie').value = '';
+    $('f-beschrijving').value = '';
+  }
+
+  function verwijder(id) {
+    if (!confirm('Dit moment verwijderen?')) return;
+    opslaan(items.filter(i => i.id !== id));
+  }
+
+  $('toevoeg-knop').addEventListener('click', voegToe);
+
+  $('admin-badge').addEventListener('click', () => {
+    if (!confirm('Adminmodus verlaten? Je hebt de adminlink nodig om weer in te loggen.')) return;
+    localStorage.removeItem(SLEUTEL_OPSLAG);
+    location.reload();
+  });
+
+  (async () => {
+    $('abo-knop').href = 'webcal://' + location.host + '/api/agenda.ics';
+
+    const urlSleutel = new URL(location.href).searchParams.get('k');
+    const kandidaat = urlSleutel || localStorage.getItem(SLEUTEL_OPSLAG) || '';
+    if (kandidaat) {
+      try {
+        const res = await fetch('/api/login', { method: 'POST', headers: { 'Authorization': 'Bearer ' + kandidaat } });
+        if (res.ok) {
+          sleutel = kandidaat;
+          adminmodus = true;
+          localStorage.setItem(SLEUTEL_OPSLAG, sleutel);
+        } else {
+          localStorage.removeItem(SLEUTEL_OPSLAG);
+        }
+      } catch {}
+      if (urlSleutel) history.replaceState(null, '', location.pathname);
+    }
+    if (adminmodus) {
+      $('admin-badge').style.display = 'block';
+      $('beheer').style.display = 'block';
+    }
+    await laadAgenda();
+    setInterval(laadAgenda, 12000);
+  })();
+</script>
+
+</body>
+</html>

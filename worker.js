@@ -73,6 +73,16 @@ const DEFAULT_SPELLEN = { volleybal: true, wereldlied: true, infantino: false };
 const VOLLEYBAL_KEY = "volleybal:v1";
 const VOLLEYBAL_SCORE_MAX = 99;
 
+// Gedeelde agenda: een lijst gebeurtenissen die de Federatie beheert. Publiek zichtbaar
+// op /agenda én beschikbaar als .ics-abonnementsfeed — zo verschijnt elke wijziging
+// vanzelf in ieders eigen agenda-app, zonder dat er ooit iemands persoonlijke agenda
+// wordt gelezen: het verkeer loopt maar één kant op, van de site naar de agenda-app.
+const AGENDA_KEY = "agenda:v1";
+const AGENDA_MAX_ITEMS = 100;
+const AGENDA_TITEL_MAX = 80;
+const AGENDA_LOCATIE_MAX = 80;
+const AGENDA_BESCHRIJVING_MAX = 300;
+
 const DEFAULT_STATE = {
   spellen: { ...DEFAULT_SPELLEN },
   // configureerbare foto voor de nep-donatieflow (/doneer) — data-URL of null voor de standaard placeholder
@@ -347,6 +357,83 @@ function volleybalPubliek(v) {
     verliezersFinale: k.verliezersFinale,
     finale: k.finale
   };
+}
+
+/* ================= Gedeelde agenda ================= */
+
+function valideerAgendaItems(items) {
+  if (!Array.isArray(items) || items.length > AGENDA_MAX_ITEMS) return false;
+  return items.every(i => {
+    if (!i || typeof i !== "object") return false;
+    if (typeof i.id !== "string" || !i.id) return false;
+    if (typeof i.titel !== "string" || !i.titel.trim() || i.titel.length > AGENDA_TITEL_MAX) return false;
+    if (typeof i.start !== "string" || Number.isNaN(Date.parse(i.start))) return false;
+    if (i.eind !== null && (typeof i.eind !== "string" || Number.isNaN(Date.parse(i.eind)))) return false;
+    if (i.locatie !== null && (typeof i.locatie !== "string" || i.locatie.length > AGENDA_LOCATIE_MAX)) return false;
+    if (i.beschrijving !== null && (typeof i.beschrijving !== "string" || i.beschrijving.length > AGENDA_BESCHRIJVING_MAX)) return false;
+    return true;
+  });
+}
+
+async function leesAgenda(env) {
+  const raw = await env.LEADERBOARD.get(AGENDA_KEY);
+  const items = raw ? JSON.parse(raw) : [];
+  return items.slice().sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
+}
+
+async function schrijfAgenda(env, items) {
+  await env.LEADERBOARD.put(AGENDA_KEY, JSON.stringify(items));
+}
+
+// RFC5545 §3.3.11 — backslash, komma en puntkomma moeten ge-escaped, newlines worden \n
+function icsEscape(s) {
+  return String(s).replace(/\\/g, "\\\\").replace(/,/g, "\\,").replace(/;/g, "\\;").replace(/\r?\n/g, "\\n");
+}
+
+// RFC5545 §3.1 — regels langer dan 75 octets moeten gevouwen worden (vervolgregel begint met een spatie)
+function icsFold(line) {
+  if (line.length <= 75) return line;
+  let out = line.slice(0, 75);
+  let rest = line.slice(75);
+  while (rest.length) {
+    out += "\r\n " + rest.slice(0, 74);
+    rest = rest.slice(74);
+  }
+  return out;
+}
+
+function icsDatum(iso) {
+  return Date.parse(iso) ? new Date(iso).toISOString().replace(/[-:]/g, "").split(".")[0] + "Z" : "";
+}
+
+function bouwIcsFeed(items) {
+  const nu = icsDatum(new Date().toISOString());
+  const regels = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//kwimhub.com//WK Waanzin Agenda//NL",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "X-WR-CALNAME:WK Waanzin — gedeelde agenda",
+    "REFRESH-INTERVAL;VALUE=DURATION:PT1H",
+    "X-PUBLISHED-TTL:PT1H"
+  ];
+  items.forEach(i => {
+    const eind = i.eind || new Date(Date.parse(i.start) + 60 * 60 * 1000).toISOString();
+    regels.push(
+      "BEGIN:VEVENT",
+      `UID:${i.id}@kwimhub.com`,
+      `DTSTAMP:${nu}`,
+      `DTSTART:${icsDatum(i.start)}`,
+      `DTEND:${icsDatum(eind)}`,
+      `SUMMARY:${icsEscape(i.titel)}`
+    );
+    if (i.locatie) regels.push(`LOCATION:${icsEscape(i.locatie)}`);
+    if (i.beschrijving) regels.push(`DESCRIPTION:${icsEscape(i.beschrijving)}`);
+    regels.push("END:VEVENT");
+  });
+  regels.push("END:VCALENDAR");
+  return regels.map(icsFold).join("\r\n") + "\r\n";
 }
 
 export default {
@@ -672,6 +759,38 @@ export default {
       const v = defaultVolleybal(teamIds);
       await schrijfVolleybal(env, v);
       return json({ ok: true, staat: volleybalPubliek(v) });
+    }
+
+    /* ================= Gedeelde agenda ================= */
+
+    if (url.pathname === "/api/agenda") {
+      if (request.method === "GET") return json({ items: await leesAgenda(env) });
+      if (request.method === "PUT") {
+        if (!checkAuth(request, env)) return json({ fout: "Geen toegang" }, 401);
+        let body;
+        try { body = await request.json(); } catch { return json({ fout: "Ongeldige JSON" }, 400); }
+        const items = body && body.items;
+        if (!valideerAgendaItems(items)) return json({ fout: "Ongeldige agenda" }, 400);
+        await schrijfAgenda(env, items);
+        return json({ ok: true, items: await leesAgenda(env) });
+      }
+      return json({ fout: "Methode niet toegestaan" }, 405);
+    }
+
+    // publieke .ics-abonnementsfeed — dit is de enige "sync" met ieders eigen agenda-app:
+    // eenrichtingsverkeer, geen login nodig, en er wordt nooit iemands persoonlijke
+    // agenda gelezen. De agenda-app van de gebruiker haalt dit bestand periodiek zelf op.
+    if (url.pathname === "/api/agenda.ics" && request.method === "GET") {
+      const items = await leesAgenda(env);
+      return new Response(bouwIcsFeed(items), {
+        status: 200,
+        headers: {
+          "Content-Type": "text/calendar; charset=utf-8",
+          "Content-Disposition": 'inline; filename="wk-waanzin-agenda.ics"',
+          "Cache-Control": "public, max-age=300",
+          ...CORS
+        }
+      });
     }
 
     return env.ASSETS.fetch(request);
